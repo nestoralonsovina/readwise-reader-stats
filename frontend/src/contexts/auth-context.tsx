@@ -27,6 +27,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     loading: supabaseAuth.loading,
     error: supabaseAuth.error,
     signIn: supabaseAuth.signIn,
+    signUp: supabaseAuth.signUp,
     signOut: supabaseAuth.signOut
   };
 

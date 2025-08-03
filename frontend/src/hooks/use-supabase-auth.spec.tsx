@@ -29,6 +29,9 @@ describe("useSupabaseAuth", () => {
   it.todo("should handle sign in errors");
   it.todo("should handle sign out");
   it.todo("should restore session on mount");
+  it.todo("should handle successful sign up with name");
+  it.todo("should handle sign up errors");
+  it.todo("should store name in user metadata on sign up");
   
   it("should be defined", () => {
     const { result } = renderHook(() => useSupabaseAuth());

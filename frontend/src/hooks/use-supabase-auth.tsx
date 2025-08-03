@@ -7,6 +7,7 @@ interface SupabaseAuthState {
   loading: boolean
   error: string | null
   signIn: (email: string, password: string) => Promise<void>
+  signUp: (email: string, password: string, name: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -52,6 +53,27 @@ export function useSupabaseAuth(): SupabaseAuthState {
     setLoading(false)
   }
 
+  const signUp = async (email: string, password: string, name: string) => {
+    setLoading(true)
+    setError(null)
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name: name
+        }
+      }
+    })
+
+    if (error) {
+      setError(error.message)
+    }
+
+    setLoading(false)
+  }
+
   const signOut = async () => {
     setLoading(true)
     setError(null)
@@ -70,6 +92,7 @@ export function useSupabaseAuth(): SupabaseAuthState {
     loading,
     error,
     signIn,
+    signUp,
     signOut,
   }
 }

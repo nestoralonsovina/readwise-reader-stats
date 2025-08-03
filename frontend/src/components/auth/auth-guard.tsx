@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useAuth } from "../../contexts/auth-context.tsx";
-import { SignInForm } from "./signin-form.tsx";
+import { AuthForms } from "./auth-forms.tsx";
 
 interface AuthGuardProps {
   children: ReactNode;
@@ -22,9 +22,9 @@ export function AuthGuard({ children }: AuthGuardProps) {
       <div className="flex flex-col items-center justify-center min-h-screen p-8">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold mb-2">Welcome to Readwise Analytics</h2>
-          <p className="text-lg text-gray-600">Please sign in to access your reading dashboard</p>
+          <p className="text-lg text-gray-600">Please sign in or create an account to access your reading dashboard</p>
         </div>
-        <SignInForm />
+        <AuthForms />
       </div>
     );
   }
