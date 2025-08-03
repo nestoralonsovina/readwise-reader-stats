@@ -1,0 +1,158 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Neobrutalism UI Component Rules
+
+## Description
+Mandatory UI component library for this project. All UI components must come from Neobrutalism design system.
+
+## Core Rule: Neobrutalism Components Only
+
+### Source
+- **MANDATORY**: All UI components must come from [https://www.neobrutalism.dev/](https://www.neobrutalism.dev/)
+- **NEVER use shadcn/ui** - only Neobrutalism components
+- **NEVER use other component libraries** like Material-UI, Ant Design, etc.
+
+### Implementation Guidelines
+
+#### How to Add Components
+1. **Visit https://www.neobrutalism.dev/**
+2. **Browse the component library** for the needed component
+3. **Copy the component code** from the website
+4. **Place in `frontend/src/components/ui/`** directory
+5. **Import and use** in your React components
+
+#### Component Structure
+```typescript
+// frontend/src/components/ui/button.tsx
+export interface ButtonProps {
+  // Component props from neobrutalism.dev
+}
+
+export const Button = ({ ...props }: ButtonProps) => {
+  // Component implementation from neobrutalism.dev
+}
+```
+
+#### Import Pattern
+```typescript
+// ✅ Correct - Import from local ui directory
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+
+// ❌ Incorrect - Never import from shadcn or other libraries
+import { Button } from "@/components/ui/button" // shadcn
+import { Button } from "@mui/material"
+```
+
+### Styling Consistency
+
+#### TailwindCSS Integration
+- **Neobrutalism components use TailwindCSS** - perfect fit for this project
+- **Bold, high-contrast design** - aligns with brutalist aesthetic
+- **Black borders and sharp edges** - distinctive visual style
+- **Bright accent colors** - creates engaging interface
+
+#### Design Principles
+- **Bold and unapologetic** - strong visual hierarchy
+- **High contrast** - excellent accessibility
+- **Geometric shapes** - clean, structured layouts
+- **Flat design with depth** - shadows and borders for emphasis
+
+### Component Categories Available
+
+#### Basic Components
+- Buttons (primary, secondary, destructive variants)
+- Input fields and form controls
+- Cards and containers
+- Typography components
+
+#### Layout Components
+- Grid systems
+- Navigation components
+- Headers and footers
+- Sidebar layouts
+
+#### Interactive Components
+- Modals and dialogs
+- Dropdowns and menus
+- Tabs and accordions
+- Progress indicators
+
+#### Data Display
+- Tables and lists
+- Charts integration ready
+- Badge and status indicators
+- Avatar and profile components
+
+### Benefits for This Project
+
+#### Reading Analytics Context
+- **Bold data visualization** - numbers and metrics stand out
+- **Clear navigation** - easy to find different analytics views
+- **Accessible design** - high contrast helps with readability
+- **Modern aesthetic** - appeals to tech-savvy readers
+
+#### Development Benefits
+- **Consistent design language** - all components follow same principles
+- **TailwindCSS native** - no additional CSS frameworks needed
+- **Copy-paste friendly** - quick implementation
+- **Customizable** - easy to modify for specific needs
+
+### Migration from shadcn/ui
+
+#### If Existing Components
+1. **Remove shadcn/ui dependencies** from package.json
+2. **Delete existing shadcn components** from ui directory
+3. **Replace with Neobrutalism equivalents** from the website
+4. **Update imports** to match new component names/props
+5. **Test all functionality** after migration
+
+#### Component Mapping
+```typescript
+// shadcn/ui → Neobrutalism equivalent
+Button → Button (similar API, different styling)
+Card → Card (same concept, brutalist design)
+Input → Input (bold borders, high contrast)
+Dialog → Modal (geometric, bold styling)
+```
+
+### Quality Assurance
+
+#### Before Using Any Component
+1. **Verify source** - must be from neobrutalism.dev
+2. **Check TailwindCSS compatibility** - ensure classes work
+3. **Test responsiveness** - components work on all screen sizes
+4. **Validate accessibility** - high contrast is maintained
+5. **Ensure consistency** - fits with other Neobrutalism components
+
+#### Red Flags
+- **Any mention of shadcn/ui** - immediate replacement needed
+- **Generic component libraries** - not allowed
+- **Custom CSS overrides** - should use Neobrutalism's built-in variants
+- **Inconsistent styling** - all components should feel cohesive
+
+## Integration with TDD
+
+### Component Testing
+- **Test component functionality** - ensure all props work correctly
+- **Test styling consistency** - Neobrutalism design is maintained
+- **Test accessibility** - high contrast and keyboard navigation
+- **Test responsiveness** - components adapt to screen sizes
+
+### Development Workflow
+1. **Identify needed component** - what UI element is required
+2. **Find on neobrutalism.dev** - locate the appropriate component
+3. **Copy implementation** - get the code from the website
+4. **Write tests first** - TDD approach for component integration
+5. **Implement and integrate** - add to project and test
+6. **Refactor if needed** - optimize while maintaining Neobrutalism styling
+
+## Remember
+- **Neobrutalism.dev is the ONLY source** for UI components
+- **Bold, high-contrast design** enhances data readability
+- **Perfect for analytics dashboards** - makes metrics stand out
+- **TailwindCSS native** - no additional styling complexity
+- **Never compromise on the design system** - consistency is key
