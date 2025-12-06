@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="readstats" options="-parameters" />
+      <module name="readstats.aot" options="-parameters" />
+      <module name="readstats.aotTest" options="-parameters" />
+      <module name="readstats.main" options="-parameters" />
+      <module name="readstats.test" options="-parameters" />
+    </option>
+  </component>
+</project>
