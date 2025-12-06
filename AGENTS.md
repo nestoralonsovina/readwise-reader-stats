@@ -50,7 +50,7 @@ Core entities to implement:
 - **Highlight**: User highlights with notes, colors, favorites
 - **Tag**: Document and highlight tagging
 - **ReadingProgressSnapshot**: Time-series tracking of reading progress changes
-- **LocationChange**: Tracks document flow through pipeline (new ’ later ’ archive)
+- **LocationChange**: Tracks document flow through pipeline (new ï¿½ later ï¿½ archive)
 - **DailyStats/DailyStatsByCategory/DailyStatsBySource**: Materialized aggregates
 - **SyncLog/SyncCursor**: Incremental sync metadata
 
@@ -60,3 +60,48 @@ Core entities to implement:
 - Reading behavior: completion rates, peak reading hours, reading velocity
 - Content pipeline: backlog size, save-to-read ratio, queue latency
 - Highlights: density, color distribution, most highlighted content
+
+## Architecture Philosophy
+
+### Bounded Contexts
+Each feature area is a self-contained bounded context with:
+- **Domain layer**: Entities, value objects, domain events
+- **Application layer**: Use cases, orchestration, port interfaces
+- **Infrastructure layer**: External integrations, persistence adapters
+
+### Event-Driven Design
+Contexts communicate via domain events (Spring ApplicationEventPublisher):
+- Sync context publishes `DocumentSyncedEvent`
+- Other contexts subscribe without coupling to sync internals
+
+### Repository Adapters
+Application layer defines interfaces (`CursorStore`, `LogStore`). Infrastructure provides implementations (`JpaCursorStore`). This enables:
+- Testing with fakes (no database needed)
+- Swapping implementations (e.g., Redis cache)
+
+## Current Implementation
+
+### Sync Context (Complete)
+- Incremental sync from Readwise Reader API
+- Cursor-based pagination with rate limiting (20 req/min)
+- Audit logging (SyncLog tracks each run)
+- Domain events published for each document
+
+### Pending Contexts
+- **Library**: Persist documents, track reading progress
+- **Analytics**: Aggregate stats, streaks, insights
+
+## Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Event publishing over direct persistence | Sync context doesn't own Document entity; other contexts subscribe |
+| Sequence return type for fetchDocuments | Memory-efficient lazy evaluation for large result sets |
+| Fake test doubles over mocks | More readable, explicit behavior in tests |
+| Store interfaces in application layer | Decouples domain from JPA; enables easy testing |
+
+## Testing Approach
+
+- **Unit tests**: Fakes for all dependencies (no Spring context)
+- **Repository tests**: `@DataJpaTest` with H2 in-memory DB
+- **TDD**: Tests written before implementation
