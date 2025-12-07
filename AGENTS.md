@@ -43,16 +43,18 @@ Database: PostgreSQL 16 on `localhost:5432`, database `readwise_analytics`, user
 - **Spring RestClient** for Readwise API integration
 - **GraalVM Native Image** support enabled
 
-## Planned Data Model
+## Data Model
 
-Core entities to implement:
+### Implemented Entities
 - **Document**: Articles, PDFs, EPUBs synced from Readwise (tracks reading_progress, word_count, location)
 - **Highlight**: User highlights with notes, colors, favorites
 - **Tag**: Document and highlight tagging
-- **ReadingProgressSnapshot**: Time-series tracking of reading progress changes
-- **LocationChange**: Tracks document flow through pipeline (new � later � archive)
-- **DailyStats/DailyStatsByCategory/DailyStatsBySource**: Materialized aggregates
+- **ReadingProgressSnapshot**: Time-series tracking of reading progress changes (documentId, readingProgress, wordCount, firstOpenedAt, lastOpenedAt, recordedAt)
+- **LocationChange**: Tracks document flow through pipeline (documentId, fromLocation, toLocation, changedAt, category)
 - **SyncLog/SyncCursor**: Incremental sync metadata
+
+### Planned Entities
+- **DailyStats/DailyStatsByCategory/DailyStatsBySource**: Materialized aggregates
 
 ## Key Analytics to Support
 
@@ -95,8 +97,42 @@ Application layer defines interfaces (`CursorStore`, `LogStore`). Infrastructure
 - Upsert semantics: creates new or updates existing based on Readwise ID
 - Category/Location stored as raw strings (multi-tenant ready)
 
-### Pending Contexts
-- **Analytics**: Aggregate stats, streaks, insights
+### Tracking Context (Complete)
+- Subscribes to `DocumentSyncedEvent`
+- **ReadingProgressSnapshot**: Records reading progress changes over time
+  - Only creates snapshot when `readingProgress` actually changes
+  - Captures `firstOpenedAt`, `lastOpenedAt` for peak hours analysis
+  - Enables: words read, reading velocity, completion events, streaks
+- **LocationChange**: Records document pipeline transitions
+  - Tracks moves between locations (new → later → shortlist → archive)
+  - Captures `fromLocation`, `toLocation`, `category`
+  - Enables: queue latency, save-to-read ratio, backlog size
+- Uses `TrackingStore` interface with `JpaTrackingStore` adapter
+- 6 unit tests with `FakeTrackingStore`
+
+### Analytics Context (Complete)
+- Query-time computation using native PostgreSQL queries via JdbcTemplate
+- **Domain layer**: `DateRange` value object, `Granularity` enum, projection data classes
+- **Application layer**: `AnalyticsStore` port interface, `AnalyticsService` facade
+- **Infrastructure layer**: `AnalyticsRepository` with native SQL, `JpaAnalyticsStore` adapter
+- **API layer**: `AnalyticsController` with REST endpoints, response DTOs
+
+**Key Metrics Provided:**
+- Reading volume: words read (calculated from progress deltas), articles completed
+- Reading behavior: streaks (consecutive reading days), peak hours, completion rate
+- Content pipeline: backlog size, in-progress, completed, archived counts, queue latency
+- Highlights: total, color distribution, most highlighted documents
+
+**PostgreSQL Features Used:**
+- Window functions: `LAG()` for progress deltas, `ROW_NUMBER()` for streak calculation
+- `COUNT(*) FILTER (WHERE ...)` for conditional aggregation
+- `DATE_TRUNC()` for time-based grouping
+- `EXTRACT(HOUR FROM ...)` for peak hours analysis
+
+**Design: Query-time vs Stored Aggregates:**
+- MVP uses query-time computation (no stored aggregates)
+- Projection data classes (not JPA entities) enable easy migration to materialized views
+- `AnalyticsStore` interface abstracts query implementation—can swap to materialized views later
 
 ## Design Decisions
 
@@ -106,6 +142,12 @@ Application layer defines interfaces (`CursorStore`, `LogStore`). Infrastructure
 | Sequence return type for fetchDocuments | Memory-efficient lazy evaluation for large result sets |
 | Fake test doubles over mocks | More readable, explicit behavior in tests |
 | Store interfaces in application layer | Decouples domain from JPA; enables easy testing |
+| Tracking uses documentId string, not FK | Decouples Tracking from Library; no entity dependencies between contexts |
+| Change detection before snapshot | Only record when values change; reduces storage, enables delta calculations |
+| Clock injection in TrackingEventListener | Enables deterministic testing with fixed timestamps |
+| JdbcTemplate over JPA for analytics | Native PostgreSQL window functions not expressible in JPQL |
+| Projection classes (not entities) | MVP flexibility; easy migration to materialized views/entities later |
+| Query-time computation for analytics | MVP phase—can evolve to materialized views without changing API |
 
 ## Testing Approach
 

@@ -32,21 +32,42 @@ class ReadwiseWebClient(
     // ==================== Reader API v3 (Documents) ====================
 
     override fun fetchDocuments(updatedAfter: Instant?): Sequence<DocumentDto> = sequence {
+        logger.info("Starting document fetch from Readwise API [updatedAfter={}]", updatedAfter)
+
         var pageCursor: String? = null
+        var pageCount = 0
+        var totalDocuments = 0
+        var totalFiltered = 0
 
         do {
             rateLimiter.acquire()
 
-            val response = fetchDocumentPage(updatedAfter, pageCursor)
+            logger.debug("Fetching page [updatedAfter={}, pageCursor={}]", updatedAfter, pageCursor)
 
-            response.results
-                .filter { it.category != "highlight" && it.category != "note" } // Skip child docs
-                .forEach { yield(it) }
+            val response = fetchDocumentPage(updatedAfter, pageCursor)
+            pageCount++
+
+            val filtered = response.results
+                .filter { it.category != "highlight" && it.category != "note" }
+
+            val filteredCount = response.results.size - filtered.size
+            totalFiltered += filteredCount
+            totalDocuments += filtered.size
+
+            filtered.forEach { yield(it) }
 
             pageCursor = response.nextPageCursor
 
-            logger.debug("Fetched ${response.results.size} documents, next cursor: $pageCursor")
+            logger.debug(
+                "Received {} documents [nextCursor={}, filtered={}]",
+                response.results.size, pageCursor, filteredCount
+            )
         } while (pageCursor != null)
+
+        logger.info(
+            "Completed document fetch [totalDocuments={}, totalPages={}, totalFiltered={}]",
+            totalDocuments, pageCount, totalFiltered
+        )
     }
 
     private fun fetchDocumentPage(updatedAfter: Instant?, pageCursor: String?): DocumentListResponse {
@@ -60,9 +81,22 @@ class ReadwiseWebClient(
                 }
                 .retrieve()
                 .body(DocumentListResponse::class.java)
-                ?: throw HttpClientErrorException(HttpStatus.NOT_FOUND, "Empty response from documents endpoint")
+                ?: run {
+                    logger.warn(
+                        "Empty response from Readwise API [updatedAfter={}, pageCursor={}]",
+                        updatedAfter, pageCursor
+                    )
+                    throw HttpClientErrorException(HttpStatus.NOT_FOUND, "Empty response from documents endpoint")
+                }
         } catch (e: RestClientResponseException) {
-            throw HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, e.responseBodyAsString)
+            logger.warn(
+                "Readwise API error [status={}, updatedAfter={}, pageCursor={}]: {}",
+                e.statusCode, updatedAfter, pageCursor, e.responseBodyAsString
+            )
+            throw HttpClientErrorException(
+                HttpStatus.valueOf(e.statusCode.value()),
+                "Readwise API error: ${e.responseBodyAsString}"
+            )
         }
     }
 

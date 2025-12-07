@@ -24,17 +24,28 @@ Event-driven bounded contexts with clean separation:
               |  HighlightSyncedEvent |
               +-----------+-----------+
                           | subscribes
+              +-----------+-----------+
+              v                       v
+     Library Context           Tracking Context
+    +------------------+      +------------------+
+    | - Document       |      | - ProgressSnap   |
+    | - Highlight      |      | - LocationChange |
+    | - Tag            |      | - TrackingStore  |
+    +------------------+      +------------------+
+              |                       |
+              +-----------+-----------+
+                          | queries
                           v
-                 Library Bounded Context
-    +---------------------------------------------+
-    |  Domain        Application    Infrastructure|
-    |  - Document    - DocStore     - JPA Repos   |
-    |  - Highlight   - EventListen  - Adapters    |
-    |  - Tag                                      |
-    +---------------------------------------------+
-                          |
-                          v (future)
                  Analytics Context
+              +------------------------+
+              | - AnalyticsService     |
+              | - AnalyticsStore       |
+              | - PostgreSQL queries   |
+              +------------------------+
+                          |
+                          v
+                    API Layer
+               AnalyticsController
 ```
 
 ## Tech Stack
@@ -61,25 +72,33 @@ curl -X POST http://localhost:8080/sync
 
 ## API Endpoints
 
+### Sync
 | Method | Path    | Description                      |
 |--------|---------|----------------------------------|
 | POST   | /sync   | Trigger incremental document sync |
 
-Response:
-```json
-{
-  "syncId": "uuid",
-  "status": "COMPLETED",
-  "documentsProcessed": 42,
-  "highlightsProcessed": 128
-}
-```
+### Analytics
+| Method | Path                           | Description                    |
+|--------|--------------------------------|--------------------------------|
+| GET    | /api/analytics/dashboard       | Dashboard summary (all metrics)|
+| GET    | /api/analytics/reading/stats   | Time-series reading stats      |
+| GET    | /api/analytics/reading/streak  | Current & longest streak       |
+| GET    | /api/analytics/reading/peak-hours | Reading activity by hour    |
+| GET    | /api/analytics/pipeline        | Content pipeline metrics       |
+| GET    | /api/analytics/highlights      | Highlight statistics           |
+
+Query parameters:
+- `days` - Period in days (default: 7 for dashboard, 30 for highlights)
+- `startDate`, `endDate` - Custom date range (ISO format)
+- `granularity` - DAILY, WEEKLY, MONTHLY (for reading stats)
 
 ## Project Structure
 
 ```
 backend/src/main/kotlin/com/reader/analytics/
    api/                    # REST controllers
+      AnalyticsController  # Analytics endpoints
+      dto/                # Response DTOs
    sync/                   # Sync bounded context
       domain/             # Entities, events
       application/        # Use cases, port interfaces
@@ -88,6 +107,14 @@ backend/src/main/kotlin/com/reader/analytics/
       domain/             # Document, Highlight, Tag entities
       application/        # DocumentStore, EventListener
       infrastructure/     # JPA repositories, adapters
+   tracking/               # Tracking bounded context
+      domain/             # ReadingProgressSnapshot, LocationChange
+      application/        # TrackingStore, TrackingEventListener
+      infrastructure/     # JPA repositories, adapters
+   analytics/              # Analytics bounded context
+      domain/             # DateRange, Granularity, projections
+      application/        # AnalyticsStore, AnalyticsService
+      infrastructure/     # Native PostgreSQL queries via JdbcTemplate
 ```
 
 ## Development

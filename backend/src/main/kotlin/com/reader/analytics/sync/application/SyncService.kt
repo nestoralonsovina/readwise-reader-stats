@@ -7,6 +7,7 @@ import com.reader.analytics.sync.domain.events.DocumentSyncedEvent
 import com.reader.analytics.sync.domain.events.HighlightSyncedEvent
 import com.reader.analytics.sync.infrastructure.ReadwiseClient
 import com.reader.analytics.sync.infrastructure.readwise.dto.DocumentDto
+import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import java.time.Instant
@@ -19,6 +20,8 @@ class SyncService(
     private val eventPublisher: ApplicationEventPublisher
 ) {
 
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     fun sync(): SyncLog {
         val startedAt = Instant.now()
         var log = logStore.save(SyncLog(startedAt = startedAt, status = SyncStatus.RUNNING))
@@ -27,8 +30,12 @@ class SyncService(
             val cursor = cursorStore.findByCursorType("documents")
             val updatedAfter = cursor?.lastSyncedAt
 
+            logger.info("Starting sync [lastSyncedAt={}]", updatedAfter)
+
             val documents = readwiseClient.fetchDocuments(updatedAfter).toList()
             var latestUpdatedAt: Instant? = null
+
+            logger.info("Fetched {} documents to process", documents.size)
 
             documents.forEach { doc ->
                 val event = doc.toEvent()
@@ -45,6 +52,12 @@ class SyncService(
                 cursorStore.save(SyncCursor("documents", timestamp, null))
             }
 
+            val duration = System.currentTimeMillis() - startedAt.toEpochMilli()
+            logger.info(
+                "Sync completed [documentsProcessed={}, latestUpdatedAt={}, duration={}ms]",
+                documents.size, latestUpdatedAt, duration
+            )
+
             log = log.copy(
                 status = SyncStatus.COMPLETED,
                 completedAt = Instant.now(),
@@ -52,6 +65,13 @@ class SyncService(
             )
             logStore.save(log)
         } catch (e: Exception) {
+            val duration = System.currentTimeMillis() - startedAt.toEpochMilli()
+            val cursor = cursorStore.findByCursorType("documents")
+            logger.error(
+                "Sync failed [lastSyncedAt={}, duration={}ms]: {}",
+                cursor?.lastSyncedAt, duration, e.message, e
+            )
+
             log = log.copy(
                 status = SyncStatus.FAILED,
                 completedAt = Instant.now(),
