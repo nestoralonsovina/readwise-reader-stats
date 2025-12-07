@@ -4,6 +4,12 @@ import com.reader.analytics.analytics.application.AnalyticsService
 import com.reader.analytics.analytics.domain.DateRange
 import com.reader.analytics.analytics.domain.Granularity
 import com.reader.analytics.api.dto.*
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -12,12 +18,32 @@ import java.time.LocalDate
 
 @RestController
 @RequestMapping("/api/analytics")
+@Tag(name = "Analytics")
 class AnalyticsController(
     private val analyticsService: AnalyticsService
 ) {
 
     @GetMapping("/dashboard")
+    @Operation(
+        summary = "Get dashboard summary",
+        description = """
+            Returns all key metrics in a single call for dashboard display.
+
+            Includes:
+            - Words read and articles completed in the period
+            - Current reading streak
+            - Backlog size (documents waiting to be read)
+            - Highlights created in the period
+            - Completion rate percentage
+        """
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Dashboard metrics retrieved successfully",
+        content = [Content(schema = Schema(implementation = DashboardResponse::class))]
+    )
     fun getDashboard(
+        @Parameter(description = "Number of days to include in the period", example = "7")
         @RequestParam(defaultValue = "7") days: Int
     ): DashboardResponse {
         val dateRange = DateRange.lastNDays(days)
@@ -39,9 +65,33 @@ class AnalyticsController(
     }
 
     @GetMapping("/reading/stats")
+    @Operation(
+        summary = "Get reading statistics time-series",
+        description = """
+            Returns reading statistics grouped by time period.
+
+            Use this endpoint to build charts showing reading progress over time.
+            Supports daily, weekly, and monthly granularity.
+
+            If no date range is provided, defaults to the last 7 days.
+        """
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Reading statistics retrieved successfully",
+        content = [Content(schema = Schema(implementation = ReadingStatsResponse::class))]
+    )
     fun getReadingStats(
+        @Parameter(description = "Start date (ISO format: YYYY-MM-DD)", example = "2024-01-01")
         @RequestParam(required = false) startDate: String?,
+
+        @Parameter(description = "End date (ISO format: YYYY-MM-DD)", example = "2024-01-31")
         @RequestParam(required = false) endDate: String?,
+
+        @Parameter(
+            description = "Time grouping granularity",
+            schema = Schema(allowableValues = ["DAILY", "WEEKLY", "MONTHLY"])
+        )
         @RequestParam(defaultValue = "DAILY") granularity: String
     ): ReadingStatsResponse {
         val dateRange = parseDateRange(startDate, endDate)
@@ -67,6 +117,20 @@ class AnalyticsController(
     }
 
     @GetMapping("/reading/streak")
+    @Operation(
+        summary = "Get reading streak information",
+        description = """
+            Returns current and longest reading streak.
+
+            A streak is defined as consecutive days with reading activity
+            (any progress recorded on a document).
+        """
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Streak information retrieved successfully",
+        content = [Content(schema = Schema(implementation = StreakResponse::class))]
+    )
     fun getReadingStreak(): StreakResponse {
         val streak = analyticsService.getReadingStreak()
         return StreakResponse(
@@ -84,7 +148,22 @@ class AnalyticsController(
     }
 
     @GetMapping("/reading/peak-hours")
+    @Operation(
+        summary = "Get peak reading hours",
+        description = """
+            Returns hourly distribution of reading activity.
+
+            Shows which hours of the day have the most reading activity,
+            useful for understanding reading patterns and productivity.
+        """
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Peak hours data retrieved successfully",
+        content = [Content(schema = Schema(implementation = PeakHoursResponse::class))]
+    )
     fun getPeakReadingHours(
+        @Parameter(description = "Number of days to analyze", example = "30")
         @RequestParam(defaultValue = "30") days: Int
     ): PeakHoursResponse {
         val dateRange = DateRange.lastNDays(days)
@@ -107,7 +186,25 @@ class AnalyticsController(
     }
 
     @GetMapping("/pipeline")
+    @Operation(
+        summary = "Get content pipeline statistics",
+        description = """
+            Returns metrics about your reading queue and content flow.
+
+            Includes:
+            - Current state: backlog, in-progress, completed, archived counts
+            - Period metrics: documents added, completed, save-to-read ratio
+            - Breakdown by location (new, later, shortlist, archive, feed)
+            - Breakdown by category (article, book, pdf, etc.)
+        """
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Pipeline statistics retrieved successfully",
+        content = [Content(schema = Schema(implementation = PipelineResponse::class))]
+    )
     fun getPipelineStats(
+        @Parameter(description = "Number of days for period metrics", example = "7")
         @RequestParam(defaultValue = "7") days: Int
     ): PipelineResponse {
         val dateRange = DateRange.lastNDays(days)
@@ -151,8 +248,27 @@ class AnalyticsController(
     }
 
     @GetMapping("/highlights")
+    @Operation(
+        summary = "Get highlight statistics",
+        description = """
+            Returns statistics about highlights across your library.
+
+            Includes:
+            - Summary: total highlights, highlights this period, average per document
+            - Color distribution: breakdown by highlight color
+            - Top documents: most highlighted documents
+        """
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Highlight statistics retrieved successfully",
+        content = [Content(schema = Schema(implementation = HighlightResponse::class))]
+    )
     fun getHighlightStats(
+        @Parameter(description = "Number of days for period metrics", example = "30")
         @RequestParam(defaultValue = "30") days: Int,
+
+        @Parameter(description = "Maximum number of top documents to return", example = "10")
         @RequestParam(defaultValue = "10") topDocumentsLimit: Int
     ): HighlightResponse {
         val dateRange = DateRange.lastNDays(days)
