@@ -122,10 +122,32 @@ class SyncServiceTest {
         assertEquals(0, result.documentsProcessed)
     }
 
+    @Test
+    fun `includes firstOpenedAt and lastOpenedAt in event`() {
+        val firstOpened = Instant.parse("2024-01-10T08:00:00Z")
+        val lastOpened = Instant.parse("2024-01-15T20:30:00Z")
+        readwiseClient.documents = listOf(
+            createDocumentDto(
+                id = "doc-1",
+                title = "Article 1",
+                firstOpenedAt = firstOpened,
+                lastOpenedAt = lastOpened
+            )
+        )
+
+        syncService.sync()
+
+        val event = eventPublisher.publishedEvents[0] as DocumentSyncedEvent
+        assertEquals(firstOpened, event.firstOpenedAt)
+        assertEquals(lastOpened, event.lastOpenedAt)
+    }
+
     private fun createDocumentDto(
         id: String,
         title: String,
-        updatedAt: Instant = Instant.now()
+        updatedAt: Instant = Instant.now(),
+        firstOpenedAt: Instant? = null,
+        lastOpenedAt: Instant? = null
     ) = DocumentDto(
         id = id,
         url = "https://example.com/$id",
@@ -143,8 +165,8 @@ class SyncServiceTest {
         savedAt = Instant.now(),
         createdAt = Instant.now(),
         updatedAt = updatedAt,
-        firstOpenedAt = null,
-        lastOpenedAt = null,
+        firstOpenedAt = firstOpenedAt,
+        lastOpenedAt = lastOpenedAt,
         parentId = null,
         summary = null,
         notes = null,

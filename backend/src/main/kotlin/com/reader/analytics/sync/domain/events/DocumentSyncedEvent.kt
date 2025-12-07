@@ -13,6 +13,8 @@ data class DocumentSyncedEvent(
     val wordCount: Int?,
     val savedAt: Instant?,
     val updatedAt: Instant?,
+    val firstOpenedAt: Instant?,
+    val lastOpenedAt: Instant?,
     val tags: List<String>,
     val parentId: String?,
     val highlights: List<HighlightSyncedEvent>

@@ -72,6 +72,8 @@ class SyncService(
         wordCount = wordCount,
         savedAt = savedAt,
         updatedAt = updatedAt,
+        firstOpenedAt = firstOpenedAt,
+        lastOpenedAt = lastOpenedAt,
         tags = tagKeys(),
         parentId = parentId,
         highlights = emptyList() // TODO: Add highlight extraction when available

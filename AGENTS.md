@@ -87,8 +87,15 @@ Application layer defines interfaces (`CursorStore`, `LogStore`). Infrastructure
 - Audit logging (SyncLog tracks each run)
 - Domain events published for each document
 
+### Library Context (Complete)
+- Subscribes to `DocumentSyncedEvent` and `HighlightSyncedEvent`
+- Persists **Document** entity (UUID PK, Readwise ID as unique field)
+- Persists **Highlight** entity (ManyToOne with Document)
+- Persists **Tag** entity (ManyToMany with Document, normalized)
+- Upsert semantics: creates new or updates existing based on Readwise ID
+- Category/Location stored as raw strings (multi-tenant ready)
+
 ### Pending Contexts
-- **Library**: Persist documents, track reading progress
 - **Analytics**: Aggregate stats, streaks, insights
 
 ## Design Decisions
