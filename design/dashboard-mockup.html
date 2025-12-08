@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Readwise Reader Analytics - Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            // Warm amber accent - distinctive, not generic blue/purple
+            accent: {
+              50: '#fffbeb',
+              100: '#fef3c7',
+              200: '#fde68a',
+              300: '#fcd34d',
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+              700: '#b45309',
+              800: '#92400e',
+              900: '#78350f',
+            },
+            // Semantic colors
+            success: '#10b981',
+            warning: '#f59e0b',
+            danger: '#ef4444',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+
+    /* Smooth transitions for theme toggle */
+    * { transition: background-color 0.2s, border-color 0.2s, color 0.2s; }
+
+    /* ApexCharts dark mode overrides */
+    .dark .apexcharts-text { fill: #9ca3af !important; }
+    .dark .apexcharts-gridline { stroke: #374151 !important; }
+    .dark .apexcharts-xaxis-tick { stroke: #374151 !important; }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-accent-500 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+        </div>
+        <span class="font-semibold text-lg">Reader Analytics</span>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <!-- Period Selector -->
+        <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <button class="px-3 py-1.5 text-sm rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">Week</button>
+          <button class="px-3 py-1.5 text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm font-medium">Month</button>
+          <button class="px-3 py-1.5 text-sm rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">Year</button>
+        </div>
+
+        <!-- Theme Toggle -->
+        <button id="themeToggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+          <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+          <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+          </svg>
+        </button>
+
+        <!-- Sync Button -->
+        <button class="flex items-center gap-2 px-4 py-2 bg-accent-500 hover:bg-accent-600 text-white rounded-lg text-sm font-medium">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Sync
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- KPI Cards Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+      <!-- Words Read -->
+      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </div>
+            <span class="text-sm text-gray-600 dark:text-gray-400">Words Read</span>
+          </div>
+          <div id="sparkline-words" class="w-16 h-8"></div>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span class="text-2xl font-bold">47,832</span>
+          <span class="text-xs font-medium text-success flex items-center gap-0.5">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+            </svg>
+            12.4%
+          </span>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">vs last month</p>
+      </div>
+
+      <!-- Articles Completed -->
+      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <span class="text-sm text-gray-600 dark:text-gray-400">Completed</span>
+          </div>
+          <div id="sparkline-completed" class="w-16 h-8"></div>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span class="text-2xl font-bold">23</span>
+          <span class="text-xs font-medium text-success flex items-center gap-0.5">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+            </svg>
+            8.2%
+          </span>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">vs last month</p>
+      </div>
+
+      <!-- Current Streak -->
+      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-accent-100 dark:bg-accent-900/30 flex items-center justify-center">
+              <svg class="w-4 h-4 text-accent-600 dark:text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/>
+              </svg>
+            </div>
+            <span class="text-sm text-gray-600 dark:text-gray-400">Current Streak</span>
+          </div>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-400 font-medium">Best: 42</span>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span class="text-2xl font-bold">12</span>
+          <span class="text-sm text-gray-500">days</span>
+        </div>
+        <div class="flex gap-0.5 mt-3">
+          <!-- Last 14 days streak visualization -->
+          <div class="w-2 h-6 rounded-sm bg-gray-200 dark:bg-gray-700"></div>
+          <div class="w-2 h-6 rounded-sm bg-gray-200 dark:bg-gray-700"></div>
+          <div class="w-2 h-6 rounded-sm bg-accent-500"></div>
+          <div class="w-2 h-6 rounded-sm bg-accent-500"></div>
+          <div class="w-2 h-6 rounded-sm bg-accent-500"></div>
+          <div class="w-2 h-6 rounded-sm bg-accent-500"></div>
+          <div class="w-2 h-6 rounded-sm bg-accent-500"></div>
+          <div class="w-2 h-6 rounded-sm bg-accent-500"></div>
+          <div class="w-2 h-6 rounded-sm bg-accent-500"></div>
+          <div class="w-2 h-6 rounded-sm bg-accent-500"></div>
+          <div class="w-2 h-6 rounded-sm bg-accent-500"></div>
+          <div class="w-2 h-6 rounded-sm bg-accent-500"></div>
+          <div class="w-2 h-6 rounded-sm bg-accent-500"></div>
+          <div class="w-2 h-6 rounded-sm bg-accent-400"></div>
+        </div>
+      </div>
+
+      <!-- Reading Backlog -->
+      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+              <svg class="w-4 h-4 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+              </svg>
+            </div>
+            <span class="text-sm text-gray-600 dark:text-gray-400">Backlog</span>
+          </div>
+          <div id="sparkline-backlog" class="w-16 h-8"></div>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span class="text-2xl font-bold">156</span>
+          <span class="text-xs font-medium text-danger flex items-center gap-0.5">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+            </svg>
+            5.1%
+          </span>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">articles to read</p>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+
+      <!-- Reading Activity Chart (spans 2 cols) -->
+      <div class="lg:col-span-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold">Reading Activity</h3>
+          <div class="flex items-center gap-4 text-sm">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+              <span class="text-gray-600 dark:text-gray-400">Words</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span class="text-gray-600 dark:text-gray-400">Articles</span>
+            </div>
+          </div>
+        </div>
+        <div id="chart-activity" class="h-64"></div>
+      </div>
+
+      <!-- Peak Hours Heatmap -->
+      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold">Peak Hours</h3>
+          <span class="text-xs text-gray-500 dark:text-gray-400">Last 30 days</span>
+        </div>
+        <div class="space-y-1">
+          <!-- Heatmap grid -->
+          <div class="flex items-center gap-1">
+            <span class="text-xs text-gray-500 w-12">6 AM</span>
+            <div class="flex-1 grid grid-cols-7 gap-1">
+              <div class="aspect-square rounded bg-accent-100 dark:bg-accent-900/20"></div>
+              <div class="aspect-square rounded bg-accent-100 dark:bg-accent-900/20"></div>
+              <div class="aspect-square rounded bg-accent-200 dark:bg-accent-900/40"></div>
+              <div class="aspect-square rounded bg-accent-100 dark:bg-accent-900/20"></div>
+              <div class="aspect-square rounded bg-accent-100 dark:bg-accent-900/20"></div>
+              <div class="aspect-square rounded bg-accent-300 dark:bg-accent-800/50"></div>
+              <div class="aspect-square rounded bg-accent-200 dark:bg-accent-900/40"></div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-xs text-gray-500 w-12">9 AM</span>
+            <div class="flex-1 grid grid-cols-7 gap-1">
+              <div class="aspect-square rounded bg-accent-400 dark:bg-accent-700/60"></div>
+              <div class="aspect-square rounded bg-accent-500 dark:bg-accent-600/70"></div>
+              <div class="aspect-square rounded bg-accent-500 dark:bg-accent-600/70"></div>
+              <div class="aspect-square rounded bg-accent-400 dark:bg-accent-700/60"></div>
+              <div class="aspect-square rounded bg-accent-500 dark:bg-accent-600/70"></div>
+              <div class="aspect-square rounded bg-accent-200 dark:bg-accent-900/40"></div>
+              <div class="aspect-square rounded bg-accent-100 dark:bg-accent-900/20"></div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-xs text-gray-500 w-12">12 PM</span>
+            <div class="flex-1 grid grid-cols-7 gap-1">
+              <div class="aspect-square rounded bg-accent-300 dark:bg-accent-800/50"></div>
+              <div class="aspect-square rounded bg-accent-400 dark:bg-accent-700/60"></div>
+              <div class="aspect-square rounded bg-accent-300 dark:bg-accent-800/50"></div>
+              <div class="aspect-square rounded bg-accent-400 dark:bg-accent-700/60"></div>
+              <div class="aspect-square rounded bg-accent-300 dark:bg-accent-800/50"></div>
+              <div class="aspect-square rounded bg-accent-200 dark:bg-accent-900/40"></div>
+              <div class="aspect-square rounded bg-accent-200 dark:bg-accent-900/40"></div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-xs text-gray-500 w-12">3 PM</span>
+            <div class="flex-1 grid grid-cols-7 gap-1">
+              <div class="aspect-square rounded bg-accent-200 dark:bg-accent-900/40"></div>
+              <div class="aspect-square rounded bg-accent-300 dark:bg-accent-800/50"></div>
+              <div class="aspect-square rounded bg-accent-200 dark:bg-accent-900/40"></div>
+              <div class="aspect-square rounded bg-accent-300 dark:bg-accent-800/50"></div>
+              <div class="aspect-square rounded bg-accent-200 dark:bg-accent-900/40"></div>
+              <div class="aspect-square rounded bg-accent-100 dark:bg-accent-900/20"></div>
+              <div class="aspect-square rounded bg-accent-100 dark:bg-accent-900/20"></div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-xs text-gray-500 w-12">6 PM</span>
+            <div class="flex-1 grid grid-cols-7 gap-1">
+              <div class="aspect-square rounded bg-accent-400 dark:bg-accent-700/60"></div>
+              <div class="aspect-square rounded bg-accent-300 dark:bg-accent-800/50"></div>
+              <div class="aspect-square rounded bg-accent-400 dark:bg-accent-700/60"></div>
+              <div class="aspect-square rounded bg-accent-400 dark:bg-accent-700/60"></div>
+              <div class="aspect-square rounded bg-accent-500 dark:bg-accent-600/70"></div>
+              <div class="aspect-square rounded bg-accent-500 dark:bg-accent-600/70"></div>
+              <div class="aspect-square rounded bg-accent-400 dark:bg-accent-700/60"></div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-xs text-gray-500 w-12">9 PM</span>
+            <div class="flex-1 grid grid-cols-7 gap-1">
+              <div class="aspect-square rounded bg-accent-600 dark:bg-accent-500/80"></div>
+              <div class="aspect-square rounded bg-accent-500 dark:bg-accent-600/70"></div>
+              <div class="aspect-square rounded bg-accent-600 dark:bg-accent-500/80"></div>
+              <div class="aspect-square rounded bg-accent-600 dark:bg-accent-500/80"></div>
+              <div class="aspect-square rounded bg-accent-500 dark:bg-accent-600/70"></div>
+              <div class="aspect-square rounded bg-accent-600 dark:bg-accent-500/80"></div>
+              <div class="aspect-square rounded bg-accent-600 dark:bg-accent-500/80"></div>
+            </div>
+          </div>
+          <!-- Day labels -->
+          <div class="flex items-center gap-1 mt-2">
+            <span class="w-12"></span>
+            <div class="flex-1 grid grid-cols-7 gap-1 text-xs text-gray-500 text-center">
+              <span>Mon</span>
+              <span>Tue</span>
+              <span>Wed</span>
+              <span>Thu</span>
+              <span>Fri</span>
+              <span>Sat</span>
+              <span>Sun</span>
+            </div>
+          </div>
+        </div>
+        <!-- Legend -->
+        <div class="flex items-center justify-end gap-1 mt-4 text-xs text-gray-500">
+          <span>Less</span>
+          <div class="w-3 h-3 rounded bg-accent-100 dark:bg-accent-900/20"></div>
+          <div class="w-3 h-3 rounded bg-accent-300 dark:bg-accent-800/50"></div>
+          <div class="w-3 h-3 rounded bg-accent-500 dark:bg-accent-600/70"></div>
+          <div class="w-3 h-3 rounded bg-accent-600 dark:bg-accent-500/80"></div>
+          <span>More</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+      <!-- Content Pipeline -->
+      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold">Content Pipeline</h3>
+          <span class="text-xs text-gray-500 dark:text-gray-400">All time</span>
+        </div>
+
+        <div class="space-y-4">
+          <!-- New/Inbox -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                <span class="text-sm text-gray-600 dark:text-gray-400">New</span>
+              </div>
+              <span class="text-sm font-medium">89</span>
+            </div>
+            <div class="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+              <div class="h-full bg-blue-500 rounded-full" style="width: 35%"></div>
+            </div>
+          </div>
+
+          <!-- Later -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span class="text-sm text-gray-600 dark:text-gray-400">Later</span>
+              </div>
+              <span class="text-sm font-medium">67</span>
+            </div>
+            <div class="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+              <div class="h-full bg-amber-500 rounded-full" style="width: 26%"></div>
+            </div>
+          </div>
+
+          <!-- Shortlist -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-violet-500"></span>
+                <span class="text-sm text-gray-600 dark:text-gray-400">Shortlist</span>
+              </div>
+              <span class="text-sm font-medium">34</span>
+            </div>
+            <div class="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+              <div class="h-full bg-violet-500 rounded-full" style="width: 13%"></div>
+            </div>
+          </div>
+
+          <!-- Archive -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span class="text-sm text-gray-600 dark:text-gray-400">Archive</span>
+              </div>
+              <span class="text-sm font-medium">312</span>
+            </div>
+            <div class="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+              <div class="h-full bg-emerald-500 rounded-full" style="width: 100%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Queue Latency -->
+        <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-600 dark:text-gray-400">Avg. queue time</span>
+            <span class="font-medium">4.2 days</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Highlights Summary -->
+      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold">Highlights</h3>
+          <span class="text-xs text-gray-500 dark:text-gray-400">This month</span>
+        </div>
+
+        <div class="flex items-center gap-6 mb-6">
+          <div class="text-center">
+            <div class="text-3xl font-bold">127</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">Total</div>
+          </div>
+          <div id="chart-highlights" class="flex-1 h-24"></div>
+        </div>
+
+        <!-- Color Distribution -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded bg-yellow-400"></span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Yellow</span>
+            </div>
+            <span class="text-sm font-medium">68</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded bg-blue-400"></span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Blue</span>
+            </div>
+            <span class="text-sm font-medium">31</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded bg-green-400"></span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Green</span>
+            </div>
+            <span class="text-sm font-medium">18</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded bg-red-400"></span>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Red</span>
+            </div>
+            <span class="text-sm font-medium">10</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Most Highlighted -->
+      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold">Most Highlighted</h3>
+          <button class="text-xs text-accent-600 dark:text-accent-400 hover:underline">View all</button>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+            <div class="w-10 h-10 rounded bg-gradient-to-br from-blue-500 to-violet-500 flex-shrink-0"></div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium truncate">How to Build a Second Brain</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">fortelabs.com</p>
+            </div>
+            <span class="text-xs font-medium text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/30 px-2 py-0.5 rounded-full">24</span>
+          </div>
+
+          <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+            <div class="w-10 h-10 rounded bg-gradient-to-br from-emerald-500 to-teal-500 flex-shrink-0"></div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium truncate">The Art of Reading</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">fs.blog</p>
+            </div>
+            <span class="text-xs font-medium text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/30 px-2 py-0.5 rounded-full">18</span>
+          </div>
+
+          <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+            <div class="w-10 h-10 rounded bg-gradient-to-br from-amber-500 to-orange-500 flex-shrink-0"></div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium truncate">Atomic Habits Summary</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">jamesclear.com</p>
+            </div>
+            <span class="text-xs font-medium text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/30 px-2 py-0.5 rounded-full">15</span>
+          </div>
+
+          <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+            <div class="w-10 h-10 rounded bg-gradient-to-br from-rose-500 to-pink-500 flex-shrink-0"></div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium truncate">Deep Work Rules</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">calnewport.com</p>
+            </div>
+            <span class="text-xs font-medium text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/30 px-2 py-0.5 rounded-full">12</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Stats -->
+    <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-800">
+      <div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+        <span>Last synced: 2 minutes ago</span>
+        <div class="flex items-center gap-6">
+          <span>502 documents</span>
+          <span>1,247 highlights</span>
+          <span>89 tags</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+
+    // Check for saved preference or system preference
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      html.classList.add('dark');
+    }
+
+    themeToggle.addEventListener('click', () => {
+      html.classList.toggle('dark');
+      localStorage.theme = html.classList.contains('dark') ? 'dark' : 'light';
+      updateCharts();
+    });
+
+    // Chart color helpers
+    const isDark = () => document.documentElement.classList.contains('dark');
+    const textColor = () => isDark() ? '#9ca3af' : '#6b7280';
+    const gridColor = () => isDark() ? '#374151' : '#e5e7eb';
+    const bgColor = () => isDark() ? '#111827' : '#ffffff';
+
+    // Sparkline options generator
+    const sparklineOptions = (data, color) => ({
+      series: [{ data }],
+      chart: { type: 'line', height: 32, width: 64, sparkline: { enabled: true } },
+      stroke: { width: 2, curve: 'smooth' },
+      colors: [color],
+      tooltip: { enabled: false }
+    });
+
+    // Initialize sparklines
+    new ApexCharts(document.querySelector("#sparkline-words"),
+      sparklineOptions([31, 40, 28, 51, 42, 60, 48], '#3b82f6')).render();
+    new ApexCharts(document.querySelector("#sparkline-completed"),
+      sparklineOptions([15, 18, 12, 22, 19, 23, 20], '#10b981')).render();
+    new ApexCharts(document.querySelector("#sparkline-backlog"),
+      sparklineOptions([140, 145, 138, 150, 148, 155, 156], '#ef4444')).render();
+
+    // Reading Activity Chart
+    const activityOptions = {
+      series: [
+        { name: 'Words', type: 'area', data: [12400, 15200, 8900, 18600, 14200, 9800, 16500, 21300, 11200, 19400, 15800, 13600] },
+        { name: 'Articles', type: 'line', data: [5, 7, 3, 8, 6, 4, 7, 9, 5, 8, 6, 5] }
+      ],
+      chart: {
+        height: 256,
+        type: 'line',
+        toolbar: { show: false },
+        background: 'transparent'
+      },
+      stroke: { width: [0, 3], curve: 'smooth' },
+      fill: {
+        type: ['gradient', 'solid'],
+        gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.1 }
+      },
+      colors: ['#3b82f6', '#10b981'],
+      xaxis: {
+        categories: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8', 'Week 9', 'Week 10', 'Week 11', 'Week 12'],
+        labels: { style: { colors: textColor() } },
+        axisBorder: { show: false },
+        axisTicks: { show: false }
+      },
+      yaxis: [
+        { labels: { style: { colors: textColor() }, formatter: (v) => (v/1000).toFixed(0) + 'k' } },
+        { opposite: true, labels: { style: { colors: textColor() } } }
+      ],
+      grid: { borderColor: gridColor(), strokeDashArray: 4 },
+      legend: { show: false },
+      tooltip: { theme: isDark() ? 'dark' : 'light' }
+    };
+    const activityChart = new ApexCharts(document.querySelector("#chart-activity"), activityOptions);
+    activityChart.render();
+
+    // Highlights Donut Chart
+    const highlightsOptions = {
+      series: [68, 31, 18, 10],
+      chart: { type: 'donut', height: 96, background: 'transparent' },
+      colors: ['#facc15', '#60a5fa', '#4ade80', '#f87171'],
+      labels: ['Yellow', 'Blue', 'Green', 'Red'],
+      stroke: { width: 0 },
+      dataLabels: { enabled: false },
+      legend: { show: false },
+      plotOptions: {
+        pie: {
+          donut: { size: '70%' },
+          expandOnClick: false
+        }
+      },
+      tooltip: { enabled: false }
+    };
+    const highlightsChart = new ApexCharts(document.querySelector("#chart-highlights"), highlightsOptions);
+    highlightsChart.render();
+
+    // Update charts on theme change
+    function updateCharts() {
+      activityChart.updateOptions({
+        xaxis: { labels: { style: { colors: textColor() } } },
+        yaxis: [
+          { labels: { style: { colors: textColor() }, formatter: (v) => (v/1000).toFixed(0) + 'k' } },
+          { opposite: true, labels: { style: { colors: textColor() } } }
+        ],
+        grid: { borderColor: gridColor() },
+        tooltip: { theme: isDark() ? 'dark' : 'light' }
+      });
+    }
+  </script>
+</body>
+</html>
