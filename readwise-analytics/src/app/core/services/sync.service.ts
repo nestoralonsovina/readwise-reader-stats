@@ -12,6 +12,14 @@ import {
   INITIAL_SYNC_STATE,
 } from '../models/sync.models';
 
+// Type-safe mapping from SyncPhase to PhaseCounts keys
+const PHASE_TO_COUNT_KEY: Record<SyncPhase, 'fetched' | 'documents' | 'highlights' | 'notes'> = {
+  FETCHING: 'fetched',
+  DOCUMENTS: 'documents',
+  HIGHLIGHTS: 'highlights',
+  NOTES: 'notes',
+} as const;
+
 @Injectable({ providedIn: 'root' })
 export class SyncService {
   private readonly http = inject(HttpClient);
@@ -20,6 +28,8 @@ export class SyncService {
   private eventSource: EventSource | null = null;
   private logIdCounter = 0;
   private lastEventId: string | null = null;
+  private reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private isReconnecting = false;
 
   // Signals for reactive state
   readonly state = signal<SyncState>(INITIAL_SYNC_STATE);
@@ -44,6 +54,12 @@ export class SyncService {
   }
 
   async startSync(): Promise<void> {
+    // Prevent starting if already running
+    if (this.isRunning()) {
+      this.openPanel();
+      return;
+    }
+
     // Reset state
     this.state.set({
       ...INITIAL_SYNC_STATE,
@@ -53,6 +69,7 @@ export class SyncService {
     this.logs.set([]);
     this.logIdCounter = 0;
     this.lastEventId = null;
+    this.cancelPendingReconnect();
 
     this.openPanel();
 
@@ -98,9 +115,12 @@ export class SyncService {
 
     this.eventSource.onerror = () => {
       this.ngZone.run(() => {
-        // Attempt reconnection after brief delay
-        if (this.isRunning()) {
-          setTimeout(() => {
+        // Attempt reconnection after brief delay, preventing concurrent attempts
+        if (this.isRunning() && !this.isReconnecting) {
+          this.isReconnecting = true;
+          this.cancelPendingReconnect();
+          this.reconnectTimeoutId = setTimeout(() => {
+            this.isReconnecting = false;
             const currentSyncId = this.state().syncId;
             if (currentSyncId && this.isRunning()) {
               this.connectToStream(currentSyncId);
@@ -109,6 +129,14 @@ export class SyncService {
         }
       });
     };
+  }
+
+  private cancelPendingReconnect(): void {
+    if (this.reconnectTimeoutId !== null) {
+      clearTimeout(this.reconnectTimeoutId);
+      this.reconnectTimeoutId = null;
+    }
+    this.isReconnecting = false;
   }
 
   private handleEvent(event: SseEvent): void {
@@ -135,6 +163,20 @@ export class SyncService {
         this.addLog(
           'progress',
           `${this.formatPhase(event.phase)}: ${event.processed} processed`
+        );
+        break;
+
+      case 'page_fetched':
+        this.state.update((s) => ({
+          ...s,
+          phaseCounts: {
+            ...s.phaseCounts,
+            fetched: event.totalItemsSoFar,
+          },
+        }));
+        this.addLog(
+          'progress',
+          `Page ${event.pageNumber}: ${event.itemsInPage} items (${event.totalItemsSoFar} total)${event.hasMore ? '' : ' - Complete'}`
         );
         break;
 
@@ -180,10 +222,11 @@ export class SyncService {
         this.state.update((s) => ({
           ...s,
           status: 'completed',
-          completedPhases: 3,
+          completedPhases: 4,
           overallPercent: 100,
           currentPhase: null,
           phaseCounts: {
+            ...s.phaseCounts,
             documents: event.summary.documents,
             highlights: event.summary.highlights,
             notes: event.summary.notes,
@@ -215,11 +258,12 @@ export class SyncService {
   }
 
   private updatePhaseCount(phase: SyncPhase, count: number): void {
+    const key = PHASE_TO_COUNT_KEY[phase];
     this.state.update((s) => ({
       ...s,
       phaseCounts: {
         ...s.phaseCounts,
-        [phase.toLowerCase()]: count,
+        [key]: count,
       },
     }));
   }
@@ -269,8 +313,18 @@ export class SyncService {
       this.state.update((s) => ({ ...s, status: 'cancelled' }));
       this.addLog('warning', 'Sync cancelled by user');
       this.disconnect();
-    } catch {
-      this.addLog('error', 'Failed to cancel sync');
+    } catch (error) {
+      if (error instanceof HttpErrorResponse) {
+        if (error.status === 404) {
+          this.addLog('warning', 'Sync already completed or not found');
+        } else if (error.status >= 500) {
+          this.addLog('error', `Server error while cancelling sync: ${error.status}`);
+        } else {
+          this.addLog('error', `Failed to cancel sync: ${error.message}`);
+        }
+      } else {
+        this.addLog('error', 'Network error while cancelling sync');
+      }
     }
   }
 

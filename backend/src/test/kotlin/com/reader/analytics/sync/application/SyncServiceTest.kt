@@ -355,6 +355,7 @@ class SyncServiceTest {
 
         override fun fetchDocuments(
             updatedAfter: Instant?,
+            onPageFetched: ((com.reader.analytics.sync.infrastructure.readwise.PageFetchedEvent) -> Unit)?,
             onRateLimited: ((com.reader.analytics.sync.infrastructure.readwise.RateLimitEvent) -> Unit)?,
             onRateLimitCleared: (() -> Unit)?
         ): Sequence<DocumentDto> {

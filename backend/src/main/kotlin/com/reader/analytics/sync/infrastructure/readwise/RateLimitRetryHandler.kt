@@ -11,6 +11,13 @@ data class RateLimitEvent(
     val maxAttempts: Int
 )
 
+data class PageFetchedEvent(
+    val pageNumber: Int,
+    val itemsInPage: Int,
+    val totalItemsSoFar: Int,
+    val hasMore: Boolean
+)
+
 class RateLimitRetryHandler(
     private val config: RetryConfig = RetryConfig()
 ) {

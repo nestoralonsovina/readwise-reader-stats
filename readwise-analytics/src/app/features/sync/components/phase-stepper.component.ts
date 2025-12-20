@@ -1,5 +1,5 @@
 import { Component, input, computed } from '@angular/core';
-import { SyncState, SyncPhase } from '../../../core/models/sync.models';
+import { SyncState, SyncPhase, PhaseCounts } from '../../../core/models/sync.models';
 import { ProgressBarComponent } from './progress-bar.component';
 
 interface PhaseDisplay {
@@ -9,10 +9,21 @@ interface PhaseDisplay {
 }
 
 const PHASES: readonly PhaseDisplay[] = [
-  { name: 'Documents', phase: 'DOCUMENTS', number: 1 },
-  { name: 'Highlights', phase: 'HIGHLIGHTS', number: 2 },
-  { name: 'Notes', phase: 'NOTES', number: 3 },
+  { name: 'Fetching', phase: 'FETCHING', number: 1 },
+  { name: 'Documents', phase: 'DOCUMENTS', number: 2 },
+  { name: 'Highlights', phase: 'HIGHLIGHTS', number: 3 },
+  { name: 'Notes', phase: 'NOTES', number: 4 },
 ];
+
+const FETCHING_PHASE: SyncPhase = 'FETCHING';
+
+// Type-safe mapping from SyncPhase to PhaseCounts keys
+const PHASE_TO_COUNT_KEY: Record<SyncPhase, keyof PhaseCounts> = {
+  FETCHING: 'fetched',
+  DOCUMENTS: 'documents',
+  HIGHLIGHTS: 'highlights',
+  NOTES: 'notes',
+} as const;
 
 @Component({
   selector: 'app-phase-stepper',
@@ -34,6 +45,8 @@ const PHASES: readonly PhaseDisplay[] = [
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-label="Phase completed"
+                  role="img"
                 >
                   <path
                     stroke-linecap="round"
@@ -48,6 +61,8 @@ const PHASES: readonly PhaseDisplay[] = [
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-label="Phase in progress"
+                  role="img"
                 >
                   <path
                     stroke-linecap="round"
@@ -62,6 +77,8 @@ const PHASES: readonly PhaseDisplay[] = [
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-label="Phase failed"
+                  role="img"
                 >
                   <path
                     stroke-linecap="round"
@@ -172,7 +189,19 @@ export class PhaseStepperComponent {
 
   getPhaseStatus(phase: PhaseDisplay): string {
     const counts = this.state().phaseCounts;
-    const count = counts[phase.phase.toLowerCase() as keyof typeof counts];
+
+    if (phase.phase === 'FETCHING') {
+      if (this.isPhaseCompleted(phase)) {
+        return `${counts.fetched} items`;
+      }
+      if (this.isPhaseActive(phase)) {
+        return `${counts.fetched} fetched`;
+      }
+      return 'Pending';
+    }
+
+    const key = PHASE_TO_COUNT_KEY[phase.phase];
+    const count = counts[key];
 
     if (this.isPhaseCompleted(phase)) {
       return `${count} synced`;

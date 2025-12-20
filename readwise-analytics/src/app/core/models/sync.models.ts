@@ -1,5 +1,5 @@
 // Sync state types
-export type SyncPhase = 'DOCUMENTS' | 'HIGHLIGHTS' | 'NOTES';
+export type SyncPhase = 'FETCHING' | 'DOCUMENTS' | 'HIGHLIGHTS' | 'NOTES';
 
 export type SyncStatus =
   | 'idle'
@@ -16,6 +16,7 @@ export interface RateLimitInfo {
 }
 
 export interface PhaseCounts {
+  readonly fetched: number;
   readonly documents: number;
   readonly highlights: number;
   readonly notes: number;
@@ -39,9 +40,9 @@ export const INITIAL_SYNC_STATE: SyncState = {
   syncId: null,
   currentPhase: null,
   completedPhases: 0,
-  totalPhases: 3,
+  totalPhases: 4,
   overallPercent: 0,
-  phaseCounts: { documents: 0, highlights: 0, notes: 0 },
+  phaseCounts: { fetched: 0, documents: 0, highlights: 0, notes: 0 },
   rateLimit: null,
   startedAt: null,
   error: null,
@@ -69,6 +70,7 @@ export type SseEventType =
   | 'started'
   | 'phase_started'
   | 'progress'
+  | 'page_fetched'
   | 'rate_limited'
   | 'rate_limit_cleared'
   | 'phase_completed'
@@ -94,6 +96,15 @@ export interface SseProgressEvent {
   readonly type: 'progress';
   readonly phase: SyncPhase;
   readonly processed: number;
+  readonly timestamp: string;
+}
+
+export interface SsePageFetchedEvent {
+  readonly type: 'page_fetched';
+  readonly pageNumber: number;
+  readonly itemsInPage: number;
+  readonly totalItemsSoFar: number;
+  readonly hasMore: boolean;
   readonly timestamp: string;
 }
 
@@ -145,6 +156,7 @@ export type SseEvent =
   | SseStartedEvent
   | SsePhaseStartedEvent
   | SseProgressEvent
+  | SsePageFetchedEvent
   | SseRateLimitedEvent
   | SseRateLimitClearedEvent
   | SsePhaseCompletedEvent

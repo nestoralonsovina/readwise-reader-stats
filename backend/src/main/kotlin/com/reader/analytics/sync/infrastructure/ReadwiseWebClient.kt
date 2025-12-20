@@ -1,5 +1,6 @@
 package com.reader.analytics.sync.infrastructure
 
+import com.reader.analytics.sync.infrastructure.readwise.PageFetchedEvent
 import com.reader.analytics.sync.infrastructure.readwise.RateLimitEvent
 import com.reader.analytics.sync.infrastructure.readwise.RateLimitRetryHandler
 import com.reader.analytics.sync.infrastructure.readwise.RetryConfig
@@ -44,6 +45,7 @@ class ReadwiseWebClient(
 
     override fun fetchDocuments(
         updatedAfter: Instant?,
+        onPageFetched: ((PageFetchedEvent) -> Unit)?,
         onRateLimited: ((RateLimitEvent) -> Unit)?,
         onRateLimitCleared: (() -> Unit)?
     ): Sequence<DocumentDto> = sequence {
@@ -59,6 +61,16 @@ class ReadwiseWebClient(
             val response = fetchDocumentPage(updatedAfter, pageCursor, onRateLimited, onRateLimitCleared)
             pageCount++
             totalItems += response.results.size
+            val hasMore = response.nextPageCursor != null
+
+            onPageFetched?.invoke(
+                PageFetchedEvent(
+                    pageNumber = pageCount,
+                    itemsInPage = response.results.size,
+                    totalItemsSoFar = totalItems,
+                    hasMore = hasMore
+                )
+            )
 
             response.results.forEach { yield(it) }
 

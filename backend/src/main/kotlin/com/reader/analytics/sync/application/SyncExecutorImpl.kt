@@ -5,6 +5,7 @@ import com.reader.analytics.sync.domain.SyncRunStatus
 import com.reader.analytics.sync.domain.events.DocumentSyncedEvent
 import com.reader.analytics.sync.domain.events.SyncProgressEvent
 import com.reader.analytics.sync.infrastructure.ReadwiseClient
+import com.reader.analytics.sync.infrastructure.readwise.PageFetchedEvent
 import com.reader.analytics.sync.infrastructure.readwise.RateLimitEvent
 import com.reader.analytics.sync.infrastructure.readwise.dto.DocumentDto
 import com.reader.analytics.sync.infrastructure.readwise.dto.isDocument
@@ -48,11 +49,35 @@ class SyncExecutorImpl(
 
             logger.info("Starting async sync [syncId={}, lastSyncedAt={}]", syncId, updatedAfter)
 
+            // Phase 1: FETCHING - Fetch all data from Readwise API
+            progressEmitter.emit(
+                syncId,
+                SyncProgressEvent.PhaseStarted(
+                    syncId = syncId,
+                    phase = SyncPhase.FETCHING,
+                    phaseNumber = 1,
+                    totalPhases = 4
+                )
+            )
+            currentRun = syncRunStore.save(currentRun.copy(currentPhase = SyncPhase.FETCHING))
+
             val allItems = readwiseClient.fetchDocuments(
                 updatedAfter = updatedAfter,
+                onPageFetched = { event -> handlePageFetched(syncId, event) },
                 onRateLimited = { event -> handleRateLimited(syncId, event) },
                 onRateLimitCleared = { handleRateLimitCleared(syncId) }
             ).toList()
+
+            // FETCHING phase completed
+            progressEmitter.emit(
+                syncId,
+                SyncProgressEvent.PhaseCompleted(
+                    syncId = syncId,
+                    phase = SyncPhase.FETCHING,
+                    count = allItems.size
+                )
+            )
+            currentRun = syncRunStore.save(currentRun.copy(completedPhases = 1))
 
             val documentDtos = allItems.filter { it.isDocument() }
             val highlightDtos = allItems.filter { it.isHighlight() }
@@ -65,12 +90,12 @@ class SyncExecutorImpl(
 
             var latestUpdatedAt: Instant? = null
 
-            // Phase 1: Documents
+            // Phase 2: Documents
             currentRun = processPhase(
                 syncId = syncId,
                 currentRun = currentRun,
                 phase = SyncPhase.DOCUMENTS,
-                phaseNumber = 1,
+                phaseNumber = 2,
                 items = documentDtos,
                 processItem = { doc ->
                     val event = doc.toDocumentEvent()
@@ -80,12 +105,12 @@ class SyncExecutorImpl(
                 updateCounts = { run, count -> run.copy(documentsProcessed = count) }
             )
 
-            // Phase 2: Highlights
+            // Phase 3: Highlights
             currentRun = processPhase(
                 syncId = syncId,
                 currentRun = currentRun,
                 phase = SyncPhase.HIGHLIGHTS,
-                phaseNumber = 2,
+                phaseNumber = 3,
                 items = highlightDtos,
                 processItem = { highlight ->
                     val event = highlight.toHighlightEvent()
@@ -95,12 +120,12 @@ class SyncExecutorImpl(
                 updateCounts = { run, count -> run.copy(highlightsProcessed = count) }
             )
 
-            // Phase 3: Notes
+            // Phase 4: Notes
             currentRun = processPhase(
                 syncId = syncId,
                 currentRun = currentRun,
                 phase = SyncPhase.NOTES,
-                phaseNumber = 3,
+                phaseNumber = 4,
                 items = noteDtos,
                 processItem = { note ->
                     val event = note.toNoteEvent()
@@ -214,6 +239,23 @@ class SyncExecutorImpl(
         return syncRunStore.save(
             updateCounts(run, items.size).copy(
                 completedPhases = phaseNumber
+            )
+        )
+    }
+
+    private fun handlePageFetched(syncId: UUID, event: PageFetchedEvent) {
+        logger.debug(
+            "Page fetched [syncId={}, page={}, items={}, total={}]",
+            syncId, event.pageNumber, event.itemsInPage, event.totalItemsSoFar
+        )
+        progressEmitter.emit(
+            syncId,
+            SyncProgressEvent.PageFetched(
+                syncId = syncId,
+                pageNumber = event.pageNumber,
+                itemsInPage = event.itemsInPage,
+                totalItemsSoFar = event.totalItemsSoFar,
+                hasMore = event.hasMore
             )
         )
     }

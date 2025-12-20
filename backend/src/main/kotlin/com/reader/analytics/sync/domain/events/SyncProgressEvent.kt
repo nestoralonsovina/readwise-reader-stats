@@ -17,7 +17,7 @@ sealed class SyncProgressEvent {
         override val syncId: UUID,
         val phase: SyncPhase,
         val phaseNumber: Int,
-        val totalPhases: Int = 3,
+        val totalPhases: Int = 4,
         override val timestamp: Instant = Instant.now()
     ) : SyncProgressEvent()
 
@@ -25,6 +25,15 @@ sealed class SyncProgressEvent {
         override val syncId: UUID,
         val phase: SyncPhase,
         val processed: Int,
+        override val timestamp: Instant = Instant.now()
+    ) : SyncProgressEvent()
+
+    data class PageFetched(
+        override val syncId: UUID,
+        val pageNumber: Int,
+        val itemsInPage: Int,
+        val totalItemsSoFar: Int,
+        val hasMore: Boolean,
         override val timestamp: Instant = Instant.now()
     ) : SyncProgressEvent()
 
@@ -75,6 +84,7 @@ sealed class SyncProgressEvent {
             is Started -> "started"
             is PhaseStarted -> "phase_started"
             is Progress -> "progress"
+            is PageFetched -> "page_fetched"
             is RateLimited -> "rate_limited"
             is RateLimitCleared -> "rate_limit_cleared"
             is PhaseCompleted -> "phase_completed"
@@ -87,6 +97,7 @@ sealed class SyncProgressEvent {
             is Started -> """{"type":"$type","syncId":"$syncId","timestamp":"$timestamp"}"""
             is PhaseStarted -> """{"type":"$type","phase":"$phase","phaseNumber":$phaseNumber,"totalPhases":$totalPhases,"timestamp":"$timestamp"}"""
             is Progress -> """{"type":"$type","phase":"$phase","processed":$processed,"timestamp":"$timestamp"}"""
+            is PageFetched -> """{"type":"$type","pageNumber":$pageNumber,"itemsInPage":$itemsInPage,"totalItemsSoFar":$totalItemsSoFar,"hasMore":$hasMore,"timestamp":"$timestamp"}"""
             is RateLimited -> """{"type":"$type","retryAfter":$retryAfter,"attempt":$attempt,"maxAttempts":$maxAttempts,"timestamp":"$timestamp"}"""
             is RateLimitCleared -> """{"type":"$type","timestamp":"$timestamp"}"""
             is PhaseCompleted -> """{"type":"$type","phase":"$phase","count":$count,"timestamp":"$timestamp"}"""
