@@ -2,6 +2,17 @@ import { Component, input, computed } from '@angular/core';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { FormatNumberPipe } from '../../pipes/format-number.pipe';
 import { ComingSoonBadgeComponent } from '../coming-soon-badge/coming-soon-badge.component';
+import { HlmCardImports } from '@spartan-ng/helm/card';
+import { HlmIconImports } from '@spartan-ng/helm/icon';
+import { provideIcons } from '@ng-icons/core';
+import {
+  lucideFileText,
+  lucideCheckCircle,
+  lucideFlame,
+  lucideInbox,
+  lucideArrowUp,
+  lucideArrowDown,
+} from '@ng-icons/lucide';
 import {
   ApexChart,
   ApexStroke,
@@ -17,87 +28,44 @@ interface ChangeIndicator {
   readonly direction: 'up' | 'down';
 }
 
+const iconMap: Record<KpiIconType, string> = {
+  document: 'lucideFileText',
+  checkmark: 'lucideCheckCircle',
+  flame: 'lucideFlame',
+  inbox: 'lucideInbox',
+};
 
 @Component({
   selector: 'app-kpi-card',
   standalone: true,
-  imports: [NgApexchartsModule, FormatNumberPipe, ComingSoonBadgeComponent],
+  imports: [
+    NgApexchartsModule,
+    FormatNumberPipe,
+    ComingSoonBadgeComponent,
+    ...HlmCardImports,
+    ...HlmIconImports,
+  ],
+  providers: [
+    provideIcons({
+      lucideFileText,
+      lucideCheckCircle,
+      lucideFlame,
+      lucideInbox,
+      lucideArrowUp,
+      lucideArrowDown,
+    }),
+  ],
   template: `
-    <div class="rounded-xl border border-border bg-card p-5 transition-colors">
-      <div class="mb-3 flex items-start justify-between">
+    <section hlmCard class="gap-0 p-5">
+      <header hlmCardHeader class="mb-3 flex items-start justify-between p-0">
         <div class="flex items-center gap-2">
           <!-- Icon badge -->
-          @if (icon()) {
+          @if (icon(); as iconType) {
             <div
               class="flex h-8 w-8 items-center justify-center rounded-lg"
               [class]="iconBgClass()"
             >
-              @switch (icon()) {
-                @case ('document') {
-                  <svg
-                    class="h-4 w-4"
-                    [class]="iconColorClass()"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                }
-                @case ('checkmark') {
-                  <svg
-                    class="h-4 w-4"
-                    [class]="iconColorClass()"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                }
-                @case ('flame') {
-                  <svg
-                    class="h-4 w-4"
-                    [class]="iconColorClass()"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"
-                    />
-                  </svg>
-                }
-                @case ('inbox') {
-                  <svg
-                    class="h-4 w-4"
-                    [class]="iconColorClass()"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                    />
-                  </svg>
-                }
-              }
+              <ng-icon [name]="iconName()" size="sm" [class]="iconColorClass()" />
             </div>
           }
           <span class="text-sm text-muted-foreground">{{ title() }}</span>
@@ -116,51 +84,38 @@ interface ChangeIndicator {
             />
           </div>
         }
-      </div>
+      </header>
 
-      <!-- Value and change indicator -->
-      <div class="flex items-baseline gap-2">
-        <span class="text-2xl font-bold text-foreground">
-          {{ value() | formatNumber }}
-        </span>
-
-        @if (showComingSoon()) {
-          <app-coming-soon-badge />
-        } @else if (change(); as c) {
-          <span
-            class="flex items-center gap-0.5 text-xs font-medium"
-            [class.text-emerald-500]="c.direction === 'up'"
-            [class.text-red-500]="c.direction === 'down'"
-          >
-            @if (c.direction === 'up') {
-              <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M5 10l7-7m0 0l7 7m-7-7v18"
-                />
-              </svg>
-            } @else {
-              <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                />
-              </svg>
-            }
-            {{ c.value }}%
+      <div hlmCardContent class="p-0">
+        <!-- Value and change indicator -->
+        <div class="flex items-baseline gap-2">
+          <span class="text-2xl font-bold text-foreground">
+            {{ value() | formatNumber }}
           </span>
+
+          @if (showComingSoon()) {
+            <app-coming-soon-badge />
+          } @else if (change(); as c) {
+            <span
+              class="flex items-center gap-0.5 text-xs font-medium"
+              [class.text-emerald-500]="c.direction === 'up'"
+              [class.text-red-500]="c.direction === 'down'"
+            >
+              <ng-icon
+                [name]="c.direction === 'up' ? 'lucideArrowUp' : 'lucideArrowDown'"
+                size="xs"
+              />
+              {{ c.value }}%
+            </span>
+          }
+        </div>
+
+        <!-- Subtitle -->
+        @if (subtitleText()) {
+          <p class="mt-1 text-xs text-muted-foreground">{{ subtitleText() }}</p>
         }
       </div>
-
-      <!-- Subtitle -->
-      @if (subtitleText()) {
-        <p class="mt-1 text-xs text-muted-foreground">{{ subtitleText() }}</p>
-      }
-    </div>
+    </section>
   `,
 })
 export class KpiCardComponent {
@@ -174,6 +129,11 @@ export class KpiCardComponent {
   readonly iconColorClass = input<string>('text-blue-600 dark:text-blue-400');
   readonly change = input<ChangeIndicator | null>(null);
   readonly showComingSoon = input<boolean>(false);
+
+  readonly iconName = computed(() => {
+    const iconType = this.icon();
+    return iconType ? iconMap[iconType] : '';
+  });
 
   /** Determines what subtitle text to display based on inputs */
   readonly subtitleText = computed<string | null>(() => {

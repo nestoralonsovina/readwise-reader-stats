@@ -3,18 +3,32 @@ import { PeriodToggleComponent } from '../../../../shared/components/period-togg
 import { ThemeService } from '../../../../core/services/theme.service';
 import { SyncService } from '../../../../core/services/sync.service';
 import { Period } from '../../../../core/models/api.models';
+import { HlmButtonImports } from '@spartan-ng/helm/button';
+import { HlmIconImports } from '@spartan-ng/helm/icon';
+import { HlmSidebarTrigger } from '@spartan-ng/helm/sidebar';
+import { provideIcons } from '@ng-icons/core';
+import { lucideSun, lucideMoon, lucideRefreshCw, lucideMenu } from '@ng-icons/lucide';
 
 @Component({
   selector: 'app-dashboard-header',
   standalone: true,
-  imports: [PeriodToggleComponent],
+  imports: [PeriodToggleComponent, ...HlmButtonImports, ...HlmIconImports, HlmSidebarTrigger],
+  providers: [provideIcons({ lucideSun, lucideMoon, lucideRefreshCw, lucideMenu })],
   template: `
     <header class="border-b border-border bg-card">
       <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <!-- Last synced -->
-        <span class="text-sm text-muted-foreground">
-          {{ lastSyncedText() }}
-        </span>
+        <!-- Left side: mobile trigger + last synced -->
+        <div class="flex items-center gap-3">
+          <!-- Mobile sidebar trigger -->
+          <button hlmSidebarTrigger class="md:hidden" aria-label="Toggle sidebar">
+            <ng-icon name="lucideMenu" size="lg" />
+          </button>
+
+          <!-- Last synced -->
+          <span class="text-sm text-muted-foreground">
+            {{ lastSyncedText() }}
+          </span>
+        </div>
 
         <!-- Controls -->
         <div class="flex items-center gap-4">
@@ -25,54 +39,32 @@ import { Period } from '../../../../core/models/api.models';
 
           <!-- Theme toggle -->
           <button
-            type="button"
-            class="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+            hlmBtn
+            variant="ghost"
+            size="icon"
             (click)="themeService.toggle()"
             [attr.aria-label]="
               themeService.isDark() ? 'Switch to light mode' : 'Switch to dark mode'
             "
           >
             @if (themeService.isDark()) {
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                />
-              </svg>
+              <ng-icon name="lucideSun" size="lg" />
             } @else {
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                />
-              </svg>
+              <ng-icon name="lucideMoon" size="lg" />
             }
           </button>
 
           <!-- Sync button -->
           <button
-            type="button"
-            class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 disabled:opacity-50"
+            hlmBtn
+            class="bg-amber-500 hover:bg-amber-600 text-white"
             (click)="onSyncClick()"
           >
-            <svg
-              class="h-4 w-4"
+            <ng-icon
+              name="lucideRefreshCw"
+              size="sm"
               [class.animate-spin]="syncService.isRunning()"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
+            />
             {{ syncService.isRunning() ? 'Syncing...' : 'Sync' }}
           </button>
         </div>

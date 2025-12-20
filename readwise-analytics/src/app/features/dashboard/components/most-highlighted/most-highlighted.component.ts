@@ -1,90 +1,78 @@
 import { Component, input } from '@angular/core';
 import { TopDocumentDto } from '../../../../core/models/api.models';
+import { HlmCardImports } from '@spartan-ng/helm/card';
+import { HlmAvatarImports } from '@spartan-ng/helm/avatar';
+import { HlmBadgeImports } from '@spartan-ng/helm/badge';
+import { HlmIconImports } from '@spartan-ng/helm/icon';
+import { provideIcons } from '@ng-icons/core';
+import { lucideFileText, lucidePenSquare } from '@ng-icons/lucide';
 
 @Component({
   selector: 'app-most-highlighted',
   standalone: true,
+  imports: [...HlmCardImports, ...HlmAvatarImports, ...HlmBadgeImports, ...HlmIconImports],
+  providers: [provideIcons({ lucideFileText, lucidePenSquare })],
   template: `
-    <div class="rounded-xl border border-border bg-card p-5">
-      <div class="mb-4 flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-foreground">Most Highlighted</h3>
+    <section hlmCard class="gap-0 p-5">
+      <header hlmCardHeader class="mb-4 p-0">
+        <h3 hlmCardTitle class="text-lg font-semibold">Most Highlighted</h3>
+      </header>
+
+      <div hlmCardContent class="p-0">
+        @if (documents() && documents()!.length > 0) {
+          <div class="space-y-3">
+            @for (doc of documents()!.slice(0, 5); track doc.documentId) {
+              <div
+                class="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
+              >
+                <!-- Thumbnail -->
+                <hlm-avatar class="h-12 w-12 flex-shrink-0 rounded-lg">
+                  @if (doc.imageUrl) {
+                    <img hlmAvatarImage [src]="doc.imageUrl" [alt]="doc.title ?? 'Document thumbnail'" />
+                  }
+                  <span hlmAvatarFallback class="rounded-lg bg-muted">
+                    <ng-icon name="lucideFileText" class="text-muted-foreground" />
+                  </span>
+                </hlm-avatar>
+
+                <!-- Content -->
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium text-foreground">
+                    {{ doc.title ?? 'Untitled' }}
+                  </p>
+                  <p class="text-xs text-muted-foreground capitalize">
+                    {{ doc.category ?? 'article' }}
+                  </p>
+                </div>
+
+                <!-- Badges -->
+                <div class="flex flex-shrink-0 items-center gap-2">
+                  @if (doc.hasNotes) {
+                    <div
+                      class="rounded-full bg-blue-500/10 p-1 text-blue-600 dark:text-blue-400"
+                      title="Has notes"
+                    >
+                      <ng-icon name="lucidePenSquare" size="sm" />
+                    </div>
+                  }
+                  <span
+                    hlmBadge
+                    variant="outline"
+                    class="rounded-full bg-amber-500/10 text-amber-600 border-transparent dark:text-amber-400"
+                  >
+                    {{ doc.highlightCount }}
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="flex h-48 items-center justify-center text-muted-foreground">
+            No highlights yet
+          </div>
+        }
       </div>
-
-      @if (documents() && documents()!.length > 0) {
-        <div class="space-y-3">
-          @for (doc of documents()!.slice(0, 5); track doc.documentId) {
-            <div
-              class="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
-            >
-              <!-- Thumbnail -->
-              @if (doc.imageUrl) {
-                <img
-                  [src]="doc.imageUrl"
-                  [alt]="doc.title ?? 'Document thumbnail'"
-                  class="h-12 w-12 flex-shrink-0 rounded-lg object-cover"
-                />
-              } @else {
-                <div
-                  class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-muted"
-                >
-                  <svg
-                    class="h-6 w-6 text-muted-foreground"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                </div>
-              }
-
-              <!-- Content -->
-              <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-medium text-foreground">
-                  {{ doc.title ?? 'Untitled' }}
-                </p>
-                <p class="text-xs text-muted-foreground capitalize">
-                  {{ doc.category ?? 'article' }}
-                </p>
-              </div>
-
-              <!-- Badges -->
-              <div class="flex flex-shrink-0 items-center gap-2">
-                @if (doc.hasNotes) {
-                  <div
-                    class="rounded-full bg-blue-500/10 p-1 text-blue-600 dark:text-blue-400"
-                    title="Has notes"
-                  >
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    </svg>
-                  </div>
-                }
-                <div
-                  class="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400"
-                >
-                  {{ doc.highlightCount }}
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-      } @else {
-        <div class="flex h-48 items-center justify-center text-muted-foreground">
-          No highlights yet
-        </div>
-      }
-    </div>
+    </section>
   `,
 })
 export class MostHighlightedComponent {

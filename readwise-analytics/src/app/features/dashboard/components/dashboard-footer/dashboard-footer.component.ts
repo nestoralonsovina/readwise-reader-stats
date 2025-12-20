@@ -2,13 +2,15 @@ import { Component, input } from '@angular/core';
 import { PipelineResponse, HighlightResponse } from '../../../../core/models/api.models';
 import { FormatNumberPipe } from '../../../../shared/pipes/format-number.pipe';
 import { ComingSoonBadgeComponent } from '../../../../shared/components/coming-soon-badge/coming-soon-badge.component';
+import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
 
 @Component({
   selector: 'app-dashboard-footer',
   standalone: true,
-  imports: [FormatNumberPipe, ComingSoonBadgeComponent],
+  imports: [FormatNumberPipe, ComingSoonBadgeComponent, ...HlmSeparatorImports],
   template: `
-    <footer class="mt-6 border-t border-border pt-6">
+    <footer class="mt-6 pt-6">
+      <hlm-separator class="mb-6" />
       <div class="flex items-center justify-center gap-6 text-sm text-muted-foreground">
         @if (pipeline(); as p) {
           <span>{{ p.current.total | formatNumber }} documents</span>

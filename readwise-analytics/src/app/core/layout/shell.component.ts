@@ -1,18 +1,19 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
+import { HlmSidebarImports } from '@spartan-ng/helm/sidebar';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent],
+  imports: [RouterOutlet, SidebarComponent, ...HlmSidebarImports],
   template: `
-    <div class="flex min-h-screen">
+    <hlm-sidebar-wrapper>
       <app-sidebar />
-      <div class="ml-56 flex-1">
+      <main hlmSidebarInset class="min-h-screen">
         <router-outlet />
-      </div>
-    </div>
+      </main>
+    </hlm-sidebar-wrapper>
   `,
 })
 export class ShellComponent {}

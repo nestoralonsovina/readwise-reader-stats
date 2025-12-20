@@ -1,25 +1,23 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
+import { HlmBadgeImports } from '@spartan-ng/helm/badge';
+import { HlmIconImports } from '@spartan-ng/helm/icon';
+import { provideIcons } from '@ng-icons/core';
+import { lucideClock } from '@ng-icons/lucide';
 
 @Component({
   selector: 'app-coming-soon-badge',
   standalone: true,
+  imports: [...HlmBadgeImports, ...HlmIconImports],
+  providers: [provideIcons({ lucideClock })],
   template: `
     <span
-      class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
-      [class]="variant() === 'muted'
-        ? 'bg-muted text-muted-foreground'
-        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'"
+      hlmBadge
+      [variant]="badgeVariant()"
+      [class]="variantClass()"
       [title]="tooltip()"
     >
       @if (showIcon()) {
-        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
+        <ng-icon name="lucideClock" size="xs" />
       }
       {{ label() }}
     </span>
@@ -30,4 +28,12 @@ export class ComingSoonBadgeComponent {
   readonly tooltip = input<string>('This feature is planned for a future release');
   readonly variant = input<'accent' | 'muted'>('accent');
   readonly showIcon = input<boolean>(false);
+
+  readonly badgeVariant = computed(() => (this.variant() === 'muted' ? 'secondary' : 'outline'));
+
+  readonly variantClass = computed(() =>
+    this.variant() === 'accent'
+      ? 'rounded-full bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800'
+      : 'rounded-full'
+  );
 }

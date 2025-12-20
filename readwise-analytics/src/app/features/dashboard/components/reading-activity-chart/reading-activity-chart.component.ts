@@ -2,6 +2,7 @@ import { Component, input, computed, inject } from '@angular/core';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { ThemeService } from '../../../../core/services/theme.service';
 import { ReadingStatsResponse } from '../../../../core/models/api.models';
+import { HlmCardImports } from '@spartan-ng/helm/card';
 import {
   ApexChart,
   ApexAxisChartSeries,
@@ -17,11 +18,11 @@ import {
 @Component({
   selector: 'app-reading-activity-chart',
   standalone: true,
-  imports: [NgApexchartsModule],
+  imports: [NgApexchartsModule, ...HlmCardImports],
   template: `
-    <div class="rounded-xl border border-border bg-card p-5">
-      <div class="mb-4 flex items-center justify-between">
-        <h3 class="font-semibold text-foreground">Reading Activity</h3>
+    <section hlmCard class="gap-0 p-5">
+      <header hlmCardHeader class="mb-4 flex items-center justify-between p-0">
+        <h3 hlmCardTitle class="font-semibold">Reading Activity</h3>
         <div class="flex items-center gap-4 text-sm">
           <div class="flex items-center gap-1.5">
             <span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
@@ -32,26 +33,28 @@ import {
             <span class="text-muted-foreground">Articles</span>
           </div>
         </div>
+      </header>
+      <div hlmCardContent class="p-0">
+        @if (data()) {
+          <apx-chart
+            [series]="series()"
+            [chart]="chartOptions()"
+            [xaxis]="xaxis()"
+            [yaxis]="yaxis()"
+            [stroke]="strokeOptions"
+            [dataLabels]="dataLabels"
+            [tooltip]="tooltipOptions()"
+            [grid]="gridOptions()"
+            [legend]="legendOptions()"
+            [colors]="colors"
+          />
+        } @else {
+          <div class="flex h-64 items-center justify-center text-muted-foreground">
+            No data available
+          </div>
+        }
       </div>
-      @if (data()) {
-        <apx-chart
-          [series]="series()"
-          [chart]="chartOptions()"
-          [xaxis]="xaxis()"
-          [yaxis]="yaxis()"
-          [stroke]="strokeOptions"
-          [dataLabels]="dataLabels"
-          [tooltip]="tooltipOptions()"
-          [grid]="gridOptions()"
-          [legend]="legendOptions()"
-          [colors]="colors"
-        />
-      } @else {
-        <div class="flex h-64 items-center justify-center text-muted-foreground">
-          No data available
-        </div>
-      }
-    </div>
+    </section>
   `,
 })
 export class ReadingActivityChartComponent {
