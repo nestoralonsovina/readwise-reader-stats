@@ -16,8 +16,8 @@ export class AnalyticsService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = '/api/analytics';
 
-  getDashboard(days: number): Observable<DashboardResponse> {
-    const params = new HttpParams().set('days', days.toString());
+  getDashboard(startDate: string, endDate: string): Observable<DashboardResponse> {
+    const params = new HttpParams().set('startDate', startDate).set('endDate', endDate);
     return this.http.get<DashboardResponse>(`${this.baseUrl}/dashboard`, { params });
   }
 
@@ -40,19 +40,24 @@ export class AnalyticsService {
     return this.http.get<StreakResponse>(`${this.baseUrl}/reading/streak`);
   }
 
-  getPeakHours(days: number): Observable<PeakHoursResponse> {
-    const params = new HttpParams().set('days', days.toString());
+  getPeakHours(startDate: string, endDate: string): Observable<PeakHoursResponse> {
+    const params = new HttpParams().set('startDate', startDate).set('endDate', endDate);
     return this.http.get<PeakHoursResponse>(`${this.baseUrl}/reading/peak-hours`, { params });
   }
 
-  getPipeline(days: number): Observable<PipelineResponse> {
-    const params = new HttpParams().set('days', days.toString());
+  getPipeline(startDate: string, endDate: string): Observable<PipelineResponse> {
+    const params = new HttpParams().set('startDate', startDate).set('endDate', endDate);
     return this.http.get<PipelineResponse>(`${this.baseUrl}/pipeline`, { params });
   }
 
-  getHighlights(days: number, topDocumentsLimit = 10): Observable<HighlightResponse> {
+  getHighlights(
+    startDate: string,
+    endDate: string,
+    topDocumentsLimit = 10
+  ): Observable<HighlightResponse> {
     const params = new HttpParams()
-      .set('days', days.toString())
+      .set('startDate', startDate)
+      .set('endDate', endDate)
       .set('topDocumentsLimit', topDocumentsLimit.toString());
     return this.http.get<HighlightResponse>(`${this.baseUrl}/highlights`, { params });
   }

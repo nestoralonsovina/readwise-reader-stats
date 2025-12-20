@@ -1,6 +1,7 @@
 package com.reader.analytics.sync.infrastructure
 
-import com.reader.analytics.sync.infrastructure.readwise.RateLimiter
+import com.reader.analytics.sync.infrastructure.readwise.RateLimitRetryHandler
+import com.reader.analytics.sync.infrastructure.readwise.RetryConfig
 import com.reader.analytics.sync.infrastructure.readwise.dto.DocumentDto
 import com.reader.analytics.sync.infrastructure.readwise.dto.DocumentListResponse
 import org.slf4j.LoggerFactory
@@ -10,13 +11,16 @@ import org.springframework.stereotype.Component
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
+import java.time.Duration
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
 @Component
 class ReadwiseWebClient(
     @Value("\${readwise.api.token}") private val token: String,
-    @Value("\${readwise.api.rate-limit-per-minute:20}") private val rateLimitPerMinute: Int
+    @Value("\${readwise.api.retry.max-attempts:3}") private val maxRetryAttempts: Int,
+    @Value("\${readwise.api.retry.base-delay-seconds:5}") private val baseDelaySeconds: Long,
+    @Value("\${readwise.api.retry.max-delay-seconds:120}") private val maxDelaySeconds: Long
 ) : ReadwiseClient {
 
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -27,7 +31,13 @@ class ReadwiseWebClient(
         .defaultHeader("Content-Type", "application/json")
         .build()
 
-    private val rateLimiter = RateLimiter(rateLimitPerMinute)
+    private val retryHandler = RateLimitRetryHandler(
+        RetryConfig(
+            maxAttempts = maxRetryAttempts,
+            baseDelay = Duration.ofSeconds(baseDelaySeconds),
+            maxDelay = Duration.ofSeconds(maxDelaySeconds)
+        )
+    )
 
     // ==================== Reader API v3 (Documents) ====================
 
@@ -39,8 +49,6 @@ class ReadwiseWebClient(
         var totalItems = 0
 
         do {
-            rateLimiter.acquire()
-
             logger.debug("Fetching page [updatedAfter={}, pageCursor={}]", updatedAfter, pageCursor)
 
             val response = fetchDocumentPage(updatedAfter, pageCursor)
@@ -64,7 +72,7 @@ class ReadwiseWebClient(
     }
 
     private fun fetchDocumentPage(updatedAfter: Instant?, pageCursor: String?): DocumentListResponse {
-        return try {
+        return retryHandler.executeWithRetry("fetchDocumentPage[cursor=$pageCursor]") {
             restClient.get()
                 .uri { builder ->
                     builder.path("/api/v3/list/")
@@ -81,15 +89,6 @@ class ReadwiseWebClient(
                     )
                     throw HttpClientErrorException(HttpStatus.NOT_FOUND, "Empty response from documents endpoint")
                 }
-        } catch (e: RestClientResponseException) {
-            logger.warn(
-                "Readwise API error [status={}, updatedAfter={}, pageCursor={}]: {}",
-                e.statusCode, updatedAfter, pageCursor, e.responseBodyAsString
-            )
-            throw HttpClientErrorException(
-                HttpStatus.valueOf(e.statusCode.value()),
-                "Readwise API error: ${e.responseBodyAsString}"
-            )
         }
     }
 

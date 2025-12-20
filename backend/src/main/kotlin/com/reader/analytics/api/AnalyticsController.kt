@@ -43,14 +43,17 @@ class AnalyticsController(
         content = [Content(schema = Schema(implementation = DashboardResponse::class))]
     )
     fun getDashboard(
-        @Parameter(description = "Number of days to include in the period", example = "7")
-        @RequestParam(defaultValue = "7") days: Int
+        @Parameter(description = "Start date (ISO format: YYYY-MM-DD)", example = "2024-01-01")
+        @RequestParam(required = false) startDate: String?,
+
+        @Parameter(description = "End date (ISO format: YYYY-MM-DD)", example = "2024-01-31")
+        @RequestParam(required = false) endDate: String?
     ): DashboardResponse {
-        val dateRange = DateRange.lastNDays(days)
+        val dateRange = parseDateRange(startDate, endDate)
         val summary = analyticsService.getDashboardSummary(dateRange)
 
         return DashboardResponse(
-            period = dateRange.toPeriodInfo("Last $days days"),
+            period = dateRange.toPeriodInfo(),
             summary = SummaryDto(
                 wordsRead = summary.totalWordsReadThisPeriod,
                 articlesCompleted = summary.articlesCompletedThisPeriod,
@@ -163,10 +166,13 @@ class AnalyticsController(
         content = [Content(schema = Schema(implementation = PeakHoursResponse::class))]
     )
     fun getPeakReadingHours(
-        @Parameter(description = "Number of days to analyze", example = "30")
-        @RequestParam(defaultValue = "30") days: Int
+        @Parameter(description = "Start date (ISO format: YYYY-MM-DD)", example = "2024-01-01")
+        @RequestParam(required = false) startDate: String?,
+
+        @Parameter(description = "End date (ISO format: YYYY-MM-DD)", example = "2024-01-31")
+        @RequestParam(required = false) endDate: String?
     ): PeakHoursResponse {
-        val dateRange = DateRange.lastNDays(days)
+        val dateRange = parseDateRange(startDate, endDate)
         val peak = analyticsService.getPeakReadingHours(dateRange)
         val total = peak.hourlyDistribution.values.sum()
 
@@ -204,10 +210,13 @@ class AnalyticsController(
         content = [Content(schema = Schema(implementation = PipelineResponse::class))]
     )
     fun getPipelineStats(
-        @Parameter(description = "Number of days for period metrics", example = "7")
-        @RequestParam(defaultValue = "7") days: Int
+        @Parameter(description = "Start date (ISO format: YYYY-MM-DD)", example = "2024-01-01")
+        @RequestParam(required = false) startDate: String?,
+
+        @Parameter(description = "End date (ISO format: YYYY-MM-DD)", example = "2024-01-31")
+        @RequestParam(required = false) endDate: String?
     ): PipelineResponse {
-        val dateRange = DateRange.lastNDays(days)
+        val dateRange = parseDateRange(startDate, endDate)
         val pipeline = analyticsService.getPipelineStats(dateRange)
         val locations = analyticsService.getLocationBreakdown()
         val categories = analyticsService.getCategoryBreakdown()
@@ -265,13 +274,16 @@ class AnalyticsController(
         content = [Content(schema = Schema(implementation = HighlightResponse::class))]
     )
     fun getHighlightStats(
-        @Parameter(description = "Number of days for period metrics", example = "30")
-        @RequestParam(defaultValue = "30") days: Int,
+        @Parameter(description = "Start date (ISO format: YYYY-MM-DD)", example = "2024-01-01")
+        @RequestParam(required = false) startDate: String?,
+
+        @Parameter(description = "End date (ISO format: YYYY-MM-DD)", example = "2024-01-31")
+        @RequestParam(required = false) endDate: String?,
 
         @Parameter(description = "Maximum number of top documents to return", example = "10")
         @RequestParam(defaultValue = "10") topDocumentsLimit: Int
     ): HighlightResponse {
-        val dateRange = DateRange.lastNDays(days)
+        val dateRange = parseDateRange(startDate, endDate)
         val stats = analyticsService.getHighlightStats(dateRange)
 
         return HighlightResponse(

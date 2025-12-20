@@ -77,9 +77,12 @@ class RateLimitRetryHandlerTest {
 
     @Test
     fun `parses retry-after from response body`() {
+        val handlerWithHighMaxDelay = RateLimitRetryHandler(
+            RetryConfig(maxDelay = Duration.ofSeconds(120))
+        )
         val responseBody = """{"detail":"Request was throttled. Expected available in 37 seconds."}"""
 
-        val delay = handler.calculateDelay(responseBody, 1)
+        val delay = handlerWithHighMaxDelay.calculateDelay(responseBody, 1)
 
         assertTrue(delay >= Duration.ofSeconds(38))
         assertTrue(delay <= Duration.ofSeconds(46))

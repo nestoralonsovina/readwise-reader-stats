@@ -35,6 +35,23 @@ class SyncService(
             logger.info("Starting sync [lastSyncedAt={}]", updatedAfter)
 
             val allItems = readwiseClient.fetchDocuments(updatedAfter).toList()
+
+            // Diagnostic logging: understand API structure
+            val categories = allItems.groupBy { it.category }.mapValues { it.value.size }
+            logger.info("API categories breakdown: {}", categories)
+
+            val highlightsWithNotes = allItems.filter { it.isHighlight() && !it.notes.isNullOrBlank() }
+            logger.info("Highlights with notes field populated: {}", highlightsWithNotes.size)
+
+            val noteDocuments = allItems.filter { it.category == "note" }
+            logger.info("Documents with category='note': {}", noteDocuments.size)
+            noteDocuments.take(3).forEach {
+                logger.info(
+                    "Sample note: id={}, parentId={}, hasContent={}, hasNotes={}",
+                    it.id, it.parentId, !it.content.isNullOrBlank(), !it.notes.isNullOrBlank()
+                )
+            }
+
             val (highlightDtos, documentDtos) = allItems.partition { it.isHighlight() }
 
             logger.info("Fetched {} documents and {} highlights to process", documentDtos.size, highlightDtos.size)

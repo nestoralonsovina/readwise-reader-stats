@@ -9,4 +9,7 @@ spring:
 readwise:
   api:
     token: test-token-for-testing
-    rate-limit-per-minute: 20
+    retry:
+      max-attempts: 3
+      base-delay-seconds: 1
+      max-delay-seconds: 5

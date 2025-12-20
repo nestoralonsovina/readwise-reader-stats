@@ -212,11 +212,11 @@ export class DashboardComponent {
     const { startDate, endDate } = periodToDateRange(period);
 
     forkJoin({
-      dashboard: this.analyticsService.getDashboard(period),
+      dashboard: this.analyticsService.getDashboard(startDate, endDate),
       readingStats: this.analyticsService.getReadingStats(granularity, startDate, endDate),
       streak: this.analyticsService.getStreak(),
-      pipeline: this.analyticsService.getPipeline(period),
-      highlights: this.analyticsService.getHighlights(period),
+      pipeline: this.analyticsService.getPipeline(startDate, endDate),
+      highlights: this.analyticsService.getHighlights(startDate, endDate),
     })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
