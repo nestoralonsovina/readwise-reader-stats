@@ -48,6 +48,23 @@
     .dark .apexcharts-text { fill: #9ca3af !important; }
     .dark .apexcharts-gridline { stroke: #374151 !important; }
     .dark .apexcharts-xaxis-tick { stroke: #374151 !important; }
+
+    /* Slide-over transitions */
+    .slide-over-backdrop {
+      transition: opacity 0.3s ease-out;
+    }
+    .slide-over-panel {
+      transition: transform 0.3s ease-out;
+    }
+    .slide-over-hidden {
+      pointer-events: none;
+    }
+    .slide-over-hidden .slide-over-backdrop {
+      opacity: 0;
+    }
+    .slide-over-hidden .slide-over-panel {
+      transform: translateX(100%);
+    }
   </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen flex">
@@ -167,7 +184,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
       <!-- Words Read -->
-      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <div onclick="openSlideOver('words')" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 text-left hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm cursor-pointer group">
         <div class="flex items-start justify-between mb-3">
           <div class="flex items-center gap-2">
             <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
@@ -177,7 +194,12 @@
             </div>
             <span class="text-sm text-gray-600 dark:text-gray-400">Words Read</span>
           </div>
-          <div id="sparkline-words" class="w-16 h-8"></div>
+          <div class="flex items-center gap-2">
+            <div id="sparkline-words" class="w-16 h-8 pointer-events-none"></div>
+            <svg class="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
         </div>
         <div class="flex items-baseline gap-2">
           <span class="text-2xl font-bold">47,832</span>
@@ -192,7 +214,7 @@
       </div>
 
       <!-- Articles Completed -->
-      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <div onclick="openSlideOver('completed')" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 text-left hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-sm cursor-pointer group">
         <div class="flex items-start justify-between mb-3">
           <div class="flex items-center gap-2">
             <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
@@ -202,7 +224,12 @@
             </div>
             <span class="text-sm text-gray-600 dark:text-gray-400">Completed</span>
           </div>
-          <div id="sparkline-completed" class="w-16 h-8"></div>
+          <div class="flex items-center gap-2">
+            <div id="sparkline-completed" class="w-16 h-8 pointer-events-none"></div>
+            <svg class="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
         </div>
         <div class="flex items-baseline gap-2">
           <span class="text-2xl font-bold">23</span>
@@ -253,7 +280,7 @@
       </div>
 
       <!-- Reading Backlog -->
-      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+      <div onclick="openSlideOver('backlog')" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 text-left hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-sm cursor-pointer group">
         <div class="flex items-start justify-between mb-3">
           <div class="flex items-center gap-2">
             <div class="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
@@ -263,7 +290,12 @@
             </div>
             <span class="text-sm text-gray-600 dark:text-gray-400">Backlog</span>
           </div>
-          <div id="sparkline-backlog" class="w-16 h-8"></div>
+          <div class="flex items-center gap-2">
+            <div id="sparkline-backlog" class="w-16 h-8 pointer-events-none"></div>
+            <svg class="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
         </div>
         <div class="flex items-baseline gap-2">
           <span class="text-2xl font-bold">156</span>
@@ -427,11 +459,11 @@
         </div>
 
         <div class="space-y-3">
-          <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+          <a href="document-detail-mockup.html" class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer group">
             <div class="w-10 h-10 rounded bg-gradient-to-br from-blue-500 to-violet-500 flex-shrink-0"></div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-1.5">
-                <p class="text-sm font-medium truncate">How to Build a Second Brain</p>
+                <p class="text-sm font-medium truncate group-hover:text-accent-600 dark:group-hover:text-accent-400">How to Build a Second Brain</p>
                 <!-- Note indicator -->
                 <svg class="w-3.5 h-3.5 text-accent-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" title="Has notes">
                   <path d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z"/>
@@ -440,22 +472,22 @@
               <p class="text-xs text-gray-500 dark:text-gray-400">fortelabs.com</p>
             </div>
             <span class="text-xs font-medium text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/30 px-2 py-0.5 rounded-full">24</span>
-          </div>
+          </a>
 
-          <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+          <a href="document-detail-mockup.html" class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer group">
             <div class="w-10 h-10 rounded bg-gradient-to-br from-emerald-500 to-teal-500 flex-shrink-0"></div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium truncate">The Art of Reading</p>
+              <p class="text-sm font-medium truncate group-hover:text-accent-600 dark:group-hover:text-accent-400">The Art of Reading</p>
               <p class="text-xs text-gray-500 dark:text-gray-400">fs.blog</p>
             </div>
             <span class="text-xs font-medium text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/30 px-2 py-0.5 rounded-full">18</span>
-          </div>
+          </a>
 
-          <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+          <a href="document-detail-mockup.html" class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer group">
             <div class="w-10 h-10 rounded bg-gradient-to-br from-amber-500 to-orange-500 flex-shrink-0"></div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-1.5">
-                <p class="text-sm font-medium truncate">Atomic Habits Summary</p>
+                <p class="text-sm font-medium truncate group-hover:text-accent-600 dark:group-hover:text-accent-400">Atomic Habits Summary</p>
                 <!-- Note indicator -->
                 <svg class="w-3.5 h-3.5 text-accent-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" title="Has notes">
                   <path d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z"/>
@@ -464,16 +496,16 @@
               <p class="text-xs text-gray-500 dark:text-gray-400">jamesclear.com</p>
             </div>
             <span class="text-xs font-medium text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/30 px-2 py-0.5 rounded-full">15</span>
-          </div>
+          </a>
 
-          <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+          <a href="document-detail-mockup.html" class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer group">
             <div class="w-10 h-10 rounded bg-gradient-to-br from-rose-500 to-pink-500 flex-shrink-0"></div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium truncate">Deep Work Rules</p>
+              <p class="text-sm font-medium truncate group-hover:text-accent-600 dark:group-hover:text-accent-400">Deep Work Rules</p>
               <p class="text-xs text-gray-500 dark:text-gray-400">calnewport.com</p>
             </div>
             <span class="text-xs font-medium text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/30 px-2 py-0.5 rounded-full">12</span>
-          </div>
+          </a>
         </div>
       </div>
     </div>
@@ -491,6 +523,53 @@
   </main>
   </div> <!-- End Main Content wrapper -->
 
+  <!-- Slide-over Panel -->
+  <div id="slideOver" class="fixed inset-0 z-50 slide-over-hidden">
+    <!-- Backdrop -->
+    <div class="slide-over-backdrop fixed inset-0 bg-gray-900/50 dark:bg-black/60" onclick="closeSlideOver()"></div>
+
+    <!-- Panel -->
+    <div class="slide-over-panel fixed inset-y-0 right-0 w-full max-w-md bg-white dark:bg-gray-900 shadow-xl flex flex-col">
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+        <div>
+          <h2 id="slideOverTitle" class="font-semibold text-lg">Words Read</h2>
+          <p id="slideOverSubtitle" class="text-sm text-gray-500 dark:text-gray-400">December 2024</p>
+        </div>
+        <button onclick="closeSlideOver()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Summary -->
+      <div id="slideOverSummary" class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800">
+        <div class="flex items-center gap-6">
+          <div>
+            <div class="text-2xl font-bold">47,832</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">Total words</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-success">+12.4%</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">vs last period</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Document List -->
+      <div class="flex-1 overflow-y-auto">
+        <div class="px-6 py-3 sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+          <span id="slideOverCount" class="text-sm text-gray-500 dark:text-gray-400">12 documents contributed</span>
+        </div>
+
+        <div id="slideOverContent" class="divide-y divide-gray-100 dark:divide-gray-800">
+          <!-- Document rows will be populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Theme toggle
     const themeToggle = document.getElementById('themeToggle');
@@ -504,7 +583,7 @@
     themeToggle.addEventListener('click', () => {
       html.classList.toggle('dark');
       localStorage.theme = html.classList.contains('dark') ? 'dark' : 'light';
-      updateCharts();
+      if (typeof updateCharts === 'function') updateCharts();
     });
 
     // Chart color helpers
@@ -513,67 +592,201 @@
     const gridColor = () => isDark() ? '#374151' : '#e5e7eb';
     const bgColor = () => isDark() ? '#111827' : '#ffffff';
 
-    // Sparkline options generator
-    const sparklineOptions = (data, color) => ({
-      series: [{ data }],
-      chart: { type: 'line', height: 32, width: 64, sparkline: { enabled: true } },
-      stroke: { width: 2, curve: 'smooth' },
-      colors: [color],
-      tooltip: { enabled: false }
-    });
+    // Initialize charts only if ApexCharts loaded
+    let activityChart = null;
+    try {
+      if (typeof ApexCharts !== 'undefined') {
+        // Sparkline options generator
+        const sparklineOptions = (data, color) => ({
+          series: [{ data }],
+          chart: { type: 'line', height: 32, width: 64, sparkline: { enabled: true } },
+          stroke: { width: 2, curve: 'smooth' },
+          colors: [color],
+          tooltip: { enabled: false }
+        });
 
-    // Initialize sparklines
-    new ApexCharts(document.querySelector("#sparkline-words"),
-      sparklineOptions([31, 40, 28, 51, 42, 60, 48], '#3b82f6')).render();
-    new ApexCharts(document.querySelector("#sparkline-completed"),
-      sparklineOptions([15, 18, 12, 22, 19, 23, 20], '#10b981')).render();
-    new ApexCharts(document.querySelector("#sparkline-backlog"),
-      sparklineOptions([140, 145, 138, 150, 148, 155, 156], '#ef4444')).render();
+        // Initialize sparklines
+        new ApexCharts(document.querySelector("#sparkline-words"),
+          sparklineOptions([31, 40, 28, 51, 42, 60, 48], '#3b82f6')).render();
+        new ApexCharts(document.querySelector("#sparkline-completed"),
+          sparklineOptions([15, 18, 12, 22, 19, 23, 20], '#10b981')).render();
+        new ApexCharts(document.querySelector("#sparkline-backlog"),
+          sparklineOptions([140, 145, 138, 150, 148, 155, 156], '#ef4444')).render();
 
-    // Reading Activity Chart
-    const activityOptions = {
-      series: [
-        { name: 'Words', type: 'line', data: [12400, 15200, 8900, 18600, 14200, 9800, 16500, 21300, 11200, 19400, 15800, 13600] },
-        { name: 'Articles', type: 'line', data: [5, 7, 3, 8, 6, 4, 7, 9, 5, 8, 6, 5] }
-      ],
-      chart: {
-        height: 256,
-        type: 'line',
-        toolbar: { show: false },
-        background: 'transparent'
-      },
-      stroke: { width: 3, curve: 'smooth' },
-      colors: ['#3b82f6', '#10b981'],
-      xaxis: {
-        categories: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8', 'Week 9', 'Week 10', 'Week 11', 'Week 12'],
-        labels: { style: { colors: textColor() } },
-        axisBorder: { show: false },
-        axisTicks: { show: false }
-      },
-      yaxis: [
-        { labels: { style: { colors: textColor() }, formatter: (v) => (v/1000).toFixed(0) + 'k' } },
-        { opposite: true, labels: { style: { colors: textColor() } } }
-      ],
-      grid: { borderColor: gridColor(), strokeDashArray: 4 },
-      legend: { show: false },
-      tooltip: { theme: isDark() ? 'dark' : 'light' }
-    };
-    const activityChart = new ApexCharts(document.querySelector("#chart-activity"), activityOptions);
-    activityChart.render();
-
+        // Reading Activity Chart
+        const activityOptions = {
+          series: [
+            { name: 'Words', type: 'line', data: [12400, 15200, 8900, 18600, 14200, 9800, 16500, 21300, 11200, 19400, 15800, 13600] },
+            { name: 'Articles', type: 'line', data: [5, 7, 3, 8, 6, 4, 7, 9, 5, 8, 6, 5] }
+          ],
+          chart: {
+            height: 256,
+            type: 'line',
+            toolbar: { show: false },
+            background: 'transparent'
+          },
+          stroke: { width: 3, curve: 'smooth' },
+          colors: ['#3b82f6', '#10b981'],
+          xaxis: {
+            categories: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8', 'Week 9', 'Week 10', 'Week 11', 'Week 12'],
+            labels: { style: { colors: textColor() } },
+            axisBorder: { show: false },
+            axisTicks: { show: false }
+          },
+          yaxis: [
+            { labels: { style: { colors: textColor() }, formatter: (v) => (v/1000).toFixed(0) + 'k' } },
+            { opposite: true, labels: { style: { colors: textColor() } } }
+          ],
+          grid: { borderColor: gridColor(), strokeDashArray: 4 },
+          legend: { show: false },
+          tooltip: { theme: isDark() ? 'dark' : 'light' }
+        };
+        activityChart = new ApexCharts(document.querySelector("#chart-activity"), activityOptions);
+        activityChart.render();
+      }
+    } catch (e) {
+      console.warn('ApexCharts failed to load:', e);
+    }
 
     // Update charts on theme change
     function updateCharts() {
-      activityChart.updateOptions({
-        xaxis: { labels: { style: { colors: textColor() } } },
-        yaxis: [
-          { labels: { style: { colors: textColor() }, formatter: (v) => (v/1000).toFixed(0) + 'k' } },
-          { opposite: true, labels: { style: { colors: textColor() } } }
-        ],
-        grid: { borderColor: gridColor() },
-        tooltip: { theme: isDark() ? 'dark' : 'light' }
-      });
+      if (activityChart) {
+        activityChart.updateOptions({
+          xaxis: { labels: { style: { colors: textColor() } } },
+          yaxis: [
+            { labels: { style: { colors: textColor() }, formatter: (v) => (v/1000).toFixed(0) + 'k' } },
+            { opposite: true, labels: { style: { colors: textColor() } } }
+          ],
+          grid: { borderColor: gridColor() },
+          tooltip: { theme: isDark() ? 'dark' : 'light' }
+        });
+      }
     }
+
+    // Slide-over panel data
+    const slideOverData = {
+      words: {
+        title: 'Words Read',
+        subtitle: 'December 2024',
+        summary: { value: '47,832', label: 'Total words', change: '+12.4%' },
+        count: '12 documents contributed',
+        documents: [
+          { title: 'How to Build a Second Brain', source: 'fortelabs.com', value: '8,432', progress: 100, color: 'from-blue-500 to-violet-500' },
+          { title: 'The Art of Reading', source: 'fs.blog', value: '6,218', progress: 100, color: 'from-emerald-500 to-teal-500' },
+          { title: 'Atomic Habits Summary', source: 'jamesclear.com', value: '5,890', progress: 100, color: 'from-amber-500 to-orange-500' },
+          { title: 'Deep Work Rules', source: 'calnewport.com', value: '5,124', progress: 85, color: 'from-rose-500 to-pink-500' },
+          { title: 'The Pragmatic Programmer', source: 'pragprog.com', value: '4,892', progress: 72, color: 'from-indigo-500 to-blue-500' },
+          { title: 'System Design Primer', source: 'github.com', value: '4,156', progress: 45, color: 'from-cyan-500 to-blue-500' },
+          { title: 'Clean Code Principles', source: 'medium.com', value: '3,890', progress: 100, color: 'from-violet-500 to-purple-500' },
+          { title: 'Thinking in Systems', source: 'amazon.com', value: '3,240', progress: 38, color: 'from-green-500 to-emerald-500' },
+          { title: 'Writing Well', source: 'julian.com', value: '2,890', progress: 100, color: 'from-yellow-500 to-amber-500' },
+          { title: 'The Mom Test', source: 'momtestbook.com', value: '1,650', progress: 62, color: 'from-pink-500 to-rose-500' },
+          { title: 'Staff Engineer', source: 'staffeng.com', value: '980', progress: 15, color: 'from-slate-500 to-gray-500' },
+          { title: 'Shape Up', source: 'basecamp.com', value: '470', progress: 8, color: 'from-orange-500 to-red-500' },
+        ]
+      },
+      completed: {
+        title: 'Articles Completed',
+        subtitle: 'December 2024',
+        summary: { value: '23', label: 'Total completed', change: '+8.2%' },
+        count: '23 articles finished',
+        documents: [
+          { title: 'How to Build a Second Brain', source: 'fortelabs.com', value: 'Dec 18', progress: 100, color: 'from-blue-500 to-violet-500' },
+          { title: 'The Art of Reading', source: 'fs.blog', value: 'Dec 17', progress: 100, color: 'from-emerald-500 to-teal-500' },
+          { title: 'Atomic Habits Summary', source: 'jamesclear.com', value: 'Dec 15', progress: 100, color: 'from-amber-500 to-orange-500' },
+          { title: 'Clean Code Principles', source: 'medium.com', value: 'Dec 14', progress: 100, color: 'from-violet-500 to-purple-500' },
+          { title: 'Writing Well', source: 'julian.com', value: 'Dec 12', progress: 100, color: 'from-yellow-500 to-amber-500' },
+          { title: 'API Design Guide', source: 'google.com', value: 'Dec 10', progress: 100, color: 'from-red-500 to-orange-500' },
+          { title: 'TypeScript Handbook', source: 'typescriptlang.org', value: 'Dec 8', progress: 100, color: 'from-blue-600 to-blue-400' },
+        ]
+      },
+      backlog: {
+        title: 'Reading Backlog',
+        subtitle: 'Unread articles',
+        summary: { value: '156', label: 'In backlog', change: '+5.1%', negative: true },
+        count: 'Oldest items first',
+        documents: [
+          { title: 'The Future of Programming', source: 'worrydream.com', value: '45 days', progress: 0, color: 'from-gray-500 to-gray-400' },
+          { title: 'Distributed Systems Paper', source: 'arxiv.org', value: '38 days', progress: 0, color: 'from-gray-500 to-gray-400' },
+          { title: 'React Server Components', source: 'react.dev', value: '32 days', progress: 0, color: 'from-cyan-500 to-blue-500' },
+          { title: 'Database Internals', source: 'oreilly.com', value: '28 days', progress: 0, color: 'from-orange-500 to-red-500' },
+          { title: 'GraphQL Best Practices', source: 'apollo.dev', value: '24 days', progress: 0, color: 'from-pink-500 to-purple-500' },
+          { title: 'Kubernetes Patterns', source: 'redhat.com', value: '21 days', progress: 0, color: 'from-red-600 to-red-400' },
+          { title: 'Microservices Pitfalls', source: 'martinfowler.com', value: '18 days', progress: 0, color: 'from-green-500 to-teal-500' },
+          { title: 'CSS Container Queries', source: 'web.dev', value: '14 days', progress: 0, color: 'from-yellow-500 to-orange-500' },
+        ]
+      }
+    };
+
+    function openSlideOver(type) {
+      const data = slideOverData[type];
+      if (!data) return;
+
+      document.getElementById('slideOverTitle').textContent = data.title;
+      document.getElementById('slideOverSubtitle').textContent = data.subtitle;
+      document.getElementById('slideOverCount').textContent = data.count;
+
+      // Update summary
+      const summaryHtml = `
+        <div class="flex items-center gap-6">
+          <div>
+            <div class="text-2xl font-bold">${data.summary.value}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">${data.summary.label}</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold ${data.summary.negative ? 'text-danger' : 'text-success'}">${data.summary.change}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">vs last period</div>
+          </div>
+        </div>
+      `;
+      document.getElementById('slideOverSummary').innerHTML = summaryHtml;
+
+      // Populate documents
+      const contentEl = document.getElementById('slideOverContent');
+      contentEl.innerHTML = data.documents.map(doc => `
+        <a href="document-detail-mockup.html" class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 group">
+          <div class="w-10 h-10 rounded bg-gradient-to-br ${doc.color} flex-shrink-0"></div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate group-hover:text-accent-600 dark:group-hover:text-accent-400">${doc.title}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">${doc.source}</p>
+            ${doc.progress > 0 && doc.progress < 100 ? `
+              <div class="mt-1.5 h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden w-24">
+                <div class="h-full bg-accent-500 rounded-full" style="width: ${doc.progress}%"></div>
+              </div>
+            ` : ''}
+          </div>
+          <div class="text-right flex-shrink-0">
+            <span class="text-sm font-medium">${doc.value}</span>
+            ${doc.progress === 100 ? `
+              <div class="flex items-center justify-end gap-1 mt-0.5">
+                <svg class="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span class="text-xs text-emerald-600 dark:text-emerald-400">Done</span>
+              </div>
+            ` : doc.progress > 0 ? `
+              <span class="text-xs text-gray-500 dark:text-gray-400">${doc.progress}%</span>
+            ` : `
+              <span class="text-xs text-gray-400 dark:text-gray-500">waiting</span>
+            `}
+          </div>
+        </a>
+      `).join('');
+
+      // Show panel
+      document.getElementById('slideOver').classList.remove('slide-over-hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSlideOver() {
+      document.getElementById('slideOver').classList.add('slide-over-hidden');
+      document.body.style.overflow = '';
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeSlideOver();
+    });
   </script>
 </body>
 </html>

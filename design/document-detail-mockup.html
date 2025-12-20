@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Detail - Readwise Reader Analytics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            accent: {
+              50: '#fffbeb',
+              100: '#fef3c7',
+              200: '#fde68a',
+              300: '#fcd34d',
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+              700: '#b45309',
+              800: '#92400e',
+              900: '#78350f',
+            },
+            success: '#10b981',
+            warning: '#f59e0b',
+            danger: '#ef4444',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+    * { transition: background-color 0.2s, border-color 0.2s, color 0.2s; }
+
+    /* Highlight colors */
+    .highlight-yellow { background-color: rgba(250, 204, 21, 0.3); border-left-color: #facc15; }
+    .highlight-blue { background-color: rgba(59, 130, 246, 0.2); border-left-color: #3b82f6; }
+    .highlight-green { background-color: rgba(34, 197, 94, 0.2); border-left-color: #22c55e; }
+    .highlight-pink { background-color: rgba(236, 72, 153, 0.2); border-left-color: #ec4899; }
+    .highlight-purple { background-color: rgba(168, 85, 247, 0.2); border-left-color: #a855f7; }
+
+    .dark .highlight-yellow { background-color: rgba(250, 204, 21, 0.15); }
+    .dark .highlight-blue { background-color: rgba(59, 130, 246, 0.15); }
+    .dark .highlight-green { background-color: rgba(34, 197, 94, 0.15); }
+    .dark .highlight-pink { background-color: rgba(236, 72, 153, 0.15); }
+    .dark .highlight-purple { background-color: rgba(168, 85, 247, 0.15); }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen flex">
+
+  <!-- Sidebar (same as dashboard) -->
+  <aside class="fixed inset-y-0 left-0 w-56 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col z-10">
+    <div class="p-4 border-b border-gray-200 dark:border-gray-800">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-accent-500 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+        </div>
+        <span class="font-semibold text-lg">Reader Analytics</span>
+      </div>
+    </div>
+
+    <nav class="flex-1 p-3 space-y-1">
+      <a href="dashboard-mockup.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+        </svg>
+        Dashboard
+      </a>
+
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        Reading Stats
+      </a>
+
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+        Content Pipeline
+      </a>
+
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+        </svg>
+        Highlights
+      </a>
+
+      <div class="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-400 font-medium">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          Library
+        </a>
+      </div>
+    </nav>
+
+    <div class="p-3 border-t border-gray-200 dark:border-gray-800">
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Settings
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 ml-56">
+
+    <!-- Header with breadcrumb -->
+    <header class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-10">
+      <div class="max-w-5xl mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+          <!-- Breadcrumb -->
+          <nav class="flex items-center gap-2 text-sm">
+            <a href="dashboard-mockup.html" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Dashboard</a>
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            <a href="#" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">Library</a>
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            <span class="text-gray-900 dark:text-white font-medium">How to Build a Second Brain</span>
+          </nav>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-3">
+            <button id="themeToggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+              <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+              </svg>
+              <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+              </svg>
+            </button>
+            <a href="https://read.readwise.io/read/..." target="_blank" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+              </svg>
+              Open in Reader
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-6 py-8">
+
+      <!-- Document Header -->
+      <div class="flex gap-6 mb-8">
+        <!-- Cover Image -->
+        <div class="w-32 h-44 rounded-lg bg-gradient-to-br from-blue-500 to-violet-500 flex-shrink-0 shadow-lg"></div>
+
+        <!-- Document Info -->
+        <div class="flex-1">
+          <div class="flex items-start justify-between">
+            <div>
+              <h1 class="text-2xl font-bold mb-1">How to Build a Second Brain</h1>
+              <p class="text-gray-600 dark:text-gray-400 mb-3">by Tiago Forte</p>
+
+              <!-- Source & Category -->
+              <div class="flex items-center gap-3 text-sm">
+                <a href="#" class="text-accent-600 dark:text-accent-400 hover:underline flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                  </svg>
+                  fortelabs.com
+                </a>
+                <span class="text-gray-300 dark:text-gray-600">•</span>
+                <span class="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded text-xs font-medium">Archive</span>
+                <span class="text-gray-300 dark:text-gray-600">•</span>
+                <span class="text-gray-500 dark:text-gray-400">Article</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reading Progress -->
+          <div class="mt-5">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-sm text-gray-600 dark:text-gray-400">Reading Progress</span>
+              <span class="text-sm font-medium">100%</span>
+            </div>
+            <div class="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+              <div class="h-full bg-emerald-500 rounded-full" style="width: 100%"></div>
+            </div>
+          </div>
+
+          <!-- Tags -->
+          <div class="flex items-center gap-2 mt-4">
+            <span class="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium">#productivity</span>
+            <span class="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium">#pkm</span>
+            <span class="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium">#note-taking</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Cards Row -->
+      <div class="grid grid-cols-4 gap-4 mb-8">
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-center">
+          <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">4,832</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Words</div>
+        </div>
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-center">
+          <div class="text-2xl font-bold text-accent-600 dark:text-accent-400">24</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Highlights</div>
+        </div>
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-center">
+          <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">8</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">With Notes</div>
+        </div>
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-center">
+          <div class="text-2xl font-bold text-violet-600 dark:text-violet-400">18m</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Reading Time</div>
+        </div>
+      </div>
+
+      <!-- Metadata -->
+      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 mb-8">
+        <h3 class="font-semibold mb-4">Reading Timeline</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
+          <div>
+            <div class="text-gray-500 dark:text-gray-400 mb-1">Saved</div>
+            <div class="font-medium">Nov 12, 2024</div>
+          </div>
+          <div>
+            <div class="text-gray-500 dark:text-gray-400 mb-1">First Opened</div>
+            <div class="font-medium">Nov 14, 2024</div>
+          </div>
+          <div>
+            <div class="text-gray-500 dark:text-gray-400 mb-1">Last Read</div>
+            <div class="font-medium">Nov 18, 2024</div>
+          </div>
+          <div>
+            <div class="text-gray-500 dark:text-gray-400 mb-1">Completed</div>
+            <div class="font-medium flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Nov 18, 2024
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Highlights Section -->
+      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+        <!-- Highlights Header -->
+        <div class="p-5 border-b border-gray-200 dark:border-gray-800">
+          <div class="flex items-center justify-between">
+            <h3 class="font-semibold">Highlights</h3>
+            <div class="flex items-center gap-3">
+              <!-- Color Filter -->
+              <div class="flex items-center gap-1.5">
+                <button class="w-5 h-5 rounded-full bg-yellow-400 ring-2 ring-offset-2 ring-yellow-400 dark:ring-offset-gray-900"></button>
+                <button class="w-5 h-5 rounded-full bg-blue-500 opacity-40 hover:opacity-100"></button>
+                <button class="w-5 h-5 rounded-full bg-green-500 opacity-40 hover:opacity-100"></button>
+                <button class="w-5 h-5 rounded-full bg-pink-500 opacity-40 hover:opacity-100"></button>
+                <button class="w-5 h-5 rounded-full bg-purple-500 opacity-40 hover:opacity-100"></button>
+              </div>
+              <span class="text-gray-300 dark:text-gray-600">|</span>
+              <!-- Toggle Notes Only -->
+              <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+                <input type="checkbox" class="rounded border-gray-300 dark:border-gray-600 text-accent-500 focus:ring-accent-500">
+                With notes only
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Highlights List -->
+        <div class="divide-y divide-gray-100 dark:divide-gray-800">
+
+          <!-- Highlight 1 - Yellow with Note -->
+          <div class="p-5 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <div class="highlight-yellow border-l-4 pl-4 py-2 rounded-r-lg mb-3">
+              <p class="text-gray-800 dark:text-gray-200 leading-relaxed">Your Second Brain is a digital archive of your most valuable ideas, insights, and knowledge. It's a system that helps you capture, organize, and retrieve information so you can focus on what matters most: creative work.</p>
+            </div>
+            <!-- Note -->
+            <div class="ml-4 mt-3 p-3 bg-accent-50 dark:bg-accent-900/20 rounded-lg border border-accent-200 dark:border-accent-800">
+              <div class="flex items-start gap-2">
+                <svg class="w-4 h-4 text-accent-600 dark:text-accent-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z"/>
+                </svg>
+                <p class="text-sm text-accent-800 dark:text-accent-300">This is the core thesis of the book. It's not just about saving things—it's about freeing up cognitive resources for actual thinking.</p>
+              </div>
+            </div>
+            <!-- Meta -->
+            <div class="flex items-center gap-4 mt-3 ml-4 text-xs text-gray-500 dark:text-gray-400">
+              <span>Nov 14, 2024</span>
+              <span>Location 142</span>
+            </div>
+          </div>
+
+          <!-- Highlight 2 - Yellow -->
+          <div class="p-5 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <div class="highlight-yellow border-l-4 pl-4 py-2 rounded-r-lg">
+              <p class="text-gray-800 dark:text-gray-200 leading-relaxed">CODE stands for Capture, Organize, Distill, Express. These four steps form the core methodology for building a second brain that actually works.</p>
+            </div>
+            <div class="flex items-center gap-4 mt-3 ml-4 text-xs text-gray-500 dark:text-gray-400">
+              <span>Nov 14, 2024</span>
+              <span>Location 298</span>
+            </div>
+          </div>
+
+          <!-- Highlight 3 - Blue with Note -->
+          <div class="p-5 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <div class="highlight-blue border-l-4 pl-4 py-2 rounded-r-lg mb-3">
+              <p class="text-gray-800 dark:text-gray-200 leading-relaxed">Don't just capture information—capture what resonates. The goal isn't to create a comprehensive archive of everything you encounter. It's to save the ideas that spark something in you, that you find yourself thinking about later.</p>
+            </div>
+            <!-- Note -->
+            <div class="ml-4 mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div class="flex items-start gap-2">
+                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z"/>
+                </svg>
+                <p class="text-sm text-blue-800 dark:text-blue-300">Resonance-based capture. This is different from trying to save "important" things—it's about emotional/intellectual reaction.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4 mt-3 ml-4 text-xs text-gray-500 dark:text-gray-400">
+              <span>Nov 15, 2024</span>
+              <span>Location 456</span>
+            </div>
+          </div>
+
+          <!-- Highlight 4 - Yellow -->
+          <div class="p-5 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <div class="highlight-yellow border-l-4 pl-4 py-2 rounded-r-lg">
+              <p class="text-gray-800 dark:text-gray-200 leading-relaxed">PARA stands for Projects, Areas, Resources, and Archives. It's a universal system for organizing any type of digital information across any platform.</p>
+            </div>
+            <div class="flex items-center gap-4 mt-3 ml-4 text-xs text-gray-500 dark:text-gray-400">
+              <span>Nov 16, 2024</span>
+              <span>Location 612</span>
+            </div>
+          </div>
+
+          <!-- Highlight 5 - Green with Note -->
+          <div class="p-5 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <div class="highlight-green border-l-4 pl-4 py-2 rounded-r-lg mb-3">
+              <p class="text-gray-800 dark:text-gray-200 leading-relaxed">Progressive Summarization is the technique of taking notes on your notes, in layers. Each pass makes the most important points more visible without losing the original context.</p>
+            </div>
+            <!-- Note -->
+            <div class="ml-4 mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+              <div class="flex items-start gap-2">
+                <svg class="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z"/>
+                </svg>
+                <p class="text-sm text-green-800 dark:text-green-300">Key technique! Layer 1: bold key passages. Layer 2: highlight the bold. Layer 3: executive summary. Do this progressively as you use the note, not all at once.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4 mt-3 ml-4 text-xs text-gray-500 dark:text-gray-400">
+              <span>Nov 17, 2024</span>
+              <span>Location 789</span>
+            </div>
+          </div>
+
+          <!-- Highlight 6 - Yellow -->
+          <div class="p-5 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <div class="highlight-yellow border-l-4 pl-4 py-2 rounded-r-lg">
+              <p class="text-gray-800 dark:text-gray-200 leading-relaxed">The most important thing is to start creating. Your Second Brain is not a library to visit occasionally—it's a factory for producing creative output.</p>
+            </div>
+            <div class="flex items-center gap-4 mt-3 ml-4 text-xs text-gray-500 dark:text-gray-400">
+              <span>Nov 18, 2024</span>
+              <span>Location 1024</span>
+            </div>
+          </div>
+
+          <!-- Highlight 7 - Pink with Note -->
+          <div class="p-5 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <div class="highlight-pink border-l-4 pl-4 py-2 rounded-r-lg mb-3">
+              <p class="text-gray-800 dark:text-gray-200 leading-relaxed">Intermediate Packets are reusable building blocks of work: notes, outlines, drafts, checklists, templates. When you break your work into these packets, you can mix and match them to create new outputs much faster.</p>
+            </div>
+            <!-- Note -->
+            <div class="ml-4 mt-3 p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg border border-pink-200 dark:border-pink-800">
+              <div class="flex items-start gap-2">
+                <svg class="w-4 h-4 text-pink-600 dark:text-pink-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z"/>
+                </svg>
+                <p class="text-sm text-pink-800 dark:text-pink-300">This concept connects to atomic design in software. Small, composable units. Apply to writing, presentations, research.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-4 mt-3 ml-4 text-xs text-gray-500 dark:text-gray-400">
+              <span>Nov 18, 2024</span>
+              <span>Location 1156</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Load More -->
+        <div class="p-4 border-t border-gray-200 dark:border-gray-800 text-center">
+          <button class="text-sm text-accent-600 dark:text-accent-400 hover:underline font-medium">
+            Show all 24 highlights
+          </button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      html.classList.add('dark');
+    }
+
+    themeToggle.addEventListener('click', () => {
+      html.classList.toggle('dark');
+      localStorage.theme = html.classList.contains('dark') ? 'dark' : 'light';
+    });
+  </script>
+</body>
+</html>
