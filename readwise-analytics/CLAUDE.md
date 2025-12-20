@@ -1,10 +1,4 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code when working with the frontend codebase.
-
-## Project Overview
-
-Angular 21 dashboard for Readwise Reader Analytics. Displays reading metrics, charts, and highlights from a Spring Boot backend.
+# Frontend - Angular 21
 
 ## Commands
 
@@ -15,92 +9,75 @@ bun run build            # Production build
 bun run test             # Run Vitest tests
 ```
 
-## Architecture
+API proxy: `/api/*` and `/sync` → `http://localhost:8080`
 
-### Directory Structure
+## Directory Structure
 
 ```
 src/app/
-├── core/                    # Singleton services and models
-│   ├── models/api.models.ts # All API response interfaces
+├── core/
+│   ├── layout/
+│   │   └── shell.component.ts      # Main layout with sidebar
+│   ├── models/api.models.ts        # All API response interfaces
 │   └── services/
-│       ├── analytics.service.ts  # GET /api/analytics/*
-│       ├── sync.service.ts       # POST /sync
-│       └── theme.service.ts      # Dark mode toggle
-├── shared/                  # Reusable across features
+│       ├── analytics.service.ts    # GET /api/analytics/*
+│       ├── sync.service.ts         # POST /sync
+│       └── theme.service.ts        # Dark mode toggle
+├── shared/
 │   ├── components/
-│   │   ├── kpi-card/        # Metric card with sparkline
-│   │   ├── streak-bar/      # 14-day streak visualization
-│   │   └── period-toggle/   # Week/Month/Year selector
+│   │   ├── sidebar/                # Navigation with "Coming Soon" badges
+│   │   ├── kpi-card/               # Metric card with sparkline
+│   │   ├── streak-bar/             # 14-day streak visualization
+│   │   ├── period-toggle/          # Week/Month/Year selector
+│   │   └── coming-soon-badge/      # Feature availability indicator
 │   └── pipes/
-│       └── format-number.pipe.ts  # 15400 → "15.4K"
+│       └── format-number.pipe.ts   # 15400 → "15.4K"
 └── features/
-    └── dashboard/           # Main dashboard feature
+    └── dashboard/
         ├── dashboard.component.ts  # Container with signal state
         └── components/
             ├── dashboard-header/
-            ├── reading-activity-chart/  # ApexCharts area+line
-            ├── peak-hours-heatmap/      # Pure CSS grid
-            ├── pipeline-card/           # Progress bars
-            ├── highlights-card/         # Donut chart
-            ├── most-highlighted/        # Article list
+            ├── reading-activity-chart/   # ApexCharts area+line
+            ├── peak-hours-heatmap/       # Pure CSS grid
+            ├── pipeline-card/            # Progress bars
+            ├── highlights-card/          # Donut chart
+            ├── most-highlighted/         # Article list
             └── dashboard-footer/
 ```
 
-### Key Patterns
+## Key Patterns
 
-**Standalone Components**: All components use `standalone: true`. No NgModules.
+**Standalone Components**: All use `standalone: true`. No NgModules.
 
-**Signal-based State**: Dashboard uses Angular signals for reactive state:
+**Signal-based State**:
 ```typescript
 readonly period = signal<Period>(30);
 readonly data = signal<DashboardData | null>(null);
-readonly loading = signal(true);
 ```
 
-**Computed Values**: Derived state via `computed()`:
-```typescript
-readonly wordsRead = computed(() => this.data()?.dashboard.summary.wordsRead ?? null);
-```
+**Computed Values**: Derived state via `computed()`.
 
-**Template Type Narrowing**: Use `@if (data(); as d)` for null-safe template access.
+**Template Type Narrowing**: Use `@if (data(); as d)` for null-safe access.
 
-### API Integration
+## Styling
 
-Services in `core/services/` call backend endpoints. Proxy configured in `proxy.conf.json`:
-- `/api/*` → `http://localhost:8080`
-- `/sync` → `http://localhost:8080`
-
-Response types match backend DTOs exactly (see `api.models.ts`).
-
-### Styling
-
-- **Tailwind CSS 4**: Utility-first, CSS-based config (no `tailwind.config.js`)
-- **Spartan UI**: Component library with `@spartan-ng/brain`
+- **Tailwind CSS 4**: CSS-based config (no `tailwind.config.js`)
+- **Spartan UI**: Component library (`@spartan-ng/brain`)
+- **Dark Mode**: Class strategy (`.dark` on `<html>`), localStorage persisted
 - **Theme Tokens**: CSS variables in `src/styles.css`
-- **Dark Mode**: Class strategy (`.dark` on `<html>`), persisted to localStorage
 
-### Charts
+## Charts
 
-Using `ng-apexcharts` wrapper:
+Using `ng-apexcharts`:
 ```typescript
 import { NgApexchartsModule } from 'ng-apexcharts';
-
-@Component({
-  imports: [NgApexchartsModule],
-  template: `<apx-chart [series]="series()" [chart]="chartOptions" />`
-})
 ```
 
-ApexCharts script loaded globally via `angular.json` scripts array.
+ApexCharts loaded globally via `angular.json` scripts array.
 
 ## Type Safety
 
 - All API responses have readonly interfaces
 - No `any` or `as` type assertions
-- Exhaustive switch statements use `never` checks
-- Null handling via proper type narrowing, not unsafe casts
-
-## Testing
-
-Vitest configured. Run with `bun run test`.
+- Exhaustive switch with `never` checks
+- Null handling via proper narrowing
