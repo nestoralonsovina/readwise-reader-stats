@@ -35,7 +35,7 @@ class TrackingEventListener(
                 wordCount = event.wordCount,
                 firstOpenedAt = event.firstOpenedAt,
                 lastOpenedAt = event.lastOpenedAt,
-                recordedAt = clock.instant()
+                recordedAt = event.updatedAt ?: clock.instant()
             )
         )
     }

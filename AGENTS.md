@@ -43,6 +43,47 @@ Database: PostgreSQL 16 on `localhost:5432`, database `readwise_analytics`, user
 - **Spring RestClient** for Readwise API integration
 - **GraalVM Native Image** support enabled
 
+## Readwise APIs
+
+This project integrates with two Readwise APIs:
+
+### Reader API (v3)
+Documents and articles from the Reader app.
+
+- **Documentation:** https://readwise.io/reader_api
+- **Base URL:** `https://readwise.io/api/v3/`
+- **Rate Limit:** 20 req/min (50 for create/update)
+
+| Endpoint | Method | Path |
+|----------|--------|------|
+| Create Document | POST | `/save/` |
+| List Documents | GET | `/list/` |
+| Update Document | PATCH | `/update/{id}/` |
+| Delete Document | DELETE | `/delete/{id}/` |
+| List Tags | GET | `/tags/` |
+
+### Highlights API (v2)
+Highlights from Kindle, books, articles, and other sources.
+
+- **Documentation:** https://readwise.io/api_deets
+- **Base URL:** `https://readwise.io/api/v2/`
+- **Rate Limit:** 240 req/min (20 for list endpoints)
+
+| Endpoint | Method | Path |
+|----------|--------|------|
+| Create Highlights | POST | `/highlights/` |
+| List Highlights | GET | `/highlights/` |
+| Export Highlights | GET | `/export/` |
+| List Books | GET | `/books/` |
+| Daily Review | GET | `/review/` |
+| Highlight/Book Tags | CRUD | `/{type}/{id}/tags/` |
+
+### Authentication
+All endpoints require: `Authorization: Token {ACCESS_TOKEN}`
+
+### API Testing
+Bruno collection available at `bruno/readwise/` with requests for all endpoints.
+
 ## Data Model
 
 ### Implemented Entities

@@ -26,10 +26,12 @@ class TrackingEventListenerTest {
 
     @Test
     fun `creates snapshot for new document with reading progress`() {
+        val updatedAt = Instant.parse("2024-01-15T08:30:00Z")
         val event = createDocumentSyncedEvent(
             id = "doc-1",
             readingProgress = 0.25,
-            wordCount = 1000
+            wordCount = 1000,
+            updatedAt = updatedAt
         )
 
         listener.onDocumentSynced(event)
@@ -39,6 +41,22 @@ class TrackingEventListenerTest {
         assertEquals("doc-1", snapshot.documentId)
         assertEquals(0.25, snapshot.readingProgress)
         assertEquals(1000, snapshot.wordCount)
+        assertEquals(updatedAt, snapshot.recordedAt)
+    }
+
+    @Test
+    fun `uses clock when updatedAt is null`() {
+        val event = createDocumentSyncedEvent(
+            id = "doc-1",
+            readingProgress = 0.25,
+            wordCount = 1000,
+            updatedAt = null
+        )
+
+        listener.onDocumentSynced(event)
+
+        val snapshot = trackingStore.findLatestSnapshot("doc-1")
+        assertNotNull(snapshot)
         assertEquals(fixedClock.instant(), snapshot.recordedAt)
     }
 
@@ -86,10 +104,12 @@ class TrackingEventListenerTest {
         )
 
         // Event with changed progress
+        val updatedAt = Instant.parse("2024-01-15T14:00:00Z")
         val event = createDocumentSyncedEvent(
             id = "doc-1",
             readingProgress = 0.75,
-            wordCount = 1000
+            wordCount = 1000,
+            updatedAt = updatedAt
         )
 
         listener.onDocumentSynced(event)
@@ -101,7 +121,7 @@ class TrackingEventListenerTest {
         val latest = trackingStore.findLatestSnapshot("doc-1")
         assertNotNull(latest)
         assertEquals(0.75, latest.readingProgress)
-        assertEquals(fixedClock.instant(), latest.recordedAt)
+        assertEquals(updatedAt, latest.recordedAt)
     }
 
     @Test
@@ -181,7 +201,8 @@ class TrackingEventListenerTest {
         readingProgress: Double? = null,
         wordCount: Int? = null,
         location: String? = "new",
-        category: String? = "article"
+        category: String? = "article",
+        updatedAt: Instant? = Instant.now()
     ) = DocumentSyncedEvent(
         id = id,
         url = "https://example.com/$id",
@@ -192,7 +213,7 @@ class TrackingEventListenerTest {
         readingProgress = readingProgress,
         wordCount = wordCount,
         savedAt = Instant.now(),
-        updatedAt = Instant.now(),
+        updatedAt = updatedAt,
         firstOpenedAt = null,
         lastOpenedAt = null,
         tags = emptyList(),
