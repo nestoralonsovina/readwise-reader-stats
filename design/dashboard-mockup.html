@@ -50,11 +50,12 @@
     .dark .apexcharts-xaxis-tick { stroke: #374151 !important; }
   </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen flex">
 
-  <!-- Header -->
-  <header class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+  <!-- Sidebar -->
+  <aside class="fixed inset-y-0 left-0 w-56 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col z-10">
+    <!-- Logo -->
+    <div class="p-4 border-b border-gray-200 dark:border-gray-800">
       <div class="flex items-center gap-3">
         <div class="w-8 h-8 rounded-lg bg-accent-500 flex items-center justify-center">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,6 +64,73 @@
         </div>
         <span class="font-semibold text-lg">Reader Analytics</span>
       </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 p-3 space-y-1">
+      <!-- Dashboard - Active -->
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-400 font-medium">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+        </svg>
+        Dashboard
+      </a>
+
+      <!-- Reading Stats -->
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        Reading Stats
+      </a>
+
+      <!-- Content Pipeline -->
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+        Content Pipeline
+      </a>
+
+      <!-- Highlights -->
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+        </svg>
+        Highlights
+      </a>
+
+      <div class="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
+        <!-- Library -->
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          Library
+        </a>
+      </div>
+    </nav>
+
+    <!-- Settings -->
+    <div class="p-3 border-t border-gray-200 dark:border-gray-800">
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Settings
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 ml-56">
+
+  <!-- Header -->
+  <header class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <!-- Last synced moved to header left -->
+      <span class="text-sm text-gray-500 dark:text-gray-400">Last synced: 2 minutes ago</span>
 
       <div class="flex items-center gap-4">
         <!-- Period Selector -->
@@ -210,11 +278,9 @@
       </div>
     </div>
 
-    <!-- Charts Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-
-      <!-- Reading Activity Chart (spans 2 cols) -->
-      <div class="lg:col-span-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+    <!-- Reading Activity Chart (full width) -->
+    <div class="mb-6">
+      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
         <div class="flex items-center justify-between mb-4">
           <h3 class="font-semibold">Reading Activity</h3>
           <div class="flex items-center gap-4 text-sm">
@@ -229,111 +295,6 @@
           </div>
         </div>
         <div id="chart-activity" class="h-64"></div>
-      </div>
-
-      <!-- Peak Hours Heatmap -->
-      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-semibold">Peak Hours</h3>
-          <span class="text-xs text-gray-500 dark:text-gray-400">Last 30 days</span>
-        </div>
-        <div class="space-y-1">
-          <!-- Heatmap grid -->
-          <div class="flex items-center gap-1">
-            <span class="text-xs text-gray-500 w-12">6 AM</span>
-            <div class="flex-1 grid grid-cols-7 gap-1">
-              <div class="aspect-square rounded bg-accent-100 dark:bg-accent-900/20"></div>
-              <div class="aspect-square rounded bg-accent-100 dark:bg-accent-900/20"></div>
-              <div class="aspect-square rounded bg-accent-200 dark:bg-accent-900/40"></div>
-              <div class="aspect-square rounded bg-accent-100 dark:bg-accent-900/20"></div>
-              <div class="aspect-square rounded bg-accent-100 dark:bg-accent-900/20"></div>
-              <div class="aspect-square rounded bg-accent-300 dark:bg-accent-800/50"></div>
-              <div class="aspect-square rounded bg-accent-200 dark:bg-accent-900/40"></div>
-            </div>
-          </div>
-          <div class="flex items-center gap-1">
-            <span class="text-xs text-gray-500 w-12">9 AM</span>
-            <div class="flex-1 grid grid-cols-7 gap-1">
-              <div class="aspect-square rounded bg-accent-400 dark:bg-accent-700/60"></div>
-              <div class="aspect-square rounded bg-accent-500 dark:bg-accent-600/70"></div>
-              <div class="aspect-square rounded bg-accent-500 dark:bg-accent-600/70"></div>
-              <div class="aspect-square rounded bg-accent-400 dark:bg-accent-700/60"></div>
-              <div class="aspect-square rounded bg-accent-500 dark:bg-accent-600/70"></div>
-              <div class="aspect-square rounded bg-accent-200 dark:bg-accent-900/40"></div>
-              <div class="aspect-square rounded bg-accent-100 dark:bg-accent-900/20"></div>
-            </div>
-          </div>
-          <div class="flex items-center gap-1">
-            <span class="text-xs text-gray-500 w-12">12 PM</span>
-            <div class="flex-1 grid grid-cols-7 gap-1">
-              <div class="aspect-square rounded bg-accent-300 dark:bg-accent-800/50"></div>
-              <div class="aspect-square rounded bg-accent-400 dark:bg-accent-700/60"></div>
-              <div class="aspect-square rounded bg-accent-300 dark:bg-accent-800/50"></div>
-              <div class="aspect-square rounded bg-accent-400 dark:bg-accent-700/60"></div>
-              <div class="aspect-square rounded bg-accent-300 dark:bg-accent-800/50"></div>
-              <div class="aspect-square rounded bg-accent-200 dark:bg-accent-900/40"></div>
-              <div class="aspect-square rounded bg-accent-200 dark:bg-accent-900/40"></div>
-            </div>
-          </div>
-          <div class="flex items-center gap-1">
-            <span class="text-xs text-gray-500 w-12">3 PM</span>
-            <div class="flex-1 grid grid-cols-7 gap-1">
-              <div class="aspect-square rounded bg-accent-200 dark:bg-accent-900/40"></div>
-              <div class="aspect-square rounded bg-accent-300 dark:bg-accent-800/50"></div>
-              <div class="aspect-square rounded bg-accent-200 dark:bg-accent-900/40"></div>
-              <div class="aspect-square rounded bg-accent-300 dark:bg-accent-800/50"></div>
-              <div class="aspect-square rounded bg-accent-200 dark:bg-accent-900/40"></div>
-              <div class="aspect-square rounded bg-accent-100 dark:bg-accent-900/20"></div>
-              <div class="aspect-square rounded bg-accent-100 dark:bg-accent-900/20"></div>
-            </div>
-          </div>
-          <div class="flex items-center gap-1">
-            <span class="text-xs text-gray-500 w-12">6 PM</span>
-            <div class="flex-1 grid grid-cols-7 gap-1">
-              <div class="aspect-square rounded bg-accent-400 dark:bg-accent-700/60"></div>
-              <div class="aspect-square rounded bg-accent-300 dark:bg-accent-800/50"></div>
-              <div class="aspect-square rounded bg-accent-400 dark:bg-accent-700/60"></div>
-              <div class="aspect-square rounded bg-accent-400 dark:bg-accent-700/60"></div>
-              <div class="aspect-square rounded bg-accent-500 dark:bg-accent-600/70"></div>
-              <div class="aspect-square rounded bg-accent-500 dark:bg-accent-600/70"></div>
-              <div class="aspect-square rounded bg-accent-400 dark:bg-accent-700/60"></div>
-            </div>
-          </div>
-          <div class="flex items-center gap-1">
-            <span class="text-xs text-gray-500 w-12">9 PM</span>
-            <div class="flex-1 grid grid-cols-7 gap-1">
-              <div class="aspect-square rounded bg-accent-600 dark:bg-accent-500/80"></div>
-              <div class="aspect-square rounded bg-accent-500 dark:bg-accent-600/70"></div>
-              <div class="aspect-square rounded bg-accent-600 dark:bg-accent-500/80"></div>
-              <div class="aspect-square rounded bg-accent-600 dark:bg-accent-500/80"></div>
-              <div class="aspect-square rounded bg-accent-500 dark:bg-accent-600/70"></div>
-              <div class="aspect-square rounded bg-accent-600 dark:bg-accent-500/80"></div>
-              <div class="aspect-square rounded bg-accent-600 dark:bg-accent-500/80"></div>
-            </div>
-          </div>
-          <!-- Day labels -->
-          <div class="flex items-center gap-1 mt-2">
-            <span class="w-12"></span>
-            <div class="flex-1 grid grid-cols-7 gap-1 text-xs text-gray-500 text-center">
-              <span>Mon</span>
-              <span>Tue</span>
-              <span>Wed</span>
-              <span>Thu</span>
-              <span>Fri</span>
-              <span>Sat</span>
-              <span>Sun</span>
-            </div>
-          </div>
-        </div>
-        <!-- Legend -->
-        <div class="flex items-center justify-end gap-1 mt-4 text-xs text-gray-500">
-          <span>Less</span>
-          <div class="w-3 h-3 rounded bg-accent-100 dark:bg-accent-900/20"></div>
-          <div class="w-3 h-3 rounded bg-accent-300 dark:bg-accent-800/50"></div>
-          <div class="w-3 h-3 rounded bg-accent-500 dark:bg-accent-600/70"></div>
-          <div class="w-3 h-3 rounded bg-accent-600 dark:bg-accent-500/80"></div>
-          <span>More</span>
-        </div>
       </div>
     </div>
 
@@ -511,8 +472,7 @@
 
     <!-- Footer Stats -->
     <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-800">
-      <div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-        <span>Last synced: 2 minutes ago</span>
+      <div class="flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
         <div class="flex items-center gap-6">
           <span>502 documents</span>
           <span>1,247 highlights</span>
@@ -521,6 +481,7 @@
       </div>
     </div>
   </main>
+  </div> <!-- End Main Content wrapper -->
 
   <script>
     // Theme toggle
