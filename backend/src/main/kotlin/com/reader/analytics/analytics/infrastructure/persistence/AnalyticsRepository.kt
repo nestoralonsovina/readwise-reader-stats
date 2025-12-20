@@ -322,9 +322,9 @@ class AnalyticsRepository(
         val total = jdbcTemplate.queryForObject(totalSql, Int::class.java) ?: 0
 
         val withNotesSql = """
-            SELECT COUNT(DISTINCT h.readwise_id)
+            SELECT COUNT(DISTINCT h.id)
             FROM highlights h
-            WHERE EXISTS (SELECT 1 FROM notes n WHERE n.parent_id = h.readwise_id)
+            WHERE EXISTS (SELECT 1 FROM notes n WHERE n.highlight_id = h.id)
         """.trimIndent()
         val withNotes = jdbcTemplate.queryForObject(withNotesSql, Int::class.java) ?: 0
 
@@ -348,7 +348,7 @@ class AnalyticsRepository(
             SELECT COALESCE(AVG(highlight_count), 0) FROM (
                 SELECT COUNT(*) AS highlight_count
                 FROM highlights
-                GROUP BY document_readwise_id
+                GROUP BY document_id
             ) AS doc_counts
         """.trimIndent()
         val avg = jdbcTemplate.queryForObject(avgSql, Double::class.java) ?: 0.0
@@ -371,12 +371,12 @@ class AnalyticsRepository(
                 d.image_url,
                 COUNT(h.id) AS highlight_count,
                 BOOL_OR(EXISTS (
-                    SELECT 1 FROM notes n WHERE n.parent_id = h.readwise_id
+                    SELECT 1 FROM notes n WHERE n.highlight_id = h.id
                 )) OR EXISTS (
-                    SELECT 1 FROM notes n WHERE n.parent_id = d.readwise_id
+                    SELECT 1 FROM notes n WHERE n.document_id = d.id
                 ) AS has_notes
             FROM documents d
-            JOIN highlights h ON h.document_readwise_id = d.readwise_id
+            JOIN highlights h ON h.document_id = d.id
             GROUP BY d.id, d.readwise_id, d.title, d.category, d.image_url
             ORDER BY highlight_count DESC
             LIMIT ?

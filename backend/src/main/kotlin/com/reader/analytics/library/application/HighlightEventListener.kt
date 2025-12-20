@@ -14,22 +14,28 @@ class HighlightEventListener(
     @EventListener
     @Transactional
     fun onHighlightSynced(event: HighlightSyncedEvent) {
+        val document = documentStore.findByReadwiseId(event.documentId)
+            ?: throw IllegalStateException(
+                "Document not found for highlight. " +
+                "documentId=${event.documentId}, highlightId=${event.id}. " +
+                "Ensure full sync completes before using app."
+            )
+
         val existingHighlight = documentStore.findHighlightByReadwiseId(event.id)
 
-        val highlight = if (existingHighlight != null) {
-            existingHighlight.copy(
-                text = event.text,
-                highlightedAt = event.highlightedAt
-            )
+        if (existingHighlight != null) {
+            existingHighlight.document = document
+            existingHighlight.text = event.text
+            existingHighlight.highlightedAt = event.highlightedAt
+            documentStore.saveHighlight(existingHighlight)
         } else {
-            Highlight(
+            val highlight = Highlight(
                 readwiseId = event.id,
-                documentReadwiseId = event.documentId,
+                document = document,
                 text = event.text,
                 highlightedAt = event.highlightedAt
             )
+            documentStore.saveHighlight(highlight)
         }
-
-        documentStore.saveHighlight(highlight)
     }
 }

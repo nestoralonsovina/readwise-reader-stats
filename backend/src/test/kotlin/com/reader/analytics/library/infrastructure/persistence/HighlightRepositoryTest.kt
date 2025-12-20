@@ -19,7 +19,7 @@ class HighlightRepositoryTest {
     private lateinit var documentRepository: DocumentRepository
 
     @Test
-    fun `saves and retrieves highlight by id`() {
+    fun `saves and retrieves highlight with document reference`() {
         val document = documentRepository.save(Document(
             readwiseId = "rw-doc-1",
             url = "https://example.com/article"
@@ -27,7 +27,7 @@ class HighlightRepositoryTest {
 
         val highlight = Highlight(
             readwiseId = "rw-hl-123",
-            documentReadwiseId = document.readwiseId,
+            document = document,
             text = "This is highlighted text",
             highlightedAt = Instant.parse("2024-01-15T10:00:00Z")
         )
@@ -38,7 +38,7 @@ class HighlightRepositoryTest {
         assertNotNull(retrieved)
         assertEquals("rw-hl-123", retrieved.readwiseId)
         assertEquals("This is highlighted text", retrieved.text)
-        assertEquals(document.readwiseId, retrieved.documentReadwiseId)
+        assertEquals(document.id, retrieved.document.id)
     }
 
     @Test
@@ -50,7 +50,7 @@ class HighlightRepositoryTest {
 
         highlightRepository.save(Highlight(
             readwiseId = "rw-hl-456",
-            documentReadwiseId = document.readwiseId,
+            document = document,
             text = "Another highlight"
         ))
 
@@ -58,24 +58,27 @@ class HighlightRepositoryTest {
 
         assertNotNull(found)
         assertEquals("Another highlight", found.text)
-        assertEquals(document.readwiseId, found.documentReadwiseId)
+        assertEquals(document.id, found.document.id)
     }
 
     @Test
-    fun `can save highlight without existing document`() {
-        // Highlights can be saved independently of documents
-        // (they reference by readwiseId, not FK)
-        val highlight = Highlight(
-            readwiseId = "rw-hl-orphan",
-            documentReadwiseId = "rw-doc-not-yet-synced",
-            text = "Orphan highlight text"
-        )
+    fun `navigates from highlight to document`() {
+        val document = documentRepository.save(Document(
+            readwiseId = "rw-doc-nav",
+            url = "https://example.com/nav-test",
+            title = "Navigation Test Article"
+        ))
 
-        val saved = highlightRepository.save(highlight)
-        val retrieved = highlightRepository.findByReadwiseId("rw-hl-orphan")
+        highlightRepository.save(Highlight(
+            readwiseId = "rw-hl-nav",
+            document = document,
+            text = "Navigable highlight"
+        ))
 
-        assertNotNull(retrieved)
-        assertEquals("Orphan highlight text", retrieved.text)
-        assertEquals("rw-doc-not-yet-synced", retrieved.documentReadwiseId)
+        val found = highlightRepository.findByReadwiseId("rw-hl-nav")
+
+        assertNotNull(found)
+        assertEquals("Navigation Test Article", found.document.title)
+        assertEquals("rw-doc-nav", found.document.readwiseId)
     }
 }

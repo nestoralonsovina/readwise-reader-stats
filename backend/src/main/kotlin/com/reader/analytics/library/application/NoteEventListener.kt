@@ -1,5 +1,7 @@
 package com.reader.analytics.library.application
 
+import com.reader.analytics.library.domain.Document
+import com.reader.analytics.library.domain.Highlight
 import com.reader.analytics.library.domain.Note
 import com.reader.analytics.sync.domain.events.NoteSyncedEvent
 import org.springframework.context.event.EventListener
@@ -14,23 +16,43 @@ class NoteEventListener(
     @EventListener
     @Transactional
     fun onNoteSynced(event: NoteSyncedEvent) {
+        val (document, highlight) = resolveParent(event.parentId)
+
         val existingNote = documentStore.findNoteByReadwiseId(event.id)
 
-        val note = if (existingNote != null) {
-            existingNote.copy(
-                parentId = event.parentId,
-                content = event.content,
-                createdAt = event.createdAt
-            )
+        if (existingNote != null) {
+            existingNote.document = document
+            existingNote.highlight = highlight
+            existingNote.content = event.content
+            existingNote.createdAt = event.createdAt
+            documentStore.saveNote(existingNote)
         } else {
-            Note(
+            val note = Note(
                 readwiseId = event.id,
-                parentId = event.parentId,
+                document = document,
+                highlight = highlight,
                 content = event.content,
                 createdAt = event.createdAt
             )
+            documentStore.saveNote(note)
+        }
+    }
+
+    private fun resolveParent(parentId: String): Pair<Document?, Highlight?> {
+        val highlight = documentStore.findHighlightByReadwiseId(parentId)
+        if (highlight != null) {
+            return null to highlight
         }
 
-        documentStore.saveNote(note)
+        val document = documentStore.findByReadwiseId(parentId)
+        if (document != null) {
+            return document to null
+        }
+
+        throw IllegalStateException(
+            "Parent not found for note. parentId=$parentId. " +
+            "Expected either a Document or Highlight with this readwiseId. " +
+            "Ensure full sync completes before using app."
+        )
     }
 }

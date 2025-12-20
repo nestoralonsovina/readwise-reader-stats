@@ -169,20 +169,22 @@ class DocumentEventListenerTest {
             highlights[readwiseId]
 
         override fun saveHighlight(highlight: Highlight): Highlight {
-            val id = highlight.id ?: UUID.randomUUID()
-            val saved = highlight.copy(id = id)
-            highlights[highlight.readwiseId] = saved
-            return saved
+            if (highlight.id == null) {
+                highlight.id = UUID.randomUUID()
+            }
+            highlights[highlight.readwiseId] = highlight
+            return highlight
         }
 
         override fun findNoteByReadwiseId(readwiseId: String): Note? =
             notes[readwiseId]
 
         override fun saveNote(note: Note): Note {
-            val id = note.id ?: UUID.randomUUID()
-            val saved = note.copy(id = id)
-            notes[note.readwiseId] = saved
-            return saved
+            if (note.id == null) {
+                note.id = UUID.randomUUID()
+            }
+            notes[note.readwiseId] = note
+            return note
         }
     }
 }

@@ -7,10 +7,13 @@ import com.reader.analytics.library.domain.Tag
 import com.reader.analytics.sync.domain.events.NoteSyncedEvent
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.time.Instant
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertSame
 
 class NoteEventListenerTest {
 
@@ -24,7 +27,14 @@ class NoteEventListenerTest {
     }
 
     @Test
-    fun `creates new note from sync event`() {
+    fun `creates note linked to highlight`() {
+        val document = documentStore.save(
+            Document(readwiseId = "rw-doc-123", url = "https://example.com/article")
+        )
+        val highlight = documentStore.saveHighlight(
+            Highlight(readwiseId = "rw-hl-456", document = document, text = "Some text")
+        )
+
         val event = NoteSyncedEvent(
             id = "rw-note-123",
             parentId = "rw-hl-456",
@@ -37,16 +47,45 @@ class NoteEventListenerTest {
         val saved = documentStore.findNoteByReadwiseId("rw-note-123")
         assertNotNull(saved)
         assertEquals("This is my annotation", saved.content)
-        assertEquals("rw-hl-456", saved.parentId)
+        assertSame(highlight, saved.highlight)
+        assertNull(saved.document)
         assertEquals(Instant.parse("2024-01-15T10:00:00Z"), saved.createdAt)
     }
 
     @Test
+    fun `creates note linked to document`() {
+        val document = documentStore.save(
+            Document(readwiseId = "rw-doc-789", url = "https://example.com/article")
+        )
+
+        val event = NoteSyncedEvent(
+            id = "rw-note-doc",
+            parentId = "rw-doc-789",
+            content = "Note directly on document",
+            createdAt = Instant.parse("2024-01-15T10:00:00Z")
+        )
+
+        listener.onNoteSynced(event)
+
+        val saved = documentStore.findNoteByReadwiseId("rw-note-doc")
+        assertNotNull(saved)
+        assertEquals("Note directly on document", saved.content)
+        assertSame(document, saved.document)
+        assertNull(saved.highlight)
+    }
+
+    @Test
     fun `updates existing note on re-sync`() {
+        val document = documentStore.save(
+            Document(readwiseId = "rw-doc-123", url = "https://example.com/article")
+        )
+        val highlight = documentStore.saveHighlight(
+            Highlight(readwiseId = "rw-hl-123", document = document, text = "Some text")
+        )
         val existingNote = Note(
             id = UUID.randomUUID(),
             readwiseId = "rw-note-existing",
-            parentId = "rw-hl-123",
+            highlight = highlight,
             content = "Original content"
         )
         documentStore.saveNote(existingNote)
@@ -67,7 +106,30 @@ class NoteEventListenerTest {
     }
 
     @Test
+    fun `fails fast when parent not found`() {
+        val event = NoteSyncedEvent(
+            id = "rw-note-orphan",
+            parentId = "rw-unknown-parent",
+            content = "Orphan note",
+            createdAt = null
+        )
+
+        val exception = assertThrows<IllegalStateException> {
+            listener.onNoteSynced(event)
+        }
+
+        assertEquals(
+            "Parent not found for note. parentId=rw-unknown-parent. Expected either a Document or Highlight with this readwiseId. Ensure full sync completes before using app.",
+            exception.message
+        )
+    }
+
+    @Test
     fun `handles note with null createdAt`() {
+        val document = documentStore.save(
+            Document(readwiseId = "rw-doc-789", url = "https://example.com/article")
+        )
+
         val event = NoteSyncedEvent(
             id = "rw-note-no-date",
             parentId = "rw-doc-789",
@@ -93,10 +155,13 @@ class NoteEventListenerTest {
             documents[readwiseId]
 
         override fun save(document: Document): Document {
-            val id = document.id ?: UUID.randomUUID()
-            val saved = document.copy(id = id)
-            documents[document.readwiseId] = saved
-            return saved
+            if (document.id == null) {
+                val field = Document::class.java.getDeclaredField("id")
+                field.isAccessible = true
+                field.set(document, UUID.randomUUID())
+            }
+            documents[document.readwiseId] = document
+            return document
         }
 
         override fun findOrCreateTags(tagNames: List<String>): MutableSet<Tag> {
@@ -109,20 +174,22 @@ class NoteEventListenerTest {
             highlights[readwiseId]
 
         override fun saveHighlight(highlight: Highlight): Highlight {
-            val id = highlight.id ?: UUID.randomUUID()
-            val saved = highlight.copy(id = id)
-            highlights[highlight.readwiseId] = saved
-            return saved
+            if (highlight.id == null) {
+                highlight.id = UUID.randomUUID()
+            }
+            highlights[highlight.readwiseId] = highlight
+            return highlight
         }
 
         override fun findNoteByReadwiseId(readwiseId: String): Note? =
             notes[readwiseId]
 
         override fun saveNote(note: Note): Note {
-            val id = note.id ?: UUID.randomUUID()
-            val saved = note.copy(id = id)
-            notes[note.readwiseId] = saved
-            return saved
+            if (note.id == null) {
+                note.id = UUID.randomUUID()
+            }
+            notes[note.readwiseId] = note
+            return note
         }
     }
 }

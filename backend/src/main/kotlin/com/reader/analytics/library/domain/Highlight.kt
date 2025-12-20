@@ -6,19 +6,31 @@ import java.util.UUID
 
 @Entity
 @Table(name = "highlights")
-data class Highlight(
+class Highlight(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID? = null,
+    var id: UUID? = null,
 
     @Column(unique = true, nullable = false)
     val readwiseId: String,
 
-    @Column(name = "document_readwise_id", nullable = false)
-    val documentReadwiseId: String,
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "document_id", nullable = false)
+    var document: Document,
 
     @Column(columnDefinition = "TEXT", nullable = false)
-    val text: String,
+    var text: String,
 
-    val highlightedAt: Instant? = null
-)
+    var highlightedAt: Instant? = null
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Highlight) return false
+        return readwiseId == other.readwiseId
+    }
+
+    override fun hashCode(): Int = readwiseId.hashCode()
+
+    override fun toString(): String =
+        "Highlight(readwiseId='$readwiseId', text='${text.take(50)}...')"
+}

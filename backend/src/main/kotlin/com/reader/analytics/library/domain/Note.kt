@@ -6,19 +6,41 @@ import java.util.UUID
 
 @Entity
 @Table(name = "notes")
-data class Note(
+class Note(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID? = null,
+    var id: UUID? = null,
 
     @Column(unique = true, nullable = false)
     val readwiseId: String,
 
-    @Column(nullable = false)
-    val parentId: String,
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "document_id")
+    var document: Document? = null,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "highlight_id")
+    var highlight: Highlight? = null,
 
     @Column(columnDefinition = "TEXT", nullable = false)
-    val content: String,
+    var content: String,
 
-    val createdAt: Instant? = null
-)
+    var createdAt: Instant? = null
+) {
+    init {
+        require((document != null) xor (highlight != null)) {
+            "Note must have exactly one parent: either document or highlight, not both or neither"
+        }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Note) return false
+        return readwiseId == other.readwiseId
+    }
+
+    override fun hashCode(): Int = readwiseId.hashCode()
+
+    override fun toString(): String =
+        "Note(readwiseId='$readwiseId', content='${content.take(50)}...')"
+}
