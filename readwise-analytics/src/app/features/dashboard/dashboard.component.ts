@@ -112,8 +112,8 @@ interface DashboardData {
         <!-- Reading Activity Chart (full width) -->
         <app-reading-activity-chart [data]="readingStats()" />
 
-        <!-- Bottom Row -->
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <!-- Bottom Row: Pipeline, Highlights, Most Highlighted -->
+        <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
           <app-pipeline-card [data]="pipeline()" />
           <app-highlights-card [data]="highlights()" />
           <app-most-highlighted [documents]="topDocuments()" />

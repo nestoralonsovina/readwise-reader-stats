@@ -8,7 +8,6 @@ import {
   ApexXAxis,
   ApexYAxis,
   ApexStroke,
-  ApexFill,
   ApexDataLabels,
   ApexTooltip,
   ApexGrid,
@@ -41,7 +40,6 @@ import {
           [xaxis]="xaxis()"
           [yaxis]="yaxis()"
           [stroke]="strokeOptions"
-          [fill]="fillOptions"
           [dataLabels]="dataLabels"
           [tooltip]="tooltipOptions()"
           [grid]="gridOptions()"
@@ -59,8 +57,6 @@ import {
 export class ReadingActivityChartComponent {
   private static readonly CHART_HEIGHT = 256;
   private static readonly STROKE_WIDTH = 3;
-  private static readonly GRADIENT_OPACITY_FROM = 0.4;
-  private static readonly GRADIENT_OPACITY_TO = 0.1;
   private static readonly GRID_DASH_ARRAY = 4;
 
   private static readonly COLORS = {
@@ -81,7 +77,7 @@ export class ReadingActivityChartComponent {
     return [
       {
         name: 'Words Read',
-        type: 'area',
+        type: 'line',
         data: stats.map((s) => s.wordsRead),
       },
       {
@@ -150,16 +146,7 @@ export class ReadingActivityChartComponent {
 
   readonly strokeOptions: ApexStroke = {
     curve: 'smooth',
-    width: [0, ReadingActivityChartComponent.STROKE_WIDTH],
-  };
-
-  readonly fillOptions: ApexFill = {
-    type: ['gradient', 'solid'],
-    gradient: {
-      shadeIntensity: 1,
-      opacityFrom: ReadingActivityChartComponent.GRADIENT_OPACITY_FROM,
-      opacityTo: ReadingActivityChartComponent.GRADIENT_OPACITY_TO,
-    },
+    width: ReadingActivityChartComponent.STROKE_WIDTH,
   };
 
   readonly colors = [
