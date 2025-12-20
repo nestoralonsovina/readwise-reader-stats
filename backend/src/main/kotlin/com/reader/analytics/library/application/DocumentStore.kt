@@ -4,9 +4,11 @@ import com.reader.analytics.library.domain.Document
 import com.reader.analytics.library.domain.Highlight
 import com.reader.analytics.library.domain.Note
 import com.reader.analytics.library.domain.Tag
+import java.util.UUID
 
 interface DocumentStore {
     fun findByReadwiseId(readwiseId: String): Document?
+    fun findById(id: UUID): Document?
     fun save(document: Document): Document
     fun findOrCreateTags(tagNames: List<String>): MutableSet<Tag>
 

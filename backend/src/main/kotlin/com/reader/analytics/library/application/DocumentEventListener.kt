@@ -28,6 +28,8 @@ class DocumentEventListener(
                 wordCount = event.wordCount,
                 savedAt = event.savedAt,
                 updatedAt = event.updatedAt,
+                firstOpenedAt = event.firstOpenedAt,
+                lastOpenedAt = event.lastOpenedAt,
                 parentId = event.parentId,
                 imageUrl = event.imageUrl,
                 tags = tags
@@ -44,6 +46,8 @@ class DocumentEventListener(
                 wordCount = event.wordCount,
                 savedAt = event.savedAt,
                 updatedAt = event.updatedAt,
+                firstOpenedAt = event.firstOpenedAt,
+                lastOpenedAt = event.lastOpenedAt,
                 parentId = event.parentId,
                 imageUrl = event.imageUrl,
                 tags = tags

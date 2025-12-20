@@ -4,6 +4,7 @@ import com.reader.analytics.analytics.application.AnalyticsService
 import com.reader.analytics.analytics.domain.DateRange
 import com.reader.analytics.analytics.domain.Granularity
 import com.reader.analytics.api.dto.*
+import com.reader.analytics.shared.UrlUtils
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/analytics")
@@ -307,6 +309,113 @@ class AnalyticsController(
                     hasNotes = it.hasNotes
                 )
             }
+        )
+    }
+
+    @GetMapping("/drill-down/words-read")
+    @Operation(
+        summary = "Get documents contributing to words read",
+        description = "Returns documents that contributed to words read in the specified period."
+    )
+    fun getWordsReadDrillDown(
+        @RequestParam(required = false) startDate: String?,
+        @RequestParam(required = false) endDate: String?,
+        @RequestParam(required = false) cursor: String?,
+        @RequestParam(defaultValue = "20") limit: Int
+    ): WordsReadDrillDownResponse {
+        val dateRange = parseDateRange(startDate, endDate)
+        val cursorUuid = cursor?.let { UUID.fromString(it) }
+        val result = analyticsService.getWordsReadDrillDown(dateRange, cursorUuid, limit)
+
+        return WordsReadDrillDownResponse(
+            summary = DrillDownSummaryDto(
+                total = result.total,
+                changePercent = result.changePercent
+            ),
+            documents = result.documents.items.map { doc ->
+                WordsReadDocumentDto(
+                    id = doc.id.toString(),
+                    title = doc.title,
+                    author = doc.author,
+                    source = UrlUtils.extractDomain(doc.url),
+                    coverUrl = doc.imageUrl,
+                    category = doc.category,
+                    wordsRead = doc.wordsRead,
+                    readingProgress = (doc.readingProgress * 100).toInt()
+                )
+            },
+            hasMore = result.documents.hasMore,
+            nextCursor = result.documents.nextCursor?.toString()
+        )
+    }
+
+    @GetMapping("/drill-down/completed")
+    @Operation(
+        summary = "Get completed documents",
+        description = "Returns documents completed (reading progress = 100%) in the specified period."
+    )
+    fun getCompletedDrillDown(
+        @RequestParam(required = false) startDate: String?,
+        @RequestParam(required = false) endDate: String?,
+        @RequestParam(required = false) cursor: String?,
+        @RequestParam(defaultValue = "20") limit: Int
+    ): CompletedDrillDownResponse {
+        val dateRange = parseDateRange(startDate, endDate)
+        val cursorUuid = cursor?.let { UUID.fromString(it) }
+        val result = analyticsService.getCompletedDrillDown(dateRange, cursorUuid, limit)
+
+        return CompletedDrillDownResponse(
+            summary = DrillDownSummaryDto(
+                total = result.total.toLong(),
+                changePercent = result.changePercent
+            ),
+            documents = result.documents.items.map { doc ->
+                CompletedDocumentDto(
+                    id = doc.id.toString(),
+                    title = doc.title,
+                    author = doc.author,
+                    source = UrlUtils.extractDomain(doc.url),
+                    coverUrl = doc.imageUrl,
+                    category = doc.category,
+                    completedAt = doc.completedAt.toString()
+                )
+            },
+            hasMore = result.documents.hasMore,
+            nextCursor = result.documents.nextCursor?.toString()
+        )
+    }
+
+    @GetMapping("/drill-down/backlog")
+    @Operation(
+        summary = "Get backlog documents",
+        description = "Returns documents in backlog (unread or minimally read), sorted oldest first."
+    )
+    fun getBacklogDrillDown(
+        @RequestParam(required = false) cursor: String?,
+        @RequestParam(defaultValue = "20") limit: Int
+    ): BacklogDrillDownResponse {
+        val cursorUuid = cursor?.let { UUID.fromString(it) }
+        val result = analyticsService.getBacklogDrillDown(cursorUuid, limit)
+
+        return BacklogDrillDownResponse(
+            summary = DrillDownSummaryDto(
+                total = result.total.toLong(),
+                changePercent = result.changePercent
+            ),
+            documents = result.documents.items.map { doc ->
+                BacklogDocumentDto(
+                    id = doc.id.toString(),
+                    title = doc.title,
+                    author = doc.author,
+                    source = UrlUtils.extractDomain(doc.url),
+                    coverUrl = doc.imageUrl,
+                    category = doc.category,
+                    savedAt = doc.savedAt.toString(),
+                    daysWaiting = doc.daysWaiting
+                )
+            },
+            hasMore = result.documents.hasMore,
+            nextCursor = result.documents.nextCursor?.toString()
         )
     }
 

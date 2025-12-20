@@ -93,8 +93,8 @@ class DocumentEventListenerTest {
             wordCount = 1500,
             savedAt = Instant.parse("2024-01-10T10:00:00Z"),
             updatedAt = Instant.parse("2024-01-15T10:00:00Z"),
-            firstOpenedAt = null,
-            lastOpenedAt = null,
+            firstOpenedAt = Instant.parse("2024-01-12T09:00:00Z"),
+            lastOpenedAt = Instant.parse("2024-01-14T18:30:00Z"),
             tags = emptyList(),
             parentId = "parent-123",
             imageUrl = "https://example.com/image.jpg",
@@ -114,6 +114,8 @@ class DocumentEventListenerTest {
         assertEquals(1500, saved.wordCount)
         assertEquals(Instant.parse("2024-01-10T10:00:00Z"), saved.savedAt)
         assertEquals(Instant.parse("2024-01-15T10:00:00Z"), saved.updatedAt)
+        assertEquals(Instant.parse("2024-01-12T09:00:00Z"), saved.firstOpenedAt)
+        assertEquals(Instant.parse("2024-01-14T18:30:00Z"), saved.lastOpenedAt)
         assertEquals("parent-123", saved.parentId)
         assertEquals("https://example.com/image.jpg", saved.imageUrl)
     }
@@ -145,6 +147,7 @@ class DocumentEventListenerTest {
 
     class FakeDocumentStore : DocumentStore {
         private val documents = mutableMapOf<String, Document>()
+        private val documentsById = mutableMapOf<UUID, Document>()
         private val tags = mutableMapOf<String, Tag>()
         private val highlights = mutableMapOf<String, Highlight>()
         private val notes = mutableMapOf<String, Note>()
@@ -152,10 +155,14 @@ class DocumentEventListenerTest {
         override fun findByReadwiseId(readwiseId: String): Document? =
             documents[readwiseId]
 
+        override fun findById(id: UUID): Document? =
+            documentsById[id]
+
         override fun save(document: Document): Document {
             val id = document.id ?: UUID.randomUUID()
             val saved = document.copy(id = id)
             documents[document.readwiseId] = saved
+            documentsById[id] = saved
             return saved
         }
 

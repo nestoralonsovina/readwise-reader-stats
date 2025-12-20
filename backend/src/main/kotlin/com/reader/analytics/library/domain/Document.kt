@@ -25,6 +25,8 @@ data class Document(
     val wordCount: Int? = null,
     val savedAt: Instant? = null,
     val updatedAt: Instant? = null,
+    val firstOpenedAt: Instant? = null,
+    val lastOpenedAt: Instant? = null,
     val parentId: String? = null,
 
     @Column(length = 2048)

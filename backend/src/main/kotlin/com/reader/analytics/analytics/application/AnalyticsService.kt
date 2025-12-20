@@ -51,4 +51,62 @@ class AnalyticsService(
 
     fun getHighlightStats(dateRange: DateRange): HighlightStats =
         analyticsStore.getHighlightStats(dateRange)
+
+    fun getWordsReadDrillDown(
+        dateRange: DateRange,
+        cursor: java.util.UUID?,
+        limit: Int
+    ): WordsReadDrillDown {
+        val currentTotal = analyticsStore.getTotalWordsRead(dateRange)
+        val previousTotal = analyticsStore.getTotalWordsRead(dateRange.previousPeriod())
+        val documents = analyticsStore.getWordsReadDocuments(dateRange, cursor, limit)
+
+        val changePercent = if (previousTotal > 0) {
+            ((currentTotal - previousTotal).toDouble() / previousTotal) * 100
+        } else {
+            null
+        }
+
+        return WordsReadDrillDown(
+            total = currentTotal,
+            changePercent = changePercent,
+            documents = documents
+        )
+    }
+
+    fun getCompletedDrillDown(
+        dateRange: DateRange,
+        cursor: java.util.UUID?,
+        limit: Int
+    ): CompletedDrillDown {
+        val currentTotal = analyticsStore.getArticlesCompleted(dateRange)
+        val previousTotal = analyticsStore.getArticlesCompleted(dateRange.previousPeriod())
+        val documents = analyticsStore.getCompletedDocuments(dateRange, cursor, limit)
+
+        val changePercent = if (previousTotal > 0) {
+            ((currentTotal - previousTotal).toDouble() / previousTotal) * 100
+        } else {
+            null
+        }
+
+        return CompletedDrillDown(
+            total = currentTotal,
+            changePercent = changePercent,
+            documents = documents
+        )
+    }
+
+    fun getBacklogDrillDown(
+        cursor: java.util.UUID?,
+        limit: Int
+    ): BacklogDrillDown {
+        val total = analyticsStore.getBacklogCount()
+        val documents = analyticsStore.getBacklogDocuments(cursor, limit)
+
+        return BacklogDrillDown(
+            total = total,
+            changePercent = null,
+            documents = documents
+        )
+    }
 }

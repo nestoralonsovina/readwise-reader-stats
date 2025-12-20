@@ -7,6 +7,8 @@ import com.reader.analytics.library.domain.Note
 import com.reader.analytics.library.domain.Tag
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
+import kotlin.jvm.optionals.getOrNull
 
 @Component
 class JpaDocumentStore(
@@ -18,6 +20,9 @@ class JpaDocumentStore(
 
     override fun findByReadwiseId(readwiseId: String): Document? =
         documentRepository.findByReadwiseId(readwiseId)
+
+    override fun findById(id: UUID): Document? =
+        documentRepository.findById(id).getOrNull()
 
     override fun save(document: Document): Document =
         documentRepository.save(document)

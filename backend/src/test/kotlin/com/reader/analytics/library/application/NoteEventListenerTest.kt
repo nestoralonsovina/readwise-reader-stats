@@ -147,6 +147,7 @@ class NoteEventListenerTest {
 
     class FakeDocumentStore : DocumentStore {
         private val documents = mutableMapOf<String, Document>()
+        private val documentsById = mutableMapOf<UUID, Document>()
         private val tags = mutableMapOf<String, Tag>()
         private val highlights = mutableMapOf<String, Highlight>()
         private val notes = mutableMapOf<String, Note>()
@@ -154,13 +155,18 @@ class NoteEventListenerTest {
         override fun findByReadwiseId(readwiseId: String): Document? =
             documents[readwiseId]
 
+        override fun findById(id: UUID): Document? =
+            documentsById[id]
+
         override fun save(document: Document): Document {
+            val id = document.id ?: UUID.randomUUID()
             if (document.id == null) {
                 val field = Document::class.java.getDeclaredField("id")
                 field.isAccessible = true
-                field.set(document, UUID.randomUUID())
+                field.set(document, id)
             }
             documents[document.readwiseId] = document
+            documentsById[id] = document
             return document
         }
 

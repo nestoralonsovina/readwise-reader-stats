@@ -6,6 +6,7 @@ import com.reader.analytics.analytics.domain.Granularity
 import com.reader.analytics.analytics.domain.projections.*
 import org.springframework.stereotype.Component
 import java.time.Duration
+import java.util.UUID
 
 @Component
 class JpaAnalyticsStore(
@@ -140,4 +141,31 @@ class JpaAnalyticsStore(
         articlesProgressed = articlesProgressed,
         articlesCompleted = articlesCompleted
     )
+
+    override fun getWordsReadDocuments(
+        dateRange: DateRange,
+        cursor: UUID?,
+        limit: Int
+    ): DrillDownPage<WordsReadDocument> {
+        TODO("Not implemented")
+    }
+
+    override fun getCompletedDocuments(
+        dateRange: DateRange,
+        cursor: UUID?,
+        limit: Int
+    ): DrillDownPage<CompletedDocument> {
+        TODO("Not implemented")
+    }
+
+    override fun getBacklogDocuments(
+        cursor: UUID?,
+        limit: Int
+    ): DrillDownPage<BacklogDocument> {
+        TODO("Not implemented")
+    }
+
+    override fun getBacklogCount(): Int {
+        TODO("Not implemented")
+    }
 }

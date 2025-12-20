@@ -27,4 +27,24 @@ interface AnalyticsStore {
     fun getHighlightStats(dateRange: DateRange): HighlightStats
 
     fun getMostHighlightedDocuments(limit: Int): List<DocumentHighlightCount>
+
+    // Drill-down methods
+    fun getWordsReadDocuments(
+        dateRange: DateRange,
+        cursor: java.util.UUID?,
+        limit: Int
+    ): DrillDownPage<WordsReadDocument>
+
+    fun getCompletedDocuments(
+        dateRange: DateRange,
+        cursor: java.util.UUID?,
+        limit: Int
+    ): DrillDownPage<CompletedDocument>
+
+    fun getBacklogDocuments(
+        cursor: java.util.UUID?,
+        limit: Int
+    ): DrillDownPage<BacklogDocument>
+
+    fun getBacklogCount(): Int
 }

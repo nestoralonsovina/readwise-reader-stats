@@ -6,4 +6,5 @@ import java.util.UUID
 
 interface HighlightRepository : JpaRepository<Highlight, UUID> {
     fun findByReadwiseId(readwiseId: String): Highlight?
+    fun findByDocumentId(documentId: UUID): List<Highlight>
 }
