@@ -7,7 +7,5 @@ data class HighlightSyncedEvent(
     val documentId: String,
     val text: String,
     val note: String?,
-    val color: String?,
-    val location: Int?,
     val highlightedAt: Instant?
 )

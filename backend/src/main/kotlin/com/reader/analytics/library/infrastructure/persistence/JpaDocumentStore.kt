@@ -37,9 +37,6 @@ class JpaDocumentStore(
     override fun findHighlightByReadwiseId(readwiseId: String): Highlight? =
         highlightRepository.findByReadwiseId(readwiseId)
 
-    override fun findHighlightsByDocument(document: Document): List<Highlight> =
-        highlightRepository.findByDocument(document)
-
     override fun saveHighlight(highlight: Highlight): Highlight =
         highlightRepository.save(highlight)
 }

@@ -4,6 +4,7 @@ import com.reader.analytics.sync.domain.SyncCursor
 import com.reader.analytics.sync.domain.SyncLog
 import com.reader.analytics.sync.domain.SyncStatus
 import com.reader.analytics.sync.domain.events.DocumentSyncedEvent
+import com.reader.analytics.sync.domain.events.HighlightSyncedEvent
 import com.reader.analytics.sync.infrastructure.ReadwiseClient
 import com.reader.analytics.sync.infrastructure.readwise.dto.DocumentDto
 import org.junit.jupiter.api.BeforeEach
@@ -13,6 +14,7 @@ import java.time.Instant
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class SyncServiceTest {
 
@@ -142,12 +144,84 @@ class SyncServiceTest {
         assertEquals(lastOpened, event.lastOpenedAt)
     }
 
+    @Test
+    fun `partitions documents and highlights into separate events`() {
+        readwiseClient.documents = listOf(
+            createDocumentDto("doc-1", title = "Article 1", category = "article"),
+            createHighlightDto("hl-1", parentId = "doc-1", content = "Highlighted text")
+        )
+
+        syncService.sync()
+
+        assertEquals(2, eventPublisher.publishedEvents.size)
+        assertTrue(eventPublisher.publishedEvents[0] is DocumentSyncedEvent)
+        assertTrue(eventPublisher.publishedEvents[1] is HighlightSyncedEvent)
+
+        val docEvent = eventPublisher.publishedEvents[0] as DocumentSyncedEvent
+        val hlEvent = eventPublisher.publishedEvents[1] as HighlightSyncedEvent
+        assertEquals("doc-1", docEvent.id)
+        assertEquals("hl-1", hlEvent.id)
+        assertEquals("doc-1", hlEvent.documentId)
+        assertEquals("Highlighted text", hlEvent.text)
+    }
+
+    @Test
+    fun `publishes documents before highlights`() {
+        readwiseClient.documents = listOf(
+            createHighlightDto("hl-first", parentId = "doc-1", content = "First in list"),
+            createDocumentDto("doc-1", title = "Article 1", category = "article"),
+            createHighlightDto("hl-second", parentId = "doc-1", content = "Second in list")
+        )
+
+        syncService.sync()
+
+        assertEquals(3, eventPublisher.publishedEvents.size)
+        assertTrue(eventPublisher.publishedEvents[0] is DocumentSyncedEvent)
+        assertTrue(eventPublisher.publishedEvents[1] is HighlightSyncedEvent)
+        assertTrue(eventPublisher.publishedEvents[2] is HighlightSyncedEvent)
+    }
+
+    @Test
+    fun `tracks highlightsProcessed in sync log`() {
+        readwiseClient.documents = listOf(
+            createDocumentDto("doc-1", title = "Article 1"),
+            createHighlightDto("hl-1", parentId = "doc-1"),
+            createHighlightDto("hl-2", parentId = "doc-1")
+        )
+
+        val result = syncService.sync()
+
+        assertEquals(1, result.documentsProcessed)
+        assertEquals(2, result.highlightsProcessed)
+    }
+
+    @Test
+    fun `highlight event contains note from document notes field`() {
+        readwiseClient.documents = listOf(
+            createHighlightDto(
+                id = "hl-with-note",
+                parentId = "doc-1",
+                content = "Highlighted text",
+                notes = "My annotation"
+            )
+        )
+
+        syncService.sync()
+
+        val hlEvent = eventPublisher.publishedEvents[0] as HighlightSyncedEvent
+        assertEquals("Highlighted text", hlEvent.text)
+        assertEquals("My annotation", hlEvent.note)
+    }
+
     private fun createDocumentDto(
         id: String,
         title: String,
         updatedAt: Instant = Instant.now(),
         firstOpenedAt: Instant? = null,
-        lastOpenedAt: Instant? = null
+        lastOpenedAt: Instant? = null,
+        category: String = "article",
+        parentId: String? = null,
+        content: String? = null
     ) = DocumentDto(
         id = id,
         url = "https://example.com/$id",
@@ -155,7 +229,7 @@ class SyncServiceTest {
         title = title,
         author = "Test Author",
         source = "web",
-        category = "article",
+        category = category,
         location = "new",
         tags = emptyMap(),
         siteName = "Example",
@@ -167,9 +241,42 @@ class SyncServiceTest {
         updatedAt = updatedAt,
         firstOpenedAt = firstOpenedAt,
         lastOpenedAt = lastOpenedAt,
-        parentId = null,
+        parentId = parentId,
         summary = null,
         notes = null,
+        content = content,
+        imageUrl = null
+    )
+
+    private fun createHighlightDto(
+        id: String,
+        parentId: String,
+        content: String = "Highlighted text",
+        notes: String? = null,
+        updatedAt: Instant = Instant.now()
+    ) = DocumentDto(
+        id = id,
+        url = "",  // Highlights don't have URLs
+        sourceUrl = null,
+        title = null,
+        author = null,
+        source = null,
+        category = "highlight",
+        location = null,
+        tags = emptyMap(),
+        siteName = null,
+        wordCount = null,
+        readingProgress = null,
+        publishedDate = null,
+        savedAt = Instant.now(),
+        createdAt = Instant.now(),
+        updatedAt = updatedAt,
+        firstOpenedAt = null,
+        lastOpenedAt = null,
+        parentId = parentId,
+        summary = null,
+        notes = notes,
+        content = content,
         imageUrl = null
     )
 

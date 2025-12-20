@@ -4,9 +4,11 @@ import com.reader.analytics.sync.domain.SyncCursor
 import com.reader.analytics.sync.domain.SyncLog
 import com.reader.analytics.sync.domain.SyncStatus
 import com.reader.analytics.sync.domain.events.DocumentSyncedEvent
-import com.reader.analytics.sync.domain.events.HighlightSyncedEvent
 import com.reader.analytics.sync.infrastructure.ReadwiseClient
 import com.reader.analytics.sync.infrastructure.readwise.dto.DocumentDto
+import com.reader.analytics.sync.infrastructure.readwise.dto.isDocument
+import com.reader.analytics.sync.infrastructure.readwise.dto.isHighlight
+import com.reader.analytics.sync.infrastructure.readwise.dto.toHighlightEvent
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
@@ -32,18 +34,33 @@ class SyncService(
 
             logger.info("Starting sync [lastSyncedAt={}]", updatedAfter)
 
-            val documents = readwiseClient.fetchDocuments(updatedAfter).toList()
+            val allItems = readwiseClient.fetchDocuments(updatedAfter).toList()
+            val (highlightDtos, documentDtos) = allItems.partition { it.isHighlight() }
+
+            logger.info("Fetched {} documents and {} highlights to process", documentDtos.size, highlightDtos.size)
+
             var latestUpdatedAt: Instant? = null
 
-            logger.info("Fetched {} documents to process", documents.size)
-
-            documents.forEach { doc ->
-                val event = doc.toEvent()
+            // Phase 1: Publish document events
+            documentDtos.forEach { doc ->
+                val event = doc.toDocumentEvent()
                 eventPublisher.publishEvent(event)
 
                 doc.updatedAt?.let { docUpdatedAt ->
                     if (latestUpdatedAt == null || docUpdatedAt.isAfter(latestUpdatedAt)) {
                         latestUpdatedAt = docUpdatedAt
+                    }
+                }
+            }
+
+            // Phase 2: Publish highlight events
+            highlightDtos.forEach { highlight ->
+                val event = highlight.toHighlightEvent()
+                eventPublisher.publishEvent(event)
+
+                highlight.updatedAt?.let { highlightUpdatedAt ->
+                    if (latestUpdatedAt == null || highlightUpdatedAt.isAfter(latestUpdatedAt)) {
+                        latestUpdatedAt = highlightUpdatedAt
                     }
                 }
             }
@@ -54,14 +71,15 @@ class SyncService(
 
             val duration = System.currentTimeMillis() - startedAt.toEpochMilli()
             logger.info(
-                "Sync completed [documentsProcessed={}, latestUpdatedAt={}, duration={}ms]",
-                documents.size, latestUpdatedAt, duration
+                "Sync completed [documents={}, highlights={}, latestUpdatedAt={}, duration={}ms]",
+                documentDtos.size, highlightDtos.size, latestUpdatedAt, duration
             )
 
             log = log.copy(
                 status = SyncStatus.COMPLETED,
                 completedAt = Instant.now(),
-                documentsProcessed = documents.size
+                documentsProcessed = documentDtos.size,
+                highlightsProcessed = highlightDtos.size
             )
             logStore.save(log)
         } catch (e: Exception) {
@@ -81,7 +99,7 @@ class SyncService(
         }
     }
 
-    private fun DocumentDto.toEvent() = DocumentSyncedEvent(
+    private fun DocumentDto.toDocumentEvent() = DocumentSyncedEvent(
         id = id,
         url = url,
         title = title,
@@ -96,6 +114,6 @@ class SyncService(
         lastOpenedAt = lastOpenedAt,
         tags = tagKeys(),
         parentId = parentId,
-        highlights = emptyList() // TODO: Add highlight extraction when available
+        highlights = emptyList()
     )
 }

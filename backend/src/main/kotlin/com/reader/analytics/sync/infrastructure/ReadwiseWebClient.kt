@@ -36,8 +36,7 @@ class ReadwiseWebClient(
 
         var pageCursor: String? = null
         var pageCount = 0
-        var totalDocuments = 0
-        var totalFiltered = 0
+        var totalItems = 0
 
         do {
             rateLimiter.acquire()
@@ -46,27 +45,21 @@ class ReadwiseWebClient(
 
             val response = fetchDocumentPage(updatedAfter, pageCursor)
             pageCount++
+            totalItems += response.results.size
 
-            val filtered = response.results
-                .filter { it.category != "highlight" && it.category != "note" }
-
-            val filteredCount = response.results.size - filtered.size
-            totalFiltered += filteredCount
-            totalDocuments += filtered.size
-
-            filtered.forEach { yield(it) }
+            response.results.forEach { yield(it) }
 
             pageCursor = response.nextPageCursor
 
             logger.debug(
-                "Received {} documents [nextCursor={}, filtered={}]",
-                response.results.size, pageCursor, filteredCount
+                "Received {} items [nextCursor={}]",
+                response.results.size, pageCursor
             )
         } while (pageCursor != null)
 
         logger.info(
-            "Completed document fetch [totalDocuments={}, totalPages={}, totalFiltered={}]",
-            totalDocuments, pageCount, totalFiltered
+            "Completed document fetch [totalItems={}, totalPages={}]",
+            totalItems, pageCount
         )
     }
 

@@ -4,7 +4,6 @@ import com.reader.analytics.library.domain.Document
 import com.reader.analytics.library.domain.Highlight
 import com.reader.analytics.library.domain.Tag
 import com.reader.analytics.sync.domain.events.DocumentSyncedEvent
-import com.reader.analytics.sync.domain.events.HighlightSyncedEvent
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Instant
@@ -116,125 +115,6 @@ class DocumentEventListenerTest {
         assertEquals("parent-123", saved.parentId)
     }
 
-    @Test
-    fun `persists highlights from sync event`() {
-        val event = DocumentSyncedEvent(
-            id = "rw-with-highlights",
-            url = "https://example.com/highlighted",
-            title = "Highlighted Article",
-            author = null,
-            category = null,
-            location = null,
-            readingProgress = null,
-            wordCount = null,
-            savedAt = null,
-            updatedAt = null,
-            firstOpenedAt = null,
-            lastOpenedAt = null,
-            tags = emptyList(),
-            parentId = null,
-            highlights = listOf(
-                HighlightSyncedEvent(
-                    id = "hl-1",
-                    documentId = "rw-with-highlights",
-                    text = "First highlight",
-                    note = "My note",
-                    color = "yellow",
-                    location = 100,
-                    highlightedAt = Instant.parse("2024-01-15T10:00:00Z")
-                ),
-                HighlightSyncedEvent(
-                    id = "hl-2",
-                    documentId = "rw-with-highlights",
-                    text = "Second highlight",
-                    note = null,
-                    color = "blue",
-                    location = 200,
-                    highlightedAt = null
-                )
-            )
-        )
-
-        listener.onDocumentSynced(event)
-
-        val savedDocument = documentStore.findByReadwiseId("rw-with-highlights")
-        assertNotNull(savedDocument)
-
-        val highlights = documentStore.findHighlightsByDocument(savedDocument)
-        assertEquals(2, highlights.size)
-
-        val hl1 = highlights.find { it.readwiseId == "hl-1" }
-        assertNotNull(hl1)
-        assertEquals("First highlight", hl1.text)
-        assertEquals("My note", hl1.note)
-        assertEquals("yellow", hl1.color)
-        assertEquals(100, hl1.locationIndex)
-
-        val hl2 = highlights.find { it.readwiseId == "hl-2" }
-        assertNotNull(hl2)
-        assertEquals("Second highlight", hl2.text)
-        assertEquals("blue", hl2.color)
-    }
-
-    @Test
-    fun `updates existing highlights on re-sync`() {
-        val document = Document(
-            id = UUID.randomUUID(),
-            readwiseId = "rw-update-hl",
-            url = "https://example.com/update-hl"
-        )
-        documentStore.save(document)
-
-        val existingHighlight = Highlight(
-            id = UUID.randomUUID(),
-            readwiseId = "hl-existing",
-            document = document,
-            text = "Old text",
-            note = "Old note"
-        )
-        documentStore.saveHighlight(existingHighlight)
-
-        val event = DocumentSyncedEvent(
-            id = "rw-update-hl",
-            url = "https://example.com/update-hl",
-            title = null,
-            author = null,
-            category = null,
-            location = null,
-            readingProgress = null,
-            wordCount = null,
-            savedAt = null,
-            updatedAt = null,
-            firstOpenedAt = null,
-            lastOpenedAt = null,
-            tags = emptyList(),
-            parentId = null,
-            highlights = listOf(
-                HighlightSyncedEvent(
-                    id = "hl-existing",
-                    documentId = "rw-update-hl",
-                    text = "Updated text",
-                    note = "Updated note",
-                    color = "green",
-                    location = 50,
-                    highlightedAt = null
-                )
-            )
-        )
-
-        listener.onDocumentSynced(event)
-
-        val savedDocument = documentStore.findByReadwiseId("rw-update-hl")
-        val highlights = documentStore.findHighlightsByDocument(savedDocument!!)
-        assertEquals(1, highlights.size)
-
-        val updated = highlights.first()
-        assertEquals(existingHighlight.id, updated.id)
-        assertEquals("Updated text", updated.text)
-        assertEquals("Updated note", updated.note)
-        assertEquals("green", updated.color)
-    }
-
     private fun createDocumentSyncedEvent(
         id: String,
         title: String,
@@ -281,9 +161,6 @@ class DocumentEventListenerTest {
 
         override fun findHighlightByReadwiseId(readwiseId: String): Highlight? =
             highlights[readwiseId]
-
-        override fun findHighlightsByDocument(document: Document): List<Highlight> =
-            highlights.values.filter { it.document.readwiseId == document.readwiseId }
 
         override fun saveHighlight(highlight: Highlight): Highlight {
             val id = highlight.id ?: UUID.randomUUID()

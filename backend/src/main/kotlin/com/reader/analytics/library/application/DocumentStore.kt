@@ -10,6 +10,5 @@ interface DocumentStore {
     fun findOrCreateTags(tagNames: List<String>): MutableSet<Tag>
 
     fun findHighlightByReadwiseId(readwiseId: String): Highlight?
-    fun findHighlightsByDocument(document: Document): List<Highlight>
     fun saveHighlight(highlight: Highlight): Highlight
 }

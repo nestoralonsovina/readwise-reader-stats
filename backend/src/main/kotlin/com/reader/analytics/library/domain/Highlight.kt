@@ -14,19 +14,14 @@ data class Highlight(
     @Column(unique = true, nullable = false)
     val readwiseId: String,
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "document_id", nullable = false)
-    val document: Document,
+    @Column(name = "document_readwise_id", nullable = false)
+    val documentReadwiseId: String,
 
     @Column(columnDefinition = "TEXT", nullable = false)
     val text: String,
 
     @Column(columnDefinition = "TEXT")
     val note: String? = null,
-
-    val color: String? = null,
-
-    val locationIndex: Int? = null,
 
     val highlightedAt: Instant? = null
 )

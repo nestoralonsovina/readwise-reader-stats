@@ -1,11 +1,9 @@
 package com.reader.analytics.library.application
 
 import com.reader.analytics.library.infrastructure.persistence.DocumentRepository
-import com.reader.analytics.library.infrastructure.persistence.HighlightRepository
 import com.reader.analytics.library.infrastructure.persistence.JpaDocumentStore
 import com.reader.analytics.library.infrastructure.persistence.TagRepository
 import com.reader.analytics.sync.domain.events.DocumentSyncedEvent
-import com.reader.analytics.sync.domain.events.HighlightSyncedEvent
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest
@@ -26,9 +24,6 @@ class DocumentEventListenerIntegrationTest {
 
     @Autowired
     private lateinit var tagRepository: TagRepository
-
-    @Autowired
-    private lateinit var highlightRepository: HighlightRepository
 
     @Test
     fun `persists document and tags from sync event`() {
@@ -165,65 +160,5 @@ class DocumentEventListenerIntegrationTest {
         val doc1 = documentRepository.findByReadwiseId("rw-shared-tag-1")
         val doc2 = documentRepository.findByReadwiseId("rw-shared-tag-2")
         assertEquals(doc1?.tags?.first()?.id, doc2?.tags?.first()?.id)
-    }
-
-    @Test
-    fun `persists document with highlights`() {
-        val event = DocumentSyncedEvent(
-            id = "rw-with-highlights",
-            url = "https://example.com/highlighted",
-            title = "Highlighted Article",
-            author = null,
-            category = null,
-            location = null,
-            readingProgress = null,
-            wordCount = null,
-            savedAt = null,
-            updatedAt = null,
-            firstOpenedAt = null,
-            lastOpenedAt = null,
-            tags = emptyList(),
-            parentId = null,
-            highlights = listOf(
-                HighlightSyncedEvent(
-                    id = "hl-int-1",
-                    documentId = "rw-with-highlights",
-                    text = "First highlight text",
-                    note = "A note",
-                    color = "yellow",
-                    location = 50,
-                    highlightedAt = Instant.parse("2024-01-15T10:00:00Z")
-                ),
-                HighlightSyncedEvent(
-                    id = "hl-int-2",
-                    documentId = "rw-with-highlights",
-                    text = "Second highlight text",
-                    note = null,
-                    color = "blue",
-                    location = 150,
-                    highlightedAt = null
-                )
-            )
-        )
-
-        listener.onDocumentSynced(event)
-
-        val document = documentRepository.findByReadwiseId("rw-with-highlights")
-        assertNotNull(document)
-
-        val highlights = highlightRepository.findByDocument(document)
-        assertEquals(2, highlights.size)
-
-        val hl1 = highlightRepository.findByReadwiseId("hl-int-1")
-        assertNotNull(hl1)
-        assertEquals("First highlight text", hl1.text)
-        assertEquals("A note", hl1.note)
-        assertEquals("yellow", hl1.color)
-        assertEquals(50, hl1.locationIndex)
-
-        val hl2 = highlightRepository.findByReadwiseId("hl-int-2")
-        assertNotNull(hl2)
-        assertEquals("Second highlight text", hl2.text)
-        assertEquals("blue", hl2.color)
     }
 }

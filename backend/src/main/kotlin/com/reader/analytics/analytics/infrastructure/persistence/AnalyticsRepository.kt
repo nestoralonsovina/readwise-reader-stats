@@ -330,7 +330,7 @@ class AnalyticsRepository(
             SELECT COALESCE(AVG(highlight_count), 0) FROM (
                 SELECT COUNT(*) AS highlight_count
                 FROM highlights
-                GROUP BY document_id
+                GROUP BY document_readwise_id
             ) AS doc_counts
         """.trimIndent()
         val avg = jdbcTemplate.queryForObject(avgSql, Double::class.java) ?: 0.0
@@ -343,21 +343,8 @@ class AnalyticsRepository(
     }
 
     fun getColorDistribution(): List<RawColorCount> {
-        val sql = """
-            SELECT
-                COALESCE(color, 'default') AS color,
-                COUNT(*) AS count
-            FROM highlights
-            GROUP BY color
-            ORDER BY count DESC
-        """.trimIndent()
-
-        return jdbcTemplate.query(sql) { rs, _ ->
-            RawColorCount(
-                color = rs.getString("color"),
-                count = rs.getInt("count")
-            )
-        }
+        // Color field removed from Highlight entity (not available in V3 Reader API)
+        return emptyList()
     }
 
     fun getMostHighlightedDocuments(limit: Int): List<RawDocumentHighlightCount> {
@@ -368,7 +355,7 @@ class AnalyticsRepository(
                 d.category,
                 COUNT(h.id) AS highlight_count
             FROM documents d
-            JOIN highlights h ON h.document_id = d.id
+            JOIN highlights h ON h.document_readwise_id = d.readwise_id
             GROUP BY d.id, d.readwise_id, d.title, d.category
             ORDER BY highlight_count DESC
             LIMIT ?
