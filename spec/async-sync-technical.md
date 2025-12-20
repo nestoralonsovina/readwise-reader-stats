@@ -1,98 +1,65 @@
-# Async Sync with Real-Time Feedback - Technical Possibilities
+# Async Sync with Real-Time Feedback
 
 ## Summary
 
-Technical specification for transforming sync from synchronous/blocking to async with real-time progress streaming. This document covers what's technically possible; UI mockup will follow separately.
+Transform sync from synchronous/blocking to async with real-time progress streaming via SSE. User sees a slide-over panel with phase stepper, activity log, and rate limit feedback.
+
+**Mockup:** `design/sync-progress-mockup.html`
+
+---
 
 ## Current State
 
 | Aspect | Implementation |
 |--------|----------------|
-| Sync trigger | `POST /sync` (manual, user-initiated) |
-| Execution | Synchronous, blocking (client waits for completion) |
-| Rate limiting | 20 req/min with exponential backoff + jitter |
+| Sync trigger | `POST /sync` (manual, blocking) |
 | Progress reporting | None - returns final status only |
-| Event handling | Synchronous via `ApplicationEventPublisher` |
+| Rate limit feedback | None - user waits blindly |
 | Sync history | `SyncLog` entity exists, not exposed via API |
-
-**Pain points:**
-- Large libraries block for minutes (rate limit bottleneck)
-- No visibility into sync progress or rate limiter state
-- No feedback when hitting API limits
 
 ---
 
 ## Sync Pipeline Phases
 
-Current pipeline (in order for referential integrity):
-
 ```
-1. Documents  → DocumentSyncedEvent → Library persists Document
-2. Highlights → HighlightSyncedEvent → Library persists Highlight (links to Document)
-3. Notes      → NoteSyncedEvent → Library persists Note (links to Document/Highlight)
+Phase 1: Documents  → DocumentSyncedEvent → Library persists Document
+Phase 2: Highlights → HighlightSyncedEvent → Library persists Highlight
+Phase 3: Notes      → NoteSyncedEvent → Library persists Note
 ```
 
-**Future phases** (legacy Readwise v2 API):
-```
-4. Books      → BookSyncedEvent (source: kindle, instapaper, pocket, etc.)
-5. Highlights → LegacyHighlightSyncedEvent (links to Book)
-```
-
-Each phase can report progress independently.
+Future (v2 API): Books, Legacy Highlights
 
 ---
 
-## Technical Options
+## Technical Decisions
 
-### 1. Async Execution
-
-| Option | Pros | Cons | Effort |
-|--------|------|------|--------|
-| **Spring @Async + CompletableFuture** | Simple, Spring-native, well-documented | Requires thread pool tuning | Low |
-| **Virtual Threads (Java 21)** | Lightweight, no pool sizing, modern | Less familiar patterns | Low |
-| **Spring Scheduler (background)** | Fire-and-forget, automatic | Less control over single runs | Low |
-
-**Recommendation:** Virtual Threads (Java 21) - we're already on Java 21, minimal config, scales naturally.
-
-### 2. Real-Time Feedback Transport
-
-| Option | Pros | Cons | Effort |
-|--------|------|------|--------|
-| **Server-Sent Events (SSE)** | Simple, unidirectional, auto-reconnect, HTTP-based | One-way only (fine for logs) | Low |
-| **WebSocket** | Bidirectional, real-time | More complex, connection management | Medium |
-| **Polling** | Simplest, works everywhere | Not truly real-time, wasteful | Low |
-
-**Recommendation:** SSE - perfect for streaming logs/progress. Unidirectional is exactly what we need.
-
-### 3. Progress State Storage
-
-| Option | Pros | Cons | Effort |
-|--------|------|------|--------|
-| **Database (extend SyncLog)** | Persistent, queryable, survives restarts | Write overhead per update | Low |
-| **In-memory (ConcurrentHashMap)** | Fast, no I/O | Lost on restart, single instance only | Very Low |
-| **Redis** | Fast, shared across instances | New dependency, operational overhead | Medium |
-
-**Recommendation:** Database (extend SyncLog) for durability. Batch updates every N items to reduce writes.
+| Aspect | Choice | Rationale |
+|--------|--------|-----------|
+| Async execution | Virtual Threads (Java 21) | Already on Java 21, no pool tuning needed |
+| Real-time transport | Server-Sent Events (SSE) | Unidirectional, auto-reconnect, HTTP-based |
+| State storage | Database (extend SyncLog → SyncRun) | Persistent, queryable, survives restarts |
 
 ---
 
-## Proposed Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         Frontend                                 │
 ├─────────────────────────────────────────────────────────────────┤
-│  POST /sync         → Returns immediately with syncId           │
-│  GET /sync/{id}/stream (SSE) → Streams progress events          │
-│  GET /sync/{id}     → Returns final status (polling fallback)   │
-│  GET /sync/history  → Returns past sync runs                    │
+│  POST /sync              → Returns syncId immediately           │
+│  GET /sync/{id}/stream   → SSE stream of progress events        │
+│  GET /sync/{id}          → Polling fallback                     │
+│  GET /sync/history       → Past sync runs                       │
+│  GET /sync/active        → Currently running sync               │
+│  DELETE /sync/{id}       → Cancel running sync                  │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                      SyncOrchestrator                           │
 ├─────────────────────────────────────────────────────────────────┤
-│  - Receives sync request                                        │
+│  - Checks for active sync (mutex)                               │
 │  - Creates SyncRun (PENDING)                                    │
 │  - Spawns async task (Virtual Thread)                           │
 │  - Returns syncId immediately                                   │
@@ -103,13 +70,12 @@ Each phase can report progress independently.
 │                    SyncExecutor (async)                         │
 ├─────────────────────────────────────────────────────────────────┤
 │  For each phase:                                                │
-│    1. Update SyncRun status (SYNCING_DOCUMENTS, etc.)           │
-│    2. Emit SyncProgressEvent                                    │
-│    3. Fetch from Readwise API (with rate limit handling)        │
-│    4. Emit progress every N items                               │
-│    5. Publish domain events (DocumentSyncedEvent, etc.)         │
-│    6. Update phase completion                                   │
-│  On completion: Update SyncRun (COMPLETED/FAILED)               │
+│    1. Emit phase_started event                                  │
+│    2. Fetch from Readwise API (rate limit handling)             │
+│    3. Emit progress event every 10 items                        │
+│    4. Emit rate_limited event when 429 received                 │
+│    5. Emit phase_completed event                                │
+│  On completion: Emit completed/error event                      │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -117,119 +83,153 @@ Each phase can report progress independently.
 │                  SyncProgressEmitter                            │
 ├─────────────────────────────────────────────────────────────────┤
 │  - Maintains Map<syncId, List<SseEmitter>>                      │
-│  - Listens to SyncProgressEvent                                 │
-│  - Pushes to all connected SSE clients for that syncId          │
-│  - Persists progress snapshots to SyncRun                       │
+│  - Pushes events to connected clients                           │
+│  - Persists events to SyncRun for reconnection replay           │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Data Model Extensions
+## Data Model
 
-### SyncRun Entity (replaces/extends SyncLog)
+### SyncRun Entity
 
 ```kotlin
 @Entity
+@Table(name = "sync_runs")
 data class SyncRun(
     @Id val id: UUID,
-    val status: SyncRunStatus,           // PENDING, RUNNING, COMPLETED, FAILED, CANCELLED
-    val currentPhase: SyncPhase?,        // DOCUMENTS, HIGHLIGHTS, NOTES, BOOKS, etc.
+
+    @Enumerated(EnumType.STRING)
+    val status: SyncRunStatus,
+
+    @Enumerated(EnumType.STRING)
+    val currentPhase: SyncPhase?,
+
     val startedAt: Instant,
     val completedAt: Instant?,
 
-    // Progress tracking
-    val totalPhases: Int,                // e.g., 3 for v3 API
-    val completedPhases: Int,
-    val currentPhaseProgress: Int,       // items processed in current phase
-    val currentPhaseTotal: Int?,         // null if unknown (API doesn't provide total)
+    // Phase tracking
+    val totalPhases: Int = 3,
+    val completedPhases: Int = 0,
+    val currentPhaseProgress: Int = 0,
 
-    // Counts (final)
-    val documentsProcessed: Int,
-    val highlightsProcessed: Int,
-    val notesProcessed: Int,
+    // Final counts
+    val documentsProcessed: Int = 0,
+    val highlightsProcessed: Int = 0,
+    val notesProcessed: Int = 0,
 
-    // Rate limit visibility
-    val rateLimitHits: Int,              // times we hit 429
-    val lastRateLimitAt: Instant?,
+    // Rate limit tracking
+    val rateLimitHits: Int = 0,
+    val lastRateLimitRetrySeconds: Int? = null,
+    val lastRateLimitAttempt: Int? = null,
 
     // Error handling
-    val errorMessage: String?,
-    val errorPhase: SyncPhase?
+    val errorMessage: String? = null,
+    val errorPhase: SyncPhase? = null
 )
 ```
 
-### SyncPhase Enum
-
-```kotlin
-enum class SyncPhase {
-    // v3 API (Reader)
-    DOCUMENTS,
-    HIGHLIGHTS,
-    NOTES,
-
-    // v2 API (Legacy Readwise) - future
-    BOOKS,
-    LEGACY_HIGHLIGHTS
-}
-```
-
-### SyncRunStatus Enum
+### Enums
 
 ```kotlin
 enum class SyncRunStatus {
-    PENDING,      // Created, not started
-    RUNNING,      // Currently executing
-    COMPLETED,    // All phases done
-    FAILED,       // Error occurred
-    CANCELLED     // User cancelled (future)
+    PENDING,    // Created, not started
+    RUNNING,    // Currently executing
+    COMPLETED,  // All phases done
+    FAILED,     // Error occurred
+    CANCELLED   // User cancelled
+}
+
+enum class SyncPhase {
+    DOCUMENTS,
+    HIGHLIGHTS,
+    NOTES
 }
 ```
 
 ---
 
-## SSE Event Types
+## SSE Events
 
-Events streamed to the client:
+All events include `timestamp` (ISO 8601). Frontend maps events to UI updates.
+
+### Event Types
 
 ```typescript
+// Sync started
+{ type: "started", syncId: "uuid", timestamp: "..." }
+
 // Phase started
-{ type: "phase_started", phase: "DOCUMENTS", timestamp: "..." }
+{ type: "phase_started", phase: "DOCUMENTS", phaseNumber: 1, totalPhases: 3, timestamp: "..." }
 
-// Progress update (emitted every 10 items or on rate limit)
-{ type: "progress", phase: "DOCUMENTS", processed: 50, total: null, timestamp: "..." }
+// Progress update (every 10 items)
+{ type: "progress", phase: "DOCUMENTS", processed: 50, timestamp: "..." }
 
-// Rate limit hit
+// Rate limit hit - triggers banner display
 { type: "rate_limited", retryAfter: 37, attempt: 2, maxAttempts: 3, timestamp: "..." }
+
+// Rate limit cleared - hides banner
+{ type: "rate_limit_cleared", timestamp: "..." }
 
 // Phase completed
 { type: "phase_completed", phase: "DOCUMENTS", count: 156, timestamp: "..." }
 
 // Sync completed
-{ type: "completed", summary: { documents: 156, highlights: 42, notes: 8 }, duration: "PT2M34S" }
+{ type: "completed",
+  summary: { documents: 156, highlights: 42, notes: 8 },
+  duration: "PT2M34S",
+  timestamp: "..."
+}
 
-// Error
-{ type: "error", phase: "HIGHLIGHTS", message: "...", timestamp: "..." }
+// Sync failed
+{ type: "error", phase: "HIGHLIGHTS", message: "Max retries exceeded", timestamp: "..." }
+
+// Sync cancelled
+{ type: "cancelled", phase: "HIGHLIGHTS", timestamp: "..." }
 ```
+
+### Event → UI Mapping
+
+| Event | UI Update |
+|-------|-----------|
+| `started` | Open panel, show "Running" badge |
+| `phase_started` | Update stepper: activate phase icon (spinner) |
+| `progress` | Update phase count ("42 of ~100"), update overall progress % |
+| `rate_limited` | Show rate limit banner with countdown |
+| `rate_limit_cleared` | Hide rate limit banner |
+| `phase_completed` | Update stepper: checkmark icon, green connector |
+| `completed` | All checkmarks, 100% progress, show footer success |
+| `error` | Red X on failed phase, show footer error |
+| `cancelled` | Gray out remaining phases, show cancelled state |
 
 ---
 
 ## API Endpoints
 
 ### POST /sync
-Triggers async sync, returns immediately.
+Trigger async sync. Returns immediately.
 
-**Response:**
+**Response (201 Created):**
 ```json
 {
-  "syncId": "uuid",
+  "syncId": "550e8400-e29b-41d4-a716-446655440000",
   "status": "PENDING",
-  "streamUrl": "/sync/{syncId}/stream"
+  "streamUrl": "/sync/550e8400-e29b-41d4-a716-446655440000/stream"
 }
 ```
 
-### GET /sync/{syncId}/stream (SSE)
-Opens SSE connection, streams progress events until completion.
+**Error (409 Conflict):** Sync already running
+```json
+{
+  "error": "SYNC_IN_PROGRESS",
+  "activeSyncId": "...",
+  "message": "A sync is already in progress"
+}
+```
+
+### GET /sync/{syncId}/stream
+SSE stream. Replays missed events on reconnect.
 
 **Headers:**
 ```
@@ -238,122 +238,434 @@ Cache-Control: no-cache
 Connection: keep-alive
 ```
 
+**Query param:** `?lastEventId=5` (for reconnection)
+
 ### GET /sync/{syncId}
-Returns current/final status (polling fallback).
+Polling fallback. Returns current state.
 
 **Response:**
 ```json
 {
-  "syncId": "uuid",
+  "syncId": "...",
   "status": "RUNNING",
   "currentPhase": "HIGHLIGHTS",
+  "startedAt": "2024-12-20T10:23:05Z",
+  "completedAt": null,
   "progress": {
     "completedPhases": 1,
     "totalPhases": 3,
-    "currentPhaseProgress": 23
+    "currentPhaseProgress": 42,
+    "overallPercent": 45
   },
   "counts": {
     "documents": 156,
-    "highlights": 23,
+    "highlights": 42,
     "notes": 0
-  }
+  },
+  "rateLimit": {
+    "isLimited": true,
+    "retryAfter": 37,
+    "attempt": 2,
+    "maxAttempts": 3
+  },
+  "duration": "PT2M34S"
+}
+```
+
+### GET /sync/active
+Check for running sync.
+
+**Response (sync running):**
+```json
+{
+  "active": true,
+  "syncId": "...",
+  "startedAt": "...",
+  "currentPhase": "DOCUMENTS",
+  "streamUrl": "/sync/.../stream"
+}
+```
+
+**Response (no sync):**
+```json
+{
+  "active": false
+}
+```
+
+### DELETE /sync/{syncId}
+Cancel running sync.
+
+**Response (200 OK):**
+```json
+{
+  "syncId": "...",
+  "status": "CANCELLED",
+  "cancelledAt": "..."
 }
 ```
 
 ### GET /sync/history
-Returns past sync runs.
+Past sync runs for history panel.
 
-**Query params:** `?limit=10&offset=0`
+**Query params:** `?limit=20&offset=0`
 
 **Response:**
 ```json
 {
   "runs": [
     {
-      "syncId": "uuid",
+      "syncId": "...",
       "status": "COMPLETED",
-      "startedAt": "...",
-      "completedAt": "...",
+      "startedAt": "2024-12-20T10:23:05Z",
+      "completedAt": "2024-12-20T10:25:39Z",
       "duration": "PT2M34S",
-      "counts": { ... }
+      "counts": {
+        "documents": 156,
+        "highlights": 42,
+        "notes": 8
+      },
+      "errorMessage": null
+    },
+    {
+      "syncId": "...",
+      "status": "FAILED",
+      "startedAt": "2024-12-19T23:30:00Z",
+      "completedAt": "2024-12-19T23:30:45Z",
+      "duration": "PT0M45S",
+      "counts": {
+        "documents": 156,
+        "highlights": 0,
+        "notes": 0
+      },
+      "errorMessage": "Rate limit exceeded (max retries)"
     }
   ],
-  "total": 47
-}
-```
-
-### GET /sync/active
-Returns currently running sync (if any). Prevents duplicate syncs.
-
-**Response:**
-```json
-{
-  "active": true,
-  "syncId": "uuid",
-  "startedAt": "...",
-  "currentPhase": "DOCUMENTS"
+  "summary": {
+    "total": 47,
+    "successful": 45,
+    "failed": 2
+  },
+  "pagination": {
+    "limit": 20,
+    "offset": 0,
+    "hasMore": true
+  }
 }
 ```
 
 ---
 
-## Rate Limit Visibility
+## UI Components
 
-Current rate limit handler already parses delay from Readwise response:
-```
-"Expected available in 37 seconds"
+### Sync Button (Header)
+
+| State | Display |
+|-------|---------|
+| Idle | "Sync" + refresh icon |
+| Running | "Syncing..." + spinning icon |
+
+Click opens slide-over panel (or starts sync if idle).
+
+### Slide-Over Panel
+
+**Width:** `max-w-lg` (~512px)
+**Position:** Right edge, full height
+**Backdrop:** Semi-transparent overlay
+
+#### Header
+- Title: "Syncing with Readwise" / "Sync Complete" / "Sync Failed"
+- Status badge: Running (blue), Rate Limited (amber), Completed (green), Failed (red)
+- Close button (X)
+
+#### Phase Stepper
+Horizontal 3-step indicator with connectors:
+
+| Phase State | Icon | Color | Label Color |
+|-------------|------|-------|-------------|
+| Pending | Number | Gray | Gray |
+| Running | Spinner (animated) | Accent | Accent |
+| Completed | Checkmark | Emerald | Emerald |
+| Failed | X | Red | Red |
+| Skipped | Number | Gray | Gray ("Skipped") |
+
+**Connector colors:**
+- Before current phase: Emerald (solid)
+- After current phase: Gray
+
+**Phase counts:**
+- Pending: "Pending"
+- Running: "42 of ~100" (estimate based on previous sync)
+- Completed: "156 synced"
+- Failed: "Failed"
+- Skipped: "Skipped"
+
+#### Overall Progress Bar
+- Animated striped pattern when running
+- Solid when completed
+- Red when failed
+- Percentage label: "45%"
+
+#### Rate Limit Banner
+**Shown when:** `rate_limited` event received
+**Hidden when:** `rate_limit_cleared` event received
+
+Content:
+- Clock icon
+- "Rate limit reached"
+- "Retrying in **37**s (attempt 2/3)"
+
+Countdown updates every second (client-side).
+
+#### Activity Log
+Scrollable log stream with:
+- **Verbose toggle:** Checkbox to show/hide progress events
+- **Entry format:** `HH:MM:SS` | Icon | Message
+
+| Log Type | Icon | Color |
+|----------|------|-------|
+| info | Info circle | Gray |
+| phase | Lightning bolt | Blue |
+| progress | Chevron right | Gray (hidden if !verbose) |
+| success | Checkmark | Emerald |
+| warning | Warning triangle | Amber |
+| error | X | Red |
+| complete | Checkmark | Emerald (bold) |
+
+#### Footer
+
+| State | Left | Right |
+|-------|------|-------|
+| Running | "Started 2m 34s ago" | Cancel Sync button |
+| Completed | Success icon + "Duration: 2m 34s" | Done button |
+| Failed | Error icon + "Check error above" | Retry Sync button |
+| Cancelled | "Sync cancelled" | Close button |
+
+### History Panel
+
+Separate slide-over with:
+
+**Summary stats:**
+- Total syncs
+- Successful (green)
+- Failed (red)
+
+**Grouped list:**
+- Today
+- Yesterday
+- Last 7 Days
+
+**Entry format:**
+- Status icon (checkmark/X)
+- Status text + duration
+- Item counts: "156 docs • 42 highlights • 8 notes"
+- Timestamp
+
+Click entry → opens sync detail panel (reuses main panel in completed/failed state)
+
+---
+
+## Frontend Implementation
+
+### Angular Service
+
+```typescript
+@Injectable({ providedIn: 'root' })
+export class SyncService {
+  private eventSource: EventSource | null = null;
+
+  readonly syncState = signal<SyncState>({ status: 'idle' });
+  readonly logs = signal<LogEntry[]>([]);
+
+  startSync(): Observable<SyncStartResponse> {
+    return this.http.post<SyncStartResponse>('/sync', {}).pipe(
+      tap(response => {
+        this.connectToStream(response.syncId);
+        this.syncState.set({ status: 'running', syncId: response.syncId });
+      })
+    );
+  }
+
+  private connectToStream(syncId: string, lastEventId?: number): void {
+    const url = lastEventId
+      ? `/sync/${syncId}/stream?lastEventId=${lastEventId}`
+      : `/sync/${syncId}/stream`;
+
+    this.eventSource = new EventSource(url);
+
+    this.eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      this.handleEvent(data);
+    };
+
+    this.eventSource.onerror = () => {
+      // Auto-reconnect with lastEventId
+      setTimeout(() => this.connectToStream(syncId, this.lastEventId), 1000);
+    };
+  }
+
+  cancelSync(syncId: string): Observable<void> {
+    return this.http.delete<void>(`/sync/${syncId}`);
+  }
+
+  getHistory(limit = 20, offset = 0): Observable<SyncHistoryResponse> {
+    return this.http.get<SyncHistoryResponse>('/sync/history', {
+      params: { limit, offset }
+    });
+  }
+
+  getActive(): Observable<ActiveSyncResponse> {
+    return this.http.get<ActiveSyncResponse>('/sync/active');
+  }
+}
 ```
 
-We can emit this to SSE:
-```json
-{ "type": "rate_limited", "retryAfter": 37, "attempt": 2, "maxAttempts": 3 }
+### State Management
+
+```typescript
+interface SyncState {
+  status: 'idle' | 'running' | 'completed' | 'failed' | 'cancelled';
+  syncId?: string;
+  currentPhase?: SyncPhase;
+  completedPhases: number;
+  totalPhases: number;
+  overallPercent: number;
+  counts: { documents: number; highlights: number; notes: number };
+  rateLimit?: { retryAfter: number; attempt: number; maxAttempts: number };
+  duration?: string;
+  errorMessage?: string;
+}
+
+interface LogEntry {
+  id: number;
+  type: 'info' | 'phase' | 'progress' | 'success' | 'warning' | 'error' | 'complete';
+  timestamp: string;
+  message: string;
+}
 ```
 
-Frontend can show: "Rate limited. Retrying in 37s (attempt 2/3)"
+---
+
+## Backend Implementation
+
+### Files to Create
+
+```
+backend/src/main/kotlin/com/reader/analytics/
+├── sync/
+│   ├── domain/
+│   │   ├── SyncRun.kt              # Entity (replaces SyncLog for new syncs)
+│   │   ├── SyncRunStatus.kt        # Enum
+│   │   ├── SyncPhase.kt            # Enum
+│   │   └── events/
+│   │       └── SyncProgressEvent.kt # Internal event for SSE emission
+│   ├── application/
+│   │   ├── SyncOrchestrator.kt     # Starts async sync, checks mutex
+│   │   ├── SyncExecutor.kt         # Async execution logic
+│   │   ├── SyncProgressEmitter.kt  # SSE emitter management
+│   │   └── SyncRunStore.kt         # Repository interface
+│   └── infrastructure/
+│       └── persistence/
+│           ├── SyncRunRepository.kt
+│           └── JpaSyncRunStore.kt
+└── api/
+    ├── SyncController.kt           # Update with new endpoints
+    └── dto/
+        ├── SyncStartResponse.kt
+        ├── SyncStatusResponse.kt
+        ├── SyncHistoryResponse.kt
+        └── ActiveSyncResponse.kt
+```
+
+### Files to Modify
+
+```
+backend/src/main/kotlin/com/reader/analytics/
+├── sync/
+│   ├── application/
+│   │   └── SyncService.kt          # Extract execution logic to SyncExecutor
+│   └── infrastructure/
+│       └── readwise/
+│           └── RateLimitRetryHandler.kt  # Emit events on retry
+└── config/
+    └── AsyncConfig.kt              # New: @EnableAsync + Virtual Thread executor
+```
+
+---
+
+## Database Migration
+
+```sql
+-- V4__create_sync_runs.sql
+
+CREATE TABLE sync_runs (
+    id UUID PRIMARY KEY,
+    status VARCHAR(20) NOT NULL,
+    current_phase VARCHAR(20),
+    started_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    total_phases INT NOT NULL DEFAULT 3,
+    completed_phases INT NOT NULL DEFAULT 0,
+    current_phase_progress INT NOT NULL DEFAULT 0,
+    documents_processed INT NOT NULL DEFAULT 0,
+    highlights_processed INT NOT NULL DEFAULT 0,
+    notes_processed INT NOT NULL DEFAULT 0,
+    rate_limit_hits INT NOT NULL DEFAULT 0,
+    last_rate_limit_retry_seconds INT,
+    last_rate_limit_attempt INT,
+    error_message TEXT,
+    error_phase VARCHAR(20)
+);
+
+CREATE INDEX idx_sync_runs_status ON sync_runs(status);
+CREATE INDEX idx_sync_runs_started_at ON sync_runs(started_at DESC);
+```
 
 ---
 
 ## Constraints
 
-1. **Single active sync** - Only one sync can run at a time (mutex/check before starting)
-2. **SSE connection limits** - Browser typically allows 6 concurrent SSE connections per domain
-3. **Rate limit is external** - 20 req/min is Readwise-imposed, cannot be bypassed
-4. **Total unknown** - Readwise API doesn't return total count upfront, only cursor-based pagination
+1. **Single active sync** - 409 Conflict if sync already running
+2. **SSE connection limits** - Browser allows ~6 per domain
+3. **Rate limit is external** - 20 req/min from Readwise, cannot bypass
+4. **Total unknown** - Readwise API uses cursor pagination, no total count
 
 ---
 
 ## Implementation Phases
 
 ### Phase 1: Async Foundation
-- Add `@EnableAsync` with Virtual Threads
-- Create `SyncRun` entity (extend SyncLog)
-- Make `POST /sync` return immediately
-- Add `GET /sync/{syncId}` for polling
+- [ ] Add `AsyncConfig` with Virtual Thread executor
+- [ ] Create `SyncRun` entity + migration
+- [ ] Create `SyncOrchestrator` (mutex check, spawn async)
+- [ ] Create `SyncExecutor` (move logic from SyncService)
+- [ ] Update `POST /sync` to return immediately
+- [ ] Add `GET /sync/{syncId}` polling endpoint
+- [ ] Add `GET /sync/active` endpoint
 
 ### Phase 2: SSE Streaming
-- Add `GET /sync/{syncId}/stream` SSE endpoint
-- Create `SyncProgressEmitter` component
-- Emit progress events from `SyncService`
-- Handle SSE client disconnection
+- [ ] Add `SyncProgressEmitter` component
+- [ ] Add `GET /sync/{syncId}/stream` SSE endpoint
+- [ ] Emit events from `SyncExecutor` at key points
+- [ ] Handle SSE client disconnection/reconnection
+- [ ] Add `lastEventId` support for replay
 
-### Phase 3: Enhanced Progress
-- Emit rate limit events
-- Add phase-level progress tracking
-- Add `GET /sync/history` endpoint
-- Add `GET /sync/active` endpoint
+### Phase 3: UI Implementation
+- [ ] Create `SyncPanelComponent` (slide-over)
+- [ ] Create `PhaseStepperComponent`
+- [ ] Create `ActivityLogComponent`
+- [ ] Update `SyncService` with SSE handling
+- [ ] Wire up sync button states
 
-### Phase 4: Legacy API Support (Future)
-- Add Books sync phase (v2 API)
-- Add Legacy Highlights sync phase
-- Add source filtering parameter
+### Phase 4: Enhanced Features
+- [ ] Add `DELETE /sync/{syncId}` cancel endpoint
+- [ ] Add `GET /sync/history` endpoint
+- [ ] Create `SyncHistoryPanelComponent`
+- [ ] Emit rate limit events from `RateLimitRetryHandler`
+- [ ] Add rate limit banner with client-side countdown
 
----
-
-## Open Questions for UI Mockup
-
-1. **Log verbosity** - Technical logs (every API call) vs summary logs (phase transitions only)?
-2. **Progress visualization** - Progress bar per phase? Overall progress bar? Just logs?
-3. **Rate limit display** - Countdown timer? Just a message? Toast notification?
-4. **History view** - Full page? Sidebar? Modal?
-5. **Error display** - Inline in log stream? Modal? Toast?
-6. **Cancel support** - Should user be able to cancel mid-sync?
+### Phase 5: Polish
+- [ ] Verbose toggle for progress logs
+- [ ] Duration timer (client-side)
+- [ ] Reconnection handling
+- [ ] Error boundary / fallback UI

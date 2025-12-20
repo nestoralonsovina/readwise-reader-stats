@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sync Progress - Readwise Reader Analytics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            accent: {
+              50: '#fffbeb',
+              100: '#fef3c7',
+              200: '#fde68a',
+              300: '#fcd34d',
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+              700: '#b45309',
+              800: '#92400e',
+              900: '#78350f',
+            },
+            success: '#10b981',
+            warning: '#f59e0b',
+            danger: '#ef4444',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+    * { transition: background-color 0.2s, border-color 0.2s, color 0.2s; }
+
+    /* Slide-over transitions */
+    .slide-over-backdrop { transition: opacity 0.3s ease-out; }
+    .slide-over-panel { transition: transform 0.3s ease-out; }
+    .slide-over-hidden { pointer-events: none; }
+    .slide-over-hidden .slide-over-backdrop { opacity: 0; }
+    .slide-over-hidden .slide-over-panel { transform: translateX(100%); }
+
+    /* Pulse animation for active phase */
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .animate-pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
+
+    /* Spinner animation */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .animate-spin { animation: spin 1s linear infinite; }
+
+    /* Log entry animation */
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .log-entry { animation: slideIn 0.2s ease-out; }
+
+    /* Progress bar animation */
+    .progress-bar-animated {
+      background-image: linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.15) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.15) 75%,
+        transparent 75%,
+        transparent
+      );
+      background-size: 1rem 1rem;
+      animation: progress-animation 1s linear infinite;
+    }
+    @keyframes progress-animation {
+      0% { background-position: 1rem 0; }
+      100% { background-position: 0 0; }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen flex">
+
+  <!-- Sidebar -->
+  <aside class="fixed inset-y-0 left-0 w-56 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col z-10">
+    <div class="p-4 border-b border-gray-200 dark:border-gray-800">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-accent-500 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+        </div>
+        <span class="font-semibold text-lg">Reader Analytics</span>
+      </div>
+    </div>
+
+    <nav class="flex-1 p-3 space-y-1">
+      <a href="dashboard-mockup.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-400 font-medium">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+        </svg>
+        Dashboard
+      </a>
+
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        Reading Stats
+      </a>
+
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+        Content Pipeline
+      </a>
+
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+        </svg>
+        Highlights
+      </a>
+
+      <div class="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          Library
+        </a>
+      </div>
+    </nav>
+
+    <div class="p-3 border-t border-gray-200 dark:border-gray-800">
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Settings
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 ml-56">
+
+    <!-- Header -->
+    <header class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+      <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <span class="text-sm text-gray-500 dark:text-gray-400">Last synced: 2 minutes ago</span>
+
+        <div class="flex items-center gap-4">
+          <!-- Period Selector -->
+          <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <button class="px-3 py-1.5 text-sm rounded-md text-gray-600 dark:text-gray-400">Week</button>
+            <button class="px-3 py-1.5 text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm font-medium">Month</button>
+            <button class="px-3 py-1.5 text-sm rounded-md text-gray-600 dark:text-gray-400">Year</button>
+          </div>
+
+          <!-- Theme Toggle -->
+          <button id="themeToggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+            <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+          </button>
+
+          <!-- Sync Button - Different States -->
+          <div class="flex items-center gap-2">
+            <!-- State 1: Idle (click to open panel) -->
+            <button id="syncBtnIdle" onclick="openSyncPanel('running')" class="flex items-center gap-2 px-4 py-2 bg-accent-500 hover:bg-accent-600 text-white rounded-lg text-sm font-medium">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Sync
+            </button>
+
+            <!-- State 2: Syncing (shows spinner, click to view progress) -->
+            <button id="syncBtnRunning" onclick="openSyncPanel('running')" class="hidden items-center gap-2 px-4 py-2 bg-accent-500 text-white rounded-lg text-sm font-medium">
+              <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Syncing...
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Demo Controls -->
+    <div class="max-w-7xl mx-auto px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-blue-50 dark:bg-blue-900/20">
+      <div class="flex items-center gap-4">
+        <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Demo States:</span>
+        <button onclick="openSyncPanel('running')" class="px-3 py-1.5 text-sm bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800/40">
+          In Progress
+        </button>
+        <button onclick="openSyncPanel('rate-limited')" class="px-3 py-1.5 text-sm bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-800/40">
+          Rate Limited
+        </button>
+        <button onclick="openSyncPanel('completed')" class="px-3 py-1.5 text-sm bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-800/40">
+          Completed
+        </button>
+        <button onclick="openSyncPanel('error')" class="px-3 py-1.5 text-sm bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-800/40">
+          Error
+        </button>
+        <button onclick="openSyncPanel('history')" class="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
+          History View
+        </button>
+      </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-6 py-8">
+      <!-- Content placeholder -->
+      <div class="text-center text-gray-500 dark:text-gray-400 py-20">
+        <p>Click "Sync" button or use demo controls above to see sync progress states</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Sync Progress Slide-over Panel -->
+  <div id="syncPanel" class="fixed inset-0 z-50 slide-over-hidden">
+    <!-- Backdrop -->
+    <div class="slide-over-backdrop fixed inset-0 bg-gray-900/50 dark:bg-black/60" onclick="closeSyncPanel()"></div>
+
+    <!-- Panel -->
+    <div class="slide-over-panel fixed inset-y-0 right-0 w-full max-w-lg bg-white dark:bg-gray-900 shadow-xl flex flex-col">
+
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <h2 id="panelTitle" class="font-semibold text-lg">Syncing with Readwise</h2>
+          <!-- Status badge -->
+          <span id="statusBadge" class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+            Running
+          </span>
+        </div>
+        <button onclick="closeSyncPanel()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Phase Stepper -->
+      <div id="phaseStepper" class="px-6 py-5 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+        <div class="flex items-center justify-between">
+          <!-- Phase 1: Documents -->
+          <div class="flex flex-col items-center flex-1">
+            <div id="phase1Icon" class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center mb-2">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <span id="phase1Label" class="text-xs font-medium text-emerald-600 dark:text-emerald-400">Documents</span>
+            <span id="phase1Count" class="text-xs text-gray-500 dark:text-gray-400">156 synced</span>
+          </div>
+
+          <!-- Connector -->
+          <div id="connector1" class="flex-1 h-0.5 bg-emerald-500 -mt-6"></div>
+
+          <!-- Phase 2: Highlights -->
+          <div class="flex flex-col items-center flex-1">
+            <div id="phase2Icon" class="w-10 h-10 rounded-full bg-accent-500 flex items-center justify-center mb-2 animate-pulse-dot">
+              <svg class="w-5 h-5 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+            </div>
+            <span id="phase2Label" class="text-xs font-medium text-accent-600 dark:text-accent-400">Highlights</span>
+            <span id="phase2Count" class="text-xs text-gray-500 dark:text-gray-400">42 of ~100</span>
+          </div>
+
+          <!-- Connector -->
+          <div id="connector2" class="flex-1 h-0.5 bg-gray-200 dark:bg-gray-700 -mt-6"></div>
+
+          <!-- Phase 3: Notes -->
+          <div class="flex flex-col items-center flex-1">
+            <div id="phase3Icon" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mb-2">
+              <span class="text-sm font-medium text-gray-500 dark:text-gray-400">3</span>
+            </div>
+            <span id="phase3Label" class="text-xs font-medium text-gray-500 dark:text-gray-400">Notes</span>
+            <span id="phase3Count" class="text-xs text-gray-400 dark:text-gray-500">Pending</span>
+          </div>
+        </div>
+
+        <!-- Overall Progress Bar -->
+        <div class="mt-5">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs text-gray-600 dark:text-gray-400">Overall Progress</span>
+            <span id="overallProgress" class="text-xs font-medium">45%</span>
+          </div>
+          <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div id="progressBar" class="h-full bg-accent-500 rounded-full progress-bar-animated" style="width: 45%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rate Limit Warning (shown when rate limited) -->
+      <div id="rateLimitBanner" class="hidden px-6 py-4 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800">
+        <div class="flex items-start gap-3">
+          <div class="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-amber-800 dark:text-amber-200">Rate limit reached</p>
+            <p class="text-sm text-amber-600 dark:text-amber-400">Retrying in <span id="retryCountdown" class="font-mono font-bold">37</span>s (attempt 2/3)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Log Stream -->
+      <div class="flex-1 overflow-y-auto">
+        <div class="px-6 py-3 sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Activity Log</span>
+          <label class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 cursor-pointer">
+            <input type="checkbox" id="verboseToggle" class="rounded border-gray-300 dark:border-gray-600 text-accent-500 focus:ring-accent-500 w-3.5 h-3.5">
+            Verbose
+          </label>
+        </div>
+
+        <div id="logStream" class="px-6 py-4 space-y-3">
+          <!-- Log entries populated by state -->
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div id="footerActions" class="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <!-- Running state -->
+        <div id="footerRunning" class="flex items-center justify-between">
+          <div class="text-sm text-gray-500 dark:text-gray-400">
+            Started <span class="font-medium">2m 34s ago</span>
+          </div>
+          <button class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">
+            Cancel Sync
+          </button>
+        </div>
+
+        <!-- Completed state -->
+        <div id="footerCompleted" class="hidden">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-900 dark:text-white">Sync completed</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Duration: 2m 34s</p>
+              </div>
+            </div>
+            <button onclick="closeSyncPanel()" class="px-4 py-2 text-sm font-medium text-white bg-accent-500 hover:bg-accent-600 rounded-lg">
+              Done
+            </button>
+          </div>
+        </div>
+
+        <!-- Error state -->
+        <div id="footerError" class="hidden">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-red-600 dark:text-red-400">Sync failed</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Check error above</p>
+              </div>
+            </div>
+            <button onclick="openSyncPanel('running')" class="px-4 py-2 text-sm font-medium text-white bg-accent-500 hover:bg-accent-600 rounded-lg">
+              Retry Sync
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sync History Panel (alternative view) -->
+  <div id="historyPanel" class="fixed inset-0 z-50 slide-over-hidden">
+    <div class="slide-over-backdrop fixed inset-0 bg-gray-900/50 dark:bg-black/60" onclick="closeHistoryPanel()"></div>
+
+    <div class="slide-over-panel fixed inset-y-0 right-0 w-full max-w-lg bg-white dark:bg-gray-900 shadow-xl flex flex-col">
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+        <h2 class="font-semibold text-lg">Sync History</h2>
+        <button onclick="closeHistoryPanel()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Summary Stats -->
+      <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+        <div class="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <div class="text-2xl font-bold text-gray-900 dark:text-white">47</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">Total syncs</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">45</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">Successful</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-red-600 dark:text-red-400">2</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">Failed</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- History List -->
+      <div class="flex-1 overflow-y-auto">
+        <div class="divide-y divide-gray-100 dark:divide-gray-800">
+
+          <!-- Today -->
+          <div class="px-6 py-2 bg-gray-50 dark:bg-gray-800/30 sticky top-0">
+            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Today</span>
+          </div>
+
+          <div class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer" onclick="openSyncPanel('completed')">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-medium text-gray-900 dark:text-white">Completed</p>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">2:34</span>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">156 docs • 42 highlights • 8 notes</p>
+              </div>
+              <span class="text-xs text-gray-400 dark:text-gray-500">10:23 AM</span>
+            </div>
+          </div>
+
+          <div class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-medium text-gray-900 dark:text-white">Completed</p>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">1:12</span>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">12 docs • 5 highlights • 2 notes</p>
+              </div>
+              <span class="text-xs text-gray-400 dark:text-gray-500">8:45 AM</span>
+            </div>
+          </div>
+
+          <!-- Yesterday -->
+          <div class="px-6 py-2 bg-gray-50 dark:bg-gray-800/30 sticky top-0">
+            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Yesterday</span>
+          </div>
+
+          <div class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer" onclick="openSyncPanel('error')">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-medium text-red-600 dark:text-red-400">Failed</p>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">0:45</span>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Rate limit exceeded (max retries)</p>
+              </div>
+              <span class="text-xs text-gray-400 dark:text-gray-500">11:30 PM</span>
+            </div>
+          </div>
+
+          <div class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-medium text-gray-900 dark:text-white">Completed</p>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">3:21</span>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">89 docs • 34 highlights • 12 notes</p>
+              </div>
+              <span class="text-xs text-gray-400 dark:text-gray-500">6:15 PM</span>
+            </div>
+          </div>
+
+          <!-- Last Week -->
+          <div class="px-6 py-2 bg-gray-50 dark:bg-gray-800/30 sticky top-0">
+            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Last 7 Days</span>
+          </div>
+
+          <div class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-medium text-gray-900 dark:text-white">Completed</p>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">2:08</span>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">67 docs • 28 highlights • 5 notes</p>
+              </div>
+              <span class="text-xs text-gray-400 dark:text-gray-500">Dec 18</span>
+            </div>
+          </div>
+
+          <div class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-medium text-gray-900 dark:text-white">Completed</p>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">4:52</span>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">234 docs • 89 highlights • 23 notes</p>
+              </div>
+              <span class="text-xs text-gray-400 dark:text-gray-500">Dec 15</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-800 text-center">
+        <button class="text-sm text-accent-600 dark:text-accent-400 hover:underline font-medium">
+          Load more history
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      html.classList.add('dark');
+    }
+
+    themeToggle.addEventListener('click', () => {
+      html.classList.toggle('dark');
+      localStorage.theme = html.classList.contains('dark') ? 'dark' : 'light';
+    });
+
+    // Log entry templates
+    const logEntries = {
+      running: [
+        { type: 'info', time: '10:23:05', message: 'Sync started' },
+        { type: 'phase', time: '10:23:06', message: 'Phase 1/3: Syncing documents...' },
+        { type: 'progress', time: '10:23:12', message: 'Documents: 50 processed' },
+        { type: 'progress', time: '10:23:18', message: 'Documents: 100 processed' },
+        { type: 'progress', time: '10:23:24', message: 'Documents: 156 processed' },
+        { type: 'success', time: '10:23:25', message: 'Phase 1 completed: 156 documents synced' },
+        { type: 'phase', time: '10:23:26', message: 'Phase 2/3: Syncing highlights...' },
+        { type: 'progress', time: '10:23:32', message: 'Highlights: 20 processed' },
+        { type: 'progress', time: '10:23:38', message: 'Highlights: 42 processed' },
+      ],
+      'rate-limited': [
+        { type: 'info', time: '10:23:05', message: 'Sync started' },
+        { type: 'phase', time: '10:23:06', message: 'Phase 1/3: Syncing documents...' },
+        { type: 'success', time: '10:23:25', message: 'Phase 1 completed: 156 documents synced' },
+        { type: 'phase', time: '10:23:26', message: 'Phase 2/3: Syncing highlights...' },
+        { type: 'progress', time: '10:23:32', message: 'Highlights: 20 processed' },
+        { type: 'warning', time: '10:23:38', message: 'Rate limit hit (429). Waiting 37s before retry (attempt 2/3)' },
+      ],
+      completed: [
+        { type: 'info', time: '10:23:05', message: 'Sync started' },
+        { type: 'phase', time: '10:23:06', message: 'Phase 1/3: Syncing documents...' },
+        { type: 'success', time: '10:23:25', message: 'Phase 1 completed: 156 documents synced' },
+        { type: 'phase', time: '10:23:26', message: 'Phase 2/3: Syncing highlights...' },
+        { type: 'success', time: '10:24:45', message: 'Phase 2 completed: 42 highlights synced' },
+        { type: 'phase', time: '10:24:46', message: 'Phase 3/3: Syncing notes...' },
+        { type: 'success', time: '10:25:12', message: 'Phase 3 completed: 8 notes synced' },
+        { type: 'complete', time: '10:25:39', message: 'Sync completed successfully' },
+      ],
+      error: [
+        { type: 'info', time: '10:23:05', message: 'Sync started' },
+        { type: 'phase', time: '10:23:06', message: 'Phase 1/3: Syncing documents...' },
+        { type: 'success', time: '10:23:25', message: 'Phase 1 completed: 156 documents synced' },
+        { type: 'phase', time: '10:23:26', message: 'Phase 2/3: Syncing highlights...' },
+        { type: 'warning', time: '10:23:38', message: 'Rate limit hit. Waiting 60s (attempt 1/3)' },
+        { type: 'warning', time: '10:24:38', message: 'Rate limit hit. Waiting 120s (attempt 2/3)' },
+        { type: 'warning', time: '10:26:38', message: 'Rate limit hit. Waiting 240s (attempt 3/3)' },
+        { type: 'error', time: '10:30:38', message: 'Max retries exceeded. Sync failed during Highlights phase.' },
+      ],
+    };
+
+    function getLogEntryClass(type) {
+      switch(type) {
+        case 'success': return 'text-emerald-600 dark:text-emerald-400';
+        case 'warning': return 'text-amber-600 dark:text-amber-400';
+        case 'error': return 'text-red-600 dark:text-red-400';
+        case 'phase': return 'text-blue-600 dark:text-blue-400 font-medium';
+        case 'complete': return 'text-emerald-600 dark:text-emerald-400 font-medium';
+        case 'progress': return 'text-gray-500 dark:text-gray-400';
+        default: return 'text-gray-600 dark:text-gray-300';
+      }
+    }
+
+    function getLogIcon(type) {
+      switch(type) {
+        case 'success':
+        case 'complete':
+          return '<svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+        case 'warning':
+          return '<svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>';
+        case 'error':
+          return '<svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+        case 'phase':
+          return '<svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>';
+        case 'progress':
+          return '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+        default:
+          return '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+      }
+    }
+
+    function renderLogs(state) {
+      const logs = logEntries[state] || logEntries.running;
+      const logStream = document.getElementById('logStream');
+
+      logStream.innerHTML = logs.map(entry => `
+        <div class="log-entry flex items-start gap-3">
+          <span class="text-xs font-mono text-gray-400 dark:text-gray-500 w-16 flex-shrink-0 pt-0.5">${entry.time}</span>
+          <div class="flex-shrink-0 pt-0.5">${getLogIcon(entry.type)}</div>
+          <span class="text-sm ${getLogEntryClass(entry.type)}">${entry.message}</span>
+        </div>
+      `).join('');
+    }
+
+    function updateStepper(state) {
+      const phase1Icon = document.getElementById('phase1Icon');
+      const phase2Icon = document.getElementById('phase2Icon');
+      const phase3Icon = document.getElementById('phase3Icon');
+      const connector1 = document.getElementById('connector1');
+      const connector2 = document.getElementById('connector2');
+      const phase1Label = document.getElementById('phase1Label');
+      const phase2Label = document.getElementById('phase2Label');
+      const phase3Label = document.getElementById('phase3Label');
+      const phase1Count = document.getElementById('phase1Count');
+      const phase2Count = document.getElementById('phase2Count');
+      const phase3Count = document.getElementById('phase3Count');
+      const progressBar = document.getElementById('progressBar');
+      const overallProgress = document.getElementById('overallProgress');
+
+      // Reset classes
+      phase1Icon.className = 'w-10 h-10 rounded-full flex items-center justify-center mb-2';
+      phase2Icon.className = 'w-10 h-10 rounded-full flex items-center justify-center mb-2';
+      phase3Icon.className = 'w-10 h-10 rounded-full flex items-center justify-center mb-2';
+
+      if (state === 'running' || state === 'rate-limited') {
+        // Phase 1 completed, Phase 2 in progress
+        phase1Icon.classList.add('bg-emerald-500');
+        phase1Icon.innerHTML = '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+        phase1Label.className = 'text-xs font-medium text-emerald-600 dark:text-emerald-400';
+        phase1Count.textContent = '156 synced';
+
+        phase2Icon.classList.add('bg-accent-500', 'animate-pulse-dot');
+        phase2Icon.innerHTML = '<svg class="w-5 h-5 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>';
+        phase2Label.className = 'text-xs font-medium text-accent-600 dark:text-accent-400';
+        phase2Count.textContent = '42 of ~100';
+
+        phase3Icon.classList.add('bg-gray-200', 'dark:bg-gray-700');
+        phase3Icon.innerHTML = '<span class="text-sm font-medium text-gray-500 dark:text-gray-400">3</span>';
+        phase3Label.className = 'text-xs font-medium text-gray-500 dark:text-gray-400';
+        phase3Count.textContent = 'Pending';
+
+        connector1.className = 'flex-1 h-0.5 bg-emerald-500 -mt-6';
+        connector2.className = 'flex-1 h-0.5 bg-gray-200 dark:bg-gray-700 -mt-6';
+
+        progressBar.style.width = '45%';
+        progressBar.classList.add('progress-bar-animated');
+        overallProgress.textContent = '45%';
+
+      } else if (state === 'completed') {
+        // All phases completed
+        phase1Icon.classList.add('bg-emerald-500');
+        phase1Icon.innerHTML = '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+        phase1Label.className = 'text-xs font-medium text-emerald-600 dark:text-emerald-400';
+        phase1Count.textContent = '156 synced';
+
+        phase2Icon.classList.add('bg-emerald-500');
+        phase2Icon.innerHTML = '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+        phase2Label.className = 'text-xs font-medium text-emerald-600 dark:text-emerald-400';
+        phase2Count.textContent = '42 synced';
+
+        phase3Icon.classList.add('bg-emerald-500');
+        phase3Icon.innerHTML = '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+        phase3Label.className = 'text-xs font-medium text-emerald-600 dark:text-emerald-400';
+        phase3Count.textContent = '8 synced';
+
+        connector1.className = 'flex-1 h-0.5 bg-emerald-500 -mt-6';
+        connector2.className = 'flex-1 h-0.5 bg-emerald-500 -mt-6';
+
+        progressBar.style.width = '100%';
+        progressBar.classList.remove('progress-bar-animated');
+        overallProgress.textContent = '100%';
+
+      } else if (state === 'error') {
+        // Phase 1 completed, Phase 2 failed
+        phase1Icon.classList.add('bg-emerald-500');
+        phase1Icon.innerHTML = '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+        phase1Label.className = 'text-xs font-medium text-emerald-600 dark:text-emerald-400';
+        phase1Count.textContent = '156 synced';
+
+        phase2Icon.classList.add('bg-red-500');
+        phase2Icon.innerHTML = '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+        phase2Label.className = 'text-xs font-medium text-red-600 dark:text-red-400';
+        phase2Count.textContent = 'Failed';
+
+        phase3Icon.classList.add('bg-gray-200', 'dark:bg-gray-700');
+        phase3Icon.innerHTML = '<span class="text-sm font-medium text-gray-500 dark:text-gray-400">3</span>';
+        phase3Label.className = 'text-xs font-medium text-gray-500 dark:text-gray-400';
+        phase3Count.textContent = 'Skipped';
+
+        connector1.className = 'flex-1 h-0.5 bg-emerald-500 -mt-6';
+        connector2.className = 'flex-1 h-0.5 bg-gray-200 dark:bg-gray-700 -mt-6';
+
+        progressBar.style.width = '33%';
+        progressBar.classList.remove('progress-bar-animated');
+        progressBar.classList.add('bg-red-500');
+        overallProgress.textContent = '33%';
+      }
+    }
+
+    function updateFooter(state) {
+      document.getElementById('footerRunning').classList.add('hidden');
+      document.getElementById('footerCompleted').classList.add('hidden');
+      document.getElementById('footerError').classList.add('hidden');
+
+      if (state === 'running' || state === 'rate-limited') {
+        document.getElementById('footerRunning').classList.remove('hidden');
+      } else if (state === 'completed') {
+        document.getElementById('footerCompleted').classList.remove('hidden');
+      } else if (state === 'error') {
+        document.getElementById('footerError').classList.remove('hidden');
+      }
+    }
+
+    function updateStatusBadge(state) {
+      const badge = document.getElementById('statusBadge');
+      badge.className = 'px-2 py-0.5 text-xs font-medium rounded-full';
+
+      if (state === 'running') {
+        badge.classList.add('bg-blue-100', 'dark:bg-blue-900/30', 'text-blue-700', 'dark:text-blue-400');
+        badge.textContent = 'Running';
+      } else if (state === 'rate-limited') {
+        badge.classList.add('bg-amber-100', 'dark:bg-amber-900/30', 'text-amber-700', 'dark:text-amber-400');
+        badge.textContent = 'Rate Limited';
+      } else if (state === 'completed') {
+        badge.classList.add('bg-emerald-100', 'dark:bg-emerald-900/30', 'text-emerald-700', 'dark:text-emerald-400');
+        badge.textContent = 'Completed';
+      } else if (state === 'error') {
+        badge.classList.add('bg-red-100', 'dark:bg-red-900/30', 'text-red-700', 'dark:text-red-400');
+        badge.textContent = 'Failed';
+      }
+    }
+
+    function openSyncPanel(state = 'running') {
+      if (state === 'history') {
+        document.getElementById('historyPanel').classList.remove('slide-over-hidden');
+        document.body.style.overflow = 'hidden';
+        return;
+      }
+
+      renderLogs(state);
+      updateStepper(state);
+      updateFooter(state);
+      updateStatusBadge(state);
+
+      // Show/hide rate limit banner
+      const rateLimitBanner = document.getElementById('rateLimitBanner');
+      if (state === 'rate-limited') {
+        rateLimitBanner.classList.remove('hidden');
+      } else {
+        rateLimitBanner.classList.add('hidden');
+      }
+
+      // Update title
+      const title = document.getElementById('panelTitle');
+      if (state === 'completed') {
+        title.textContent = 'Sync Complete';
+      } else if (state === 'error') {
+        title.textContent = 'Sync Failed';
+      } else {
+        title.textContent = 'Syncing with Readwise';
+      }
+
+      document.getElementById('syncPanel').classList.remove('slide-over-hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSyncPanel() {
+      document.getElementById('syncPanel').classList.add('slide-over-hidden');
+      document.body.style.overflow = '';
+    }
+
+    function closeHistoryPanel() {
+      document.getElementById('historyPanel').classList.add('slide-over-hidden');
+      document.body.style.overflow = '';
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeSyncPanel();
+        closeHistoryPanel();
+      }
+    });
+  </script>
+</body>
+</html>
