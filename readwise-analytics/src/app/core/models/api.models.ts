@@ -114,14 +114,13 @@ export interface PipelineResponse {
 // Highlights endpoint
 export interface HighlightSummaryDto {
   readonly total: number;
+  readonly withNotes: number;
+  readonly notePercentage: number;
   readonly thisPeriod: number;
+  readonly previousPeriod: number;
+  readonly periodChange: number;
+  readonly periodChangePercent: number | null;
   readonly averagePerDocument: number;
-}
-
-export interface ColorDto {
-  readonly color: string;
-  readonly count: number;
-  readonly percentage: number;
 }
 
 export interface TopDocumentDto {
@@ -130,11 +129,11 @@ export interface TopDocumentDto {
   readonly category: string | null;
   readonly highlightCount: number;
   readonly imageUrl: string | null;
+  readonly hasNotes: boolean;
 }
 
 export interface HighlightResponse {
   readonly summary: HighlightSummaryDto;
-  readonly colorDistribution: readonly ColorDto[];
   readonly topDocuments: readonly TopDocumentDto[];
 }
 

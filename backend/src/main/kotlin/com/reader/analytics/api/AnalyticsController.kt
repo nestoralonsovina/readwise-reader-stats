@@ -273,28 +273,26 @@ class AnalyticsController(
     ): HighlightResponse {
         val dateRange = DateRange.lastNDays(days)
         val stats = analyticsService.getHighlightStats(dateRange)
-        val total = stats.colorDistribution.values.sum()
 
         return HighlightResponse(
             summary = HighlightSummaryDto(
                 total = stats.totalHighlights,
+                withNotes = stats.highlightsWithNotes,
+                notePercentage = stats.notePercentage,
                 thisPeriod = stats.highlightsThisPeriod,
+                previousPeriod = stats.highlightsPreviousPeriod,
+                periodChange = stats.periodChange,
+                periodChangePercent = stats.periodChangePercent,
                 averagePerDocument = stats.averageHighlightsPerDocument
             ),
-            colorDistribution = stats.colorDistribution.map { (color, count) ->
-                ColorDto(
-                    color = color,
-                    count = count,
-                    percentage = if (total > 0) (count.toDouble() / total) * 100 else 0.0
-                )
-            }.sortedByDescending { it.count },
             topDocuments = stats.mostHighlightedDocuments.take(topDocumentsLimit).map {
                 TopDocumentDto(
                     documentId = it.documentId,
                     title = it.title,
                     category = it.category,
                     highlightCount = it.highlightCount,
-                    imageUrl = it.imageUrl
+                    imageUrl = it.imageUrl,
+                    hasNotes = it.hasNotes
                 )
             }
         )

@@ -27,6 +27,4 @@ interface AnalyticsStore {
     fun getHighlightStats(dateRange: DateRange): HighlightStats
 
     fun getMostHighlightedDocuments(limit: Int): List<DocumentHighlightCount>
-
-    fun getColorDistribution(): Map<String, Int>
 }

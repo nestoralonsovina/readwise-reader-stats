@@ -43,9 +43,10 @@ class AnalyticsServiceTest {
         )
         fakeStore.highlightStats = HighlightStats(
             totalHighlights = 200,
+            highlightsWithNotes = 50,
             highlightsThisPeriod = 15,
+            highlightsPreviousPeriod = 10,
             averageHighlightsPerDocument = 2.5,
-            colorDistribution = mapOf("yellow" to 100, "blue" to 50),
             mostHighlightedDocuments = emptyList()
         )
         fakeStore.completionRate = 0.6
@@ -109,14 +110,13 @@ class AnalyticsServiceTest {
         var articlesCompleted: Int = 0
         var streak = ReadingStreak(0, 0, null, null, null)
         var pipelineStats = PipelineStats(0, 0, 0, 0, 0.0, null, 0, 0)
-        var highlightStats = HighlightStats(0, 0, 0.0, emptyMap(), emptyList())
+        var highlightStats = HighlightStats(0, 0, 0, 0, 0.0, emptyList())
         var completionRate: Double = 0.0
         var peakReadingHours = PeakReadingHours(emptyMap(), 0, 0.0)
         var readingStats: List<DailyReadingStats> = emptyList()
         var locationBreakdownResult: List<LocationBreakdown> = emptyList()
         var categoryBreakdownResult: List<CategoryBreakdown> = emptyList()
         var mostHighlightedDocuments: List<DocumentHighlightCount> = emptyList()
-        var colorDistributionResult: Map<String, Int> = emptyMap()
 
         var lastReadingStatsDateRange: DateRange? = null
         var lastReadingStatsGranularity: Granularity? = null
@@ -154,7 +154,5 @@ class AnalyticsServiceTest {
         }
 
         override fun getMostHighlightedDocuments(limit: Int) = mostHighlightedDocuments.take(limit)
-
-        override fun getColorDistribution() = colorDistributionResult
     }
 }

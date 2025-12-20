@@ -53,11 +53,28 @@ import { TopDocumentDto } from '../../../../core/models/api.models';
                 </p>
               </div>
 
-              <!-- Highlight count badge -->
-              <div
-                class="flex-shrink-0 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400"
-              >
-                {{ doc.highlightCount }}
+              <!-- Badges -->
+              <div class="flex flex-shrink-0 items-center gap-2">
+                @if (doc.hasNotes) {
+                  <div
+                    class="rounded-full bg-blue-500/10 p-1 text-blue-600 dark:text-blue-400"
+                    title="Has notes"
+                  >
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </div>
+                }
+                <div
+                  class="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400"
+                >
+                  {{ doc.highlightCount }}
+                </div>
               </div>
             </div>
           }

@@ -103,15 +103,21 @@ class JpaAnalyticsStore(
         }
 
     override fun getHighlightStats(dateRange: DateRange): HighlightStats {
-        val raw = repository.getHighlightStats(dateRange.start, dateRange.end)
-        val colors = getColorDistribution()
+        val previousRange = dateRange.previousPeriod()
+        val raw = repository.getHighlightStats(
+            currentStart = dateRange.start,
+            currentEnd = dateRange.end,
+            previousStart = previousRange.start,
+            previousEnd = previousRange.end
+        )
         val topDocs = getMostHighlightedDocuments(10)
 
         return HighlightStats(
             totalHighlights = raw.totalHighlights,
+            highlightsWithNotes = raw.highlightsWithNotes,
             highlightsThisPeriod = raw.highlightsThisPeriod,
+            highlightsPreviousPeriod = raw.highlightsPreviousPeriod,
             averageHighlightsPerDocument = raw.averagePerDocument,
-            colorDistribution = colors,
             mostHighlightedDocuments = topDocs
         )
     }
@@ -123,12 +129,10 @@ class JpaAnalyticsStore(
                 title = it.title,
                 highlightCount = it.highlightCount,
                 category = it.category,
-                imageUrl = it.imageUrl
+                imageUrl = it.imageUrl,
+                hasNotes = it.hasNotes
             )
         }
-
-    override fun getColorDistribution(): Map<String, Int> =
-        repository.getColorDistribution().associate { it.color to it.count }
 
     private fun RawDailyStats.toDailyReadingStats() = DailyReadingStats(
         date = date,

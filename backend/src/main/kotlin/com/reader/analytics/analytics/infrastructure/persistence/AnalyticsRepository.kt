@@ -312,18 +312,35 @@ class AnalyticsRepository(
         }
     }
 
-    fun getHighlightStats(startDate: LocalDate, endDate: LocalDate): RawHighlightStats {
+    fun getHighlightStats(
+        currentStart: LocalDate,
+        currentEnd: LocalDate,
+        previousStart: LocalDate,
+        previousEnd: LocalDate
+    ): RawHighlightStats {
         val totalSql = "SELECT COUNT(*) FROM highlights"
         val total = jdbcTemplate.queryForObject(totalSql, Int::class.java) ?: 0
+
+        val withNotesSql = """
+            SELECT COUNT(*) FROM highlights
+            WHERE note IS NOT NULL AND note != ''
+        """.trimIndent()
+        val withNotes = jdbcTemplate.queryForObject(withNotesSql, Int::class.java) ?: 0
 
         val periodSql = """
             SELECT COUNT(*) FROM highlights
             WHERE highlighted_at >= ? AND highlighted_at < ?
         """.trimIndent()
-        val period = jdbcTemplate.queryForObject(
+        val currentPeriod = jdbcTemplate.queryForObject(
             periodSql, Int::class.java,
-            startDate.atStartOfDay(),
-            endDate.plusDays(1).atStartOfDay()
+            currentStart.atStartOfDay(),
+            currentEnd.plusDays(1).atStartOfDay()
+        ) ?: 0
+
+        val previousPeriod = jdbcTemplate.queryForObject(
+            periodSql, Int::class.java,
+            previousStart.atStartOfDay(),
+            previousEnd.plusDays(1).atStartOfDay()
         ) ?: 0
 
         val avgSql = """
@@ -337,14 +354,11 @@ class AnalyticsRepository(
 
         return RawHighlightStats(
             totalHighlights = total,
-            highlightsThisPeriod = period,
+            highlightsWithNotes = withNotes,
+            highlightsThisPeriod = currentPeriod,
+            highlightsPreviousPeriod = previousPeriod,
             averagePerDocument = avg
         )
-    }
-
-    fun getColorDistribution(): List<RawColorCount> {
-        // Color field removed from Highlight entity (not available in V3 Reader API)
-        return emptyList()
     }
 
     fun getMostHighlightedDocuments(limit: Int): List<RawDocumentHighlightCount> {
@@ -354,7 +368,8 @@ class AnalyticsRepository(
                 d.title,
                 d.category,
                 d.image_url,
-                COUNT(h.id) AS highlight_count
+                COUNT(h.id) AS highlight_count,
+                BOOL_OR(h.note IS NOT NULL AND h.note != '') AS has_notes
             FROM documents d
             JOIN highlights h ON h.document_readwise_id = d.readwise_id
             GROUP BY d.id, d.readwise_id, d.title, d.category, d.image_url
@@ -368,7 +383,8 @@ class AnalyticsRepository(
                 title = rs.getString("title"),
                 category = rs.getString("category"),
                 imageUrl = rs.getString("image_url"),
-                highlightCount = rs.getInt("highlight_count")
+                highlightCount = rs.getInt("highlight_count"),
+                hasNotes = rs.getBoolean("has_notes")
             )
         }, limit)
     }
@@ -450,13 +466,10 @@ data class RawCategoryBreakdown(
 
 data class RawHighlightStats(
     val totalHighlights: Int,
+    val highlightsWithNotes: Int,
     val highlightsThisPeriod: Int,
+    val highlightsPreviousPeriod: Int,
     val averagePerDocument: Double
-)
-
-data class RawColorCount(
-    val color: String,
-    val count: Int
 )
 
 data class RawDocumentHighlightCount(
@@ -464,5 +477,6 @@ data class RawDocumentHighlightCount(
     val title: String?,
     val category: String?,
     val imageUrl: String?,
-    val highlightCount: Int
+    val highlightCount: Int,
+    val hasNotes: Boolean
 )
