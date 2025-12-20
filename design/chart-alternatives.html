@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reading Activity Chart - Alternatives</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            accent: {
+              50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a', 300: '#fcd34d',
+              400: '#fbbf24', 500: '#f59e0b', 600: '#d97706', 700: '#b45309',
+            },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .dark .apexcharts-text { fill: #9ca3af !important; }
+    .dark .apexcharts-gridline { stroke: #374151 !important; }
+  </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen p-8">
+
+  <!-- Theme Toggle -->
+  <div class="max-w-6xl mx-auto mb-8 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold">Reading Activity Chart Alternatives</h1>
+      <p class="text-gray-600 dark:text-gray-400 mt-1">Toggle dark mode to compare visibility</p>
+    </div>
+    <button id="themeToggle" class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+      <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+      </svg>
+      <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+      </svg>
+      <span class="text-sm font-medium">Toggle Theme</span>
+    </button>
+  </div>
+
+  <div class="max-w-6xl mx-auto space-y-8">
+
+    <!-- CURRENT (Problem) -->
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="px-2 py-1 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded">Current</span>
+        <h2 class="font-semibold">Area + Line (Dual Axis)</h2>
+      </div>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <strong>Issues:</strong> Gradient area washes out in dark mode. No stroke edge. Dual axis adds complexity.
+      </p>
+      <div id="chart-current" class="h-64"></div>
+    </div>
+
+    <!-- OPTION A: Bar Chart with Direct Labels -->
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded">Option A</span>
+        <h2 class="font-semibold">Bar Chart with Direct Labels</h2>
+      </div>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <strong>Why:</strong> Bars use position encoding (most accurate). Direct labels eliminate y-axis reading. Strong contrast in both themes.
+      </p>
+      <div id="chart-bars" class="h-64"></div>
+    </div>
+
+    <!-- OPTION B: Solid Line with Data Points -->
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="px-2 py-1 text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded">Option B</span>
+        <h2 class="font-semibold">Line with Markers + Solid Fill</h2>
+      </div>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <strong>Why:</strong> Solid 20% fill (not gradient). 3px stroke with visible markers. Shows trend clearly in both themes.
+      </p>
+      <div id="chart-line-solid" class="h-64"></div>
+    </div>
+
+    <!-- OPTION C: Single Metric Focus -->
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="px-2 py-1 text-xs font-medium bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 rounded">Option C</span>
+        <h2 class="font-semibold">Single Metric with Summary Stats</h2>
+      </div>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <strong>Why:</strong> Focus on words (primary metric). Articles shown as summary stat. Cleaner, less cognitive load.
+      </p>
+      <div class="flex items-start gap-6">
+        <div class="flex-1">
+          <div id="chart-single" class="h-56"></div>
+        </div>
+        <div class="w-48 space-y-4 pt-4">
+          <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">176,900</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">Total words</div>
+          </div>
+          <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">73</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">Articles completed</div>
+          </div>
+          <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div class="text-xl font-bold">14.7k</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">Avg words/week</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPTION D: Grouped Bars (Words + Articles) -->
+    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="px-2 py-1 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded">Option D</span>
+        <h2 class="font-semibold">Grouped Bars (Normalized Scale)</h2>
+      </div>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <strong>Why:</strong> Both metrics visible without dual axis. Normalized to percentage of max. Clear week-by-week comparison.
+      </p>
+      <div id="chart-grouped" class="h-64"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      html.classList.add('dark');
+    }
+    themeToggle.addEventListener('click', () => {
+      html.classList.toggle('dark');
+      localStorage.theme = html.classList.contains('dark') ? 'dark' : 'light';
+      // Recreate charts for theme update
+      location.reload();
+    });
+
+    const isDark = () => document.documentElement.classList.contains('dark');
+    const textColor = () => isDark() ? '#9ca3af' : '#6b7280';
+    const gridColor = () => isDark() ? '#374151' : '#e5e7eb';
+
+    const wordsData = [12400, 15200, 8900, 18600, 14200, 9800, 16500, 21300, 11200, 19400, 15800, 13600];
+    const articlesData = [5, 7, 3, 8, 6, 4, 7, 9, 5, 8, 6, 5];
+    const weeks = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12'];
+
+    // CURRENT (the problematic one)
+    new ApexCharts(document.querySelector("#chart-current"), {
+      series: [
+        { name: 'Words', type: 'area', data: wordsData },
+        { name: 'Articles', type: 'line', data: articlesData }
+      ],
+      chart: { height: 256, type: 'line', toolbar: { show: false }, background: 'transparent' },
+      stroke: { width: [0, 3], curve: 'smooth' },
+      fill: {
+        type: ['gradient', 'solid'],
+        gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.1 }
+      },
+      colors: ['#3b82f6', '#10b981'],
+      xaxis: { categories: weeks, labels: { style: { colors: textColor() } }, axisBorder: { show: false }, axisTicks: { show: false } },
+      yaxis: [
+        { labels: { style: { colors: textColor() }, formatter: (v) => (v/1000).toFixed(0) + 'k' } },
+        { opposite: true, labels: { style: { colors: textColor() } } }
+      ],
+      grid: { borderColor: gridColor(), strokeDashArray: 4 },
+      legend: { show: false },
+      tooltip: { theme: isDark() ? 'dark' : 'light' }
+    }).render();
+
+    // OPTION A: Bar chart with direct labels
+    new ApexCharts(document.querySelector("#chart-bars"), {
+      series: [{ name: 'Words', data: wordsData }],
+      chart: { type: 'bar', height: 256, toolbar: { show: false }, background: 'transparent' },
+      plotOptions: {
+        bar: { borderRadius: 4, columnWidth: '60%', dataLabels: { position: 'top' } }
+      },
+      dataLabels: {
+        enabled: true,
+        formatter: (v) => (v/1000).toFixed(1) + 'k',
+        offsetY: -20,
+        style: { fontSize: '11px', colors: [textColor()] }
+      },
+      colors: ['#3b82f6'],
+      xaxis: { categories: weeks, labels: { style: { colors: textColor() } }, axisBorder: { show: false }, axisTicks: { show: false } },
+      yaxis: { labels: { show: false } },
+      grid: { borderColor: gridColor(), strokeDashArray: 4, yaxis: { lines: { show: false } } },
+      tooltip: { theme: isDark() ? 'dark' : 'light' }
+    }).render();
+
+    // OPTION B: Line with solid fill and markers
+    new ApexCharts(document.querySelector("#chart-line-solid"), {
+      series: [{ name: 'Words', data: wordsData }],
+      chart: { type: 'area', height: 256, toolbar: { show: false }, background: 'transparent' },
+      stroke: { width: 3, curve: 'smooth' },
+      fill: { type: 'solid', opacity: 0.15 },
+      colors: ['#3b82f6'],
+      markers: { size: 5, colors: ['#3b82f6'], strokeColors: isDark() ? '#111827' : '#ffffff', strokeWidth: 2, hover: { size: 7 } },
+      xaxis: { categories: weeks, labels: { style: { colors: textColor() } }, axisBorder: { show: false }, axisTicks: { show: false } },
+      yaxis: { labels: { style: { colors: textColor() }, formatter: (v) => (v/1000).toFixed(0) + 'k' } },
+      grid: { borderColor: gridColor(), strokeDashArray: 4 },
+      tooltip: { theme: isDark() ? 'dark' : 'light', y: { formatter: (v) => v.toLocaleString() + ' words' } }
+    }).render();
+
+    // OPTION C: Single metric focus
+    new ApexCharts(document.querySelector("#chart-single"), {
+      series: [{ name: 'Words', data: wordsData }],
+      chart: { type: 'bar', height: 224, toolbar: { show: false }, background: 'transparent' },
+      plotOptions: { bar: { borderRadius: 3, columnWidth: '70%' } },
+      colors: ['#3b82f6'],
+      xaxis: { categories: weeks, labels: { style: { colors: textColor() } }, axisBorder: { show: false }, axisTicks: { show: false } },
+      yaxis: { labels: { style: { colors: textColor() }, formatter: (v) => (v/1000).toFixed(0) + 'k' } },
+      grid: { borderColor: gridColor(), strokeDashArray: 4 },
+      tooltip: { theme: isDark() ? 'dark' : 'light', y: { formatter: (v) => v.toLocaleString() + ' words' } }
+    }).render();
+
+    // OPTION D: Grouped bars (normalized)
+    const maxWords = Math.max(...wordsData);
+    const maxArticles = Math.max(...articlesData);
+    new ApexCharts(document.querySelector("#chart-grouped"), {
+      series: [
+        { name: 'Words', data: wordsData.map(v => Math.round(v / maxWords * 100)) },
+        { name: 'Articles', data: articlesData.map(v => Math.round(v / maxArticles * 100)) }
+      ],
+      chart: { type: 'bar', height: 256, toolbar: { show: false }, background: 'transparent' },
+      plotOptions: { bar: { borderRadius: 3, columnWidth: '70%' } },
+      colors: ['#3b82f6', '#10b981'],
+      xaxis: { categories: weeks, labels: { style: { colors: textColor() } }, axisBorder: { show: false }, axisTicks: { show: false } },
+      yaxis: { labels: { style: { colors: textColor() }, formatter: (v) => v + '%' }, max: 100 },
+      grid: { borderColor: gridColor(), strokeDashArray: 4 },
+      legend: { position: 'top', horizontalAlign: 'right', labels: { colors: textColor() } },
+      tooltip: {
+        theme: isDark() ? 'dark' : 'light',
+        y: { formatter: (v, { seriesIndex, dataPointIndex }) => {
+          return seriesIndex === 0
+            ? wordsData[dataPointIndex].toLocaleString() + ' words'
+            : articlesData[dataPointIndex] + ' articles';
+        }}
+      }
+    }).render();
+  </script>
+</body>
+</html>

@@ -525,7 +525,7 @@
     // Reading Activity Chart
     const activityOptions = {
       series: [
-        { name: 'Words', type: 'area', data: [12400, 15200, 8900, 18600, 14200, 9800, 16500, 21300, 11200, 19400, 15800, 13600] },
+        { name: 'Words', type: 'line', data: [12400, 15200, 8900, 18600, 14200, 9800, 16500, 21300, 11200, 19400, 15800, 13600] },
         { name: 'Articles', type: 'line', data: [5, 7, 3, 8, 6, 4, 7, 9, 5, 8, 6, 5] }
       ],
       chart: {
@@ -534,11 +534,7 @@
         toolbar: { show: false },
         background: 'transparent'
       },
-      stroke: { width: [0, 3], curve: 'smooth' },
-      fill: {
-        type: ['gradient', 'solid'],
-        gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.1 }
-      },
+      stroke: { width: 3, curve: 'smooth' },
       colors: ['#3b82f6', '#10b981'],
       xaxis: {
         categories: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8', 'Week 9', 'Week 10', 'Week 11', 'Week 12'],
