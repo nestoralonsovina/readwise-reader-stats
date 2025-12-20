@@ -1,0 +1,48 @@
+meta {
+  name: Update Document
+  type: http
+  seq: 3
+}
+
+patch {
+  url: https://readwise.io/api/v3/update/:document_id/
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+  Content-Type: application/json
+}
+
+params:path {
+  document_id: your-document-id-here
+}
+
+body:json {
+  {
+    "title": "Updated Title",
+    "author": "Updated Author",
+    "location": "later",
+    "tags": ["updated", "modified"]
+  }
+}
+
+docs {
+  Update an existing document in Readwise Reader.
+
+  Path parameters:
+  - document_id: The ID of the document to update
+
+  Body fields (all optional):
+  - title: New title
+  - author: New author
+  - summary: New summary
+  - published_date: ISO 8601 format
+  - image_url: New cover image URL
+  - location: new, later, shortlist, archive, feed
+  - category: article, email, rss, highlight, note, pdf, epub, tweet, video
+  - tags: Array of tag strings (replaces existing tags)
+
+  Returns 200 with document id and URL.
+}

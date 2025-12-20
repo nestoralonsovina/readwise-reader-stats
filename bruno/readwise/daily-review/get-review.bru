@@ -1,0 +1,27 @@
+meta {
+  name: Get Daily Review
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://readwise.io/api/v2/review/
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+}
+
+docs {
+  Get the daily review highlights.
+
+  Returns:
+  - review_id: Unique ID for this review session
+  - review_url: URL to view the review in browser
+  - review_completed: Whether the review was completed
+  - highlights: Array of highlight objects for review
+
+  Use this to integrate daily review into your workflow.
+}

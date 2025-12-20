@@ -1,0 +1,47 @@
+meta {
+  name: List Books
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://readwise.io/api/v2/books/
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+}
+
+params:query {
+  ~page_size: 100
+  ~page: 1
+  ~category: books
+  ~source: kindle
+  ~updated__lt: 2024-12-31T23:59:59Z
+  ~updated__gt: 2024-01-01T00:00:00Z
+  ~last_highlight_at__lt: 2024-12-31T23:59:59Z
+  ~last_highlight_at__gt: 2024-01-01T00:00:00Z
+}
+
+docs {
+  List books/sources from Readwise.
+
+  Query parameters (all optional):
+  - page_size: Number of results per page
+  - page: Page number
+  - category: books, articles, tweets, podcasts, supplementals
+  - source: Filter by source (kindle, instapaper, pocket, etc.)
+  - updated__lt: Updated before timestamp (ISO 8601)
+  - updated__gt: Updated after timestamp (ISO 8601)
+  - last_highlight_at__lt: Last highlight before timestamp
+  - last_highlight_at__gt: Last highlight after timestamp
+
+  Response includes:
+  - count: Total number of books
+  - next/previous: Pagination URLs
+  - results: Array of book objects
+
+  Rate limit: 20 requests/minute
+}

@@ -1,0 +1,52 @@
+meta {
+  name: Create Document
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://readwise.io/api/v3/save/
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "url": "https://example.com/article",
+    "title": "Example Article",
+    "author": "John Doe",
+    "summary": "A brief summary of the article",
+    "html": "<html><body><p>Article content here</p></body></html>",
+    "should_clean_html": true,
+    "location": "new",
+    "category": "article",
+    "tags": ["example", "test"],
+    "notes": "My notes about this article"
+  }
+}
+
+docs {
+  Save a new document to Readwise Reader.
+
+  Required fields:
+  - url: Unique identifier for the document
+
+  Optional fields:
+  - html: Valid HTML content
+  - should_clean_html: Auto-clean HTML and extract metadata
+  - title, author, summary: Document metadata
+  - published_date: ISO 8601 format
+  - image_url: Cover image URL
+  - location: new, later, shortlist, archive, feed
+  - category: article, email, rss, highlight, note, pdf, epub, tweet, video
+  - saved_using: Client identifier
+  - tags: Array of tag strings
+  - notes: Notes about the document
+
+  Returns 201 (created) or 200 (updated) with document id and URL.
+}

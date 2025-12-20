@@ -1,0 +1,45 @@
+meta {
+  name: List Documents
+  type: http
+  seq: 2
+}
+
+get {
+  url: https://readwise.io/api/v3/list/
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+}
+
+params:query {
+  ~id: document-id
+  ~updatedAfter: 2024-01-01T00:00:00Z
+  ~location: new
+  ~category: article
+  ~tag: example
+  ~pageCursor: cursor-string
+  ~withHtmlContent: false
+  ~withRawSourceUrl: false
+}
+
+docs {
+  List documents from Readwise Reader.
+
+  Query parameters (all optional):
+  - id: Filter by specific document ID
+  - updatedAfter: ISO 8601 datetime to filter recently updated documents
+  - location: Filter by location (new, later, shortlist, archive, feed)
+  - category: Filter by category (article, email, rss, highlight, note, pdf, epub, tweet, video)
+  - tag: Filter by tag
+  - pageCursor: Pagination cursor from previous response
+  - withHtmlContent: Include HTML content in response (boolean)
+  - withRawSourceUrl: Include raw source URL (boolean)
+
+  Response includes:
+  - count: Total number of documents
+  - nextPageCursor: Cursor for next page (null if no more pages)
+  - results: Array of document objects
+}

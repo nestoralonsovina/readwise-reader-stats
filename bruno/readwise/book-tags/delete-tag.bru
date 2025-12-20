@@ -1,0 +1,30 @@
+meta {
+  name: Delete Book Tag
+  type: http
+  seq: 5
+}
+
+delete {
+  url: https://readwise.io/api/v2/books/:book_id/tags/:tag_id
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+}
+
+params:path {
+  book_id: book-id-here
+  tag_id: tag-id-here
+}
+
+docs {
+  Remove a tag from a book/source.
+
+  Path parameters:
+  - book_id: The book ID
+  - tag_id: The tag ID
+
+  Returns 204 (No Content) on success.
+}

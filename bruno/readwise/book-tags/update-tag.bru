@@ -1,0 +1,40 @@
+meta {
+  name: Update Book Tag
+  type: http
+  seq: 4
+}
+
+patch {
+  url: https://readwise.io/api/v2/books/:book_id/tags/:tag_id
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+  Content-Type: application/json
+}
+
+params:path {
+  book_id: book-id-here
+  tag_id: tag-id-here
+}
+
+body:json {
+  {
+    "name": "updated-tag-name"
+  }
+}
+
+docs {
+  Update a tag on a book/source.
+
+  Path parameters:
+  - book_id: The book ID
+  - tag_id: The tag ID
+
+  Body:
+  - name: New tag name (max 127 characters)
+
+  Returns the updated tag object.
+}

@@ -1,0 +1,29 @@
+meta {
+  name: Get Book
+  type: http
+  seq: 2
+}
+
+get {
+  url: https://readwise.io/api/v2/books/:id/
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+}
+
+params:path {
+  id: book-id-here
+}
+
+docs {
+  Get a single book/source by ID.
+
+  Path parameters:
+  - id: The book ID
+
+  Returns the full book object including title, author, category,
+  source, cover image URL, highlight count, etc.
+}

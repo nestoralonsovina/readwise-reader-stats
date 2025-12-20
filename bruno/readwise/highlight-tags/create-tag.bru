@@ -1,0 +1,38 @@
+meta {
+  name: Create Highlight Tag
+  type: http
+  seq: 3
+}
+
+post {
+  url: https://readwise.io/api/v2/highlights/:highlight_id/tags/
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+  Content-Type: application/json
+}
+
+params:path {
+  highlight_id: highlight-id-here
+}
+
+body:json {
+  {
+    "name": "my-tag"
+  }
+}
+
+docs {
+  Add a tag to a highlight.
+
+  Path parameters:
+  - highlight_id: The highlight ID
+
+  Body:
+  - name: Tag name (max 127 characters)
+
+  Returns the created tag object.
+}

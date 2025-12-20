@@ -1,0 +1,28 @@
+meta {
+  name: Delete Highlight
+  type: http
+  seq: 6
+}
+
+delete {
+  url: https://readwise.io/api/v2/highlights/:id/
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+}
+
+params:path {
+  id: highlight-id-here
+}
+
+docs {
+  Delete a highlight.
+
+  Path parameters:
+  - id: The highlight ID to delete
+
+  Returns 204 (No Content) on success.
+}

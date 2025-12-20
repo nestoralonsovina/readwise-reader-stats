@@ -1,0 +1,46 @@
+meta {
+  name: Update Highlight
+  type: http
+  seq: 5
+}
+
+patch {
+  url: https://readwise.io/api/v2/highlights/:id/
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+  Content-Type: application/json
+}
+
+params:path {
+  id: highlight-id-here
+}
+
+body:json {
+  {
+    "text": "Updated highlight text",
+    "note": "Updated note",
+    "location": 150,
+    "url": "https://example.com/updated",
+    "color": "blue"
+  }
+}
+
+docs {
+  Update an existing highlight.
+
+  Path parameters:
+  - id: The highlight ID
+
+  Body fields (all optional):
+  - text: Updated highlight text
+  - note: Updated note
+  - location: Updated position
+  - url: Updated URL
+  - color: yellow, blue, pink, orange, green, purple
+
+  Returns the updated highlight object.
+}

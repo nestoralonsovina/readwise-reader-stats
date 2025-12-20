@@ -1,0 +1,55 @@
+meta {
+  name: Create Highlights
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://readwise.io/api/v2/highlights/
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "highlights": [
+      {
+        "text": "The highlighted text content",
+        "title": "Book or Article Title",
+        "author": "Author Name",
+        "source_url": "https://example.com/article",
+        "source_type": "article",
+        "category": "articles",
+        "note": "My note about this highlight",
+        "location": 100,
+        "location_type": "order",
+        "highlighted_at": "2024-01-15T10:30:00Z",
+        "highlight_url": "https://example.com/article#highlight"
+      }
+    ]
+  }
+}
+
+docs {
+  Create one or more highlights in Readwise.
+
+  Body fields for each highlight:
+  - text (required): The highlighted text
+  - title: Book/article title (creates new source if doesn't exist)
+  - author: Author name
+  - source_url: URL of the source
+  - source_type: Type of source
+  - category: books, articles, tweets, podcasts, supplementals
+  - note: Personal note about the highlight
+  - location: Position in the source
+  - location_type: order, page, time_offset
+  - highlighted_at: ISO 8601 timestamp
+  - highlight_url: Direct link to the highlight
+
+  Returns 200 with created/updated book objects and modified_highlights IDs.
+}

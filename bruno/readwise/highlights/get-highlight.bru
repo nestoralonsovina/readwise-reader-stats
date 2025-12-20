@@ -1,0 +1,28 @@
+meta {
+  name: Get Highlight
+  type: http
+  seq: 4
+}
+
+get {
+  url: https://readwise.io/api/v2/highlights/:id/
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+}
+
+params:path {
+  id: highlight-id-here
+}
+
+docs {
+  Get a single highlight by ID.
+
+  Path parameters:
+  - id: The highlight ID
+
+  Returns the full highlight object including text, note, location, tags, etc.
+}

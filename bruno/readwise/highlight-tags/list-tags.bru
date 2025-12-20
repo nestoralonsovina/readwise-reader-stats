@@ -1,0 +1,37 @@
+meta {
+  name: List Highlight Tags
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://readwise.io/api/v2/highlights/:highlight_id/tags
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+}
+
+params:path {
+  highlight_id: highlight-id-here
+}
+
+params:query {
+  ~page_size: 100
+  ~page: 1
+}
+
+docs {
+  List tags for a specific highlight.
+
+  Path parameters:
+  - highlight_id: The highlight ID
+
+  Query parameters (optional):
+  - page_size: Number of results per page
+  - page: Page number
+
+  Returns paginated list of tag objects.
+}

@@ -1,0 +1,40 @@
+meta {
+  name: Export Highlights
+  type: http
+  seq: 3
+}
+
+get {
+  url: https://readwise.io/api/v2/export/
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+}
+
+params:query {
+  ~updatedAfter: 2024-01-01T00:00:00Z
+  ~ids: 12345,67890
+  ~includeDeleted: false
+  ~pageCursor: cursor-string
+}
+
+docs {
+  Export highlights with full metadata, grouped by book/source.
+
+  Query parameters (all optional):
+  - updatedAfter: ISO 8601 datetime to filter recently updated
+  - ids: Comma-separated list of book IDs to export
+  - includeDeleted: Include deleted highlights (boolean)
+  - pageCursor: Pagination cursor from previous response
+
+  Response includes:
+  - count: Total number of books
+  - nextPageCursor: Cursor for next page
+  - results: Array of book objects with nested highlights
+
+  This is the recommended endpoint for syncing highlights.
+  Rate limit: 20 requests/minute
+}

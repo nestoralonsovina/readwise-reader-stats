@@ -1,0 +1,37 @@
+meta {
+  name: List Book Tags
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://readwise.io/api/v2/books/:book_id/tags
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+}
+
+params:path {
+  book_id: book-id-here
+}
+
+params:query {
+  ~page_size: 100
+  ~page: 1
+}
+
+docs {
+  List tags for a specific book/source.
+
+  Path parameters:
+  - book_id: The book ID
+
+  Query parameters (optional):
+  - page_size: Number of results per page
+  - page: Page number
+
+  Returns paginated list of tag objects.
+}

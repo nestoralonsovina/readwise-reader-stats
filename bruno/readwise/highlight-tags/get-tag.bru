@@ -1,0 +1,30 @@
+meta {
+  name: Get Highlight Tag
+  type: http
+  seq: 2
+}
+
+get {
+  url: https://readwise.io/api/v2/highlights/:highlight_id/tags/:tag_id
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+}
+
+params:path {
+  highlight_id: highlight-id-here
+  tag_id: tag-id-here
+}
+
+docs {
+  Get a specific tag for a highlight.
+
+  Path parameters:
+  - highlight_id: The highlight ID
+  - tag_id: The tag ID
+
+  Returns the tag object.
+}

@@ -1,0 +1,38 @@
+meta {
+  name: Create Book Tag
+  type: http
+  seq: 3
+}
+
+post {
+  url: https://readwise.io/api/v2/books/:book_id/tags/
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+  Content-Type: application/json
+}
+
+params:path {
+  book_id: book-id-here
+}
+
+body:json {
+  {
+    "name": "my-tag"
+  }
+}
+
+docs {
+  Add a tag to a book/source.
+
+  Path parameters:
+  - book_id: The book ID
+
+  Body:
+  - name: Tag name (max 127 characters)
+
+  Returns the created tag object.
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Validate Token
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://readwise.io/api/v2/auth/
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Token {{ACCESS_TOKEN}}
+}
+
+docs {
+  Validate the access token.
+
+  Returns 204 if token is valid.
+}
