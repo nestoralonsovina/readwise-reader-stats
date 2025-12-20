@@ -90,16 +90,16 @@ Full-page view showing a document with all its highlights, notes, and metadata.
 │  Reading Timeline                                           │
 │  Saved: Nov 12 │ First Opened: Nov 14 │ Completed: Nov 18   │
 ├─────────────────────────────────────────────────────────────┤
-│  Highlights                              [Color] [With notes]│
+│  Highlights                                      [With notes]│
 ├─────────────────────────────────────────────────────────────┤
-│  ┃ "Highlighted text passage here..."           │ Nov 14    │
-│  ┃                                              │ Loc 142   │
-│  ├──────────────────────────────────────────────┤           │
-│  │ 💬 User's note about this highlight          │           │
-│  └──────────────────────────────────────────────┘           │
+│  ┃ "Highlighted text passage here..."                       │
+│  ┃                                                  Nov 14  │
+│  ├──────────────────────────────────────────────────────────┤
+│  │ 💬 User's note about this highlight                      │
+│  └──────────────────────────────────────────────────────────┘
 │                                                             │
-│  ┃ "Another highlighted passage..."             │ Nov 15    │
-│  ┃                                              │ Loc 298   │
+│  ┃ "Another highlighted passage..."                         │
+│  ┃                                                  Nov 15  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -109,13 +109,11 @@ Full-page view showing a document with all its highlights, notes, and metadata.
 3. **Tags:** Document tags as chips
 4. **Stats Row:** Words, highlights, notes count, reading time
 5. **Timeline:** Saved, first opened, last read, completed dates
-6. **Highlights List:** All highlights with color coding, notes, and metadata
+6. **Highlights List:** All highlights with notes and metadata
 
 **Highlight Features:**
-- Color-coded left border (yellow, blue, green, pink, purple)
 - Note indicator and expandable note content
-- Date and location metadata
-- Filter by color
+- Date metadata
 - Filter "with notes only"
 
 ---
@@ -342,37 +340,23 @@ readonly documentId = input.required<string>();
 readonly document = signal<DocumentDetail | null>(null);
 readonly loading = signal(true);
 
-// Highlight filters
-readonly colorFilter = signal<HighlightColor | 'all'>('all');
+// Highlight filter
 readonly notesOnly = signal(false);
 
 readonly filteredHighlights = computed(() => {
   const doc = this.document();
   if (!doc) return [];
 
-  return doc.highlights.filter(h => {
-    if (this.colorFilter() !== 'all' && h.color !== this.colorFilter()) return false;
-    if (this.notesOnly() && !h.note) return false;
-    return true;
-  });
+  if (this.notesOnly()) {
+    return doc.highlights.filter(h => h.note !== null);
+  }
+  return doc.highlights;
 });
 ```
 
 ---
 
 ## Styling Notes
-
-### Highlight Colors
-```css
-.highlight-yellow { background: rgba(250, 204, 21, 0.3); border-left-color: #facc15; }
-.highlight-blue   { background: rgba(59, 130, 246, 0.2); border-left-color: #3b82f6; }
-.highlight-green  { background: rgba(34, 197, 94, 0.2);  border-left-color: #22c55e; }
-.highlight-pink   { background: rgba(236, 72, 153, 0.2); border-left-color: #ec4899; }
-.highlight-purple { background: rgba(168, 85, 247, 0.2); border-left-color: #a855f7; }
-```
-
-### Dark Mode Variants
-All highlight colors reduce opacity to 0.15 in dark mode.
 
 ### Transitions
 - Panel slide: `transform 300ms ease-out`
@@ -400,6 +384,488 @@ All highlight colors reduce opacity to 0.15 in dark mode.
 
 ---
 
+## Technical Specification
+
+### Open Questions - Resolved
+
+#### 1. Spartan UI Sheet Component
+**Decision:** Build custom slide-over following existing `SyncPanelComponent` pattern.
+
+**Rationale:** Spartan UI sheet (`@spartan-ng/ui-sheet-brain`) is not installed and adds dependency complexity. The `SyncPanelComponent` already implements the exact slide-over pattern needed (backdrop, escape key, right-side panel).
+
+#### 2. Router vs Overlay for Document Detail
+**Decision:** Full route at `/library/:documentId`.
+
+**Rationale:**
+- Enables deep linking and bookmarking
+- Browser back button works naturally
+- Simpler state management (no nested overlays)
+- Matches sidebar "Library" navigation intent
+
+#### 3. Pagination Strategy
+**Decision:** Cursor-based pagination with "Load More" for all drill-down lists.
+
+| Endpoint | Page Size | Rationale |
+|----------|-----------|-----------|
+| words-read | 20 | Power readers may have 50+ documents |
+| completed | 20 | Consistent UX |
+| backlog | 20 | Could be 100+ items |
+
+**API Format:**
+```json
+{
+  "documents": [...],
+  "hasMore": true,
+  "nextCursor": "uuid-of-last-item"
+}
+```
+
+#### 4. Highlight Inline Preview
+**Decision:** Show highlighted text only (no surrounding context).
+
+**Rationale:**
+- Readwise API doesn't provide surrounding context
+- Extracting context would require storing full document content (scope creep)
+- User can click "Open in Reader" for full context
+
+#### 5. Cover Image Fallback
+**Decision:** Category-based gradient placeholder.
+
+| Category | Gradient |
+|----------|----------|
+| article | Blue → Indigo |
+| book | Amber → Orange |
+| pdf | Red → Rose |
+| tweet | Cyan → Blue |
+| default | Gray → Slate |
+
+---
+
+### Data Model Changes
+
+#### Document Entity Additions
+
+Add timestamp fields sourced from Readwise API:
+
+```kotlin
+// Add to Document entity
+val firstOpenedAt: Instant? = null,  // From Readwise API
+val lastOpenedAt: Instant? = null    // From Readwise API
+```
+
+**Migration:** Add nullable columns, populate from next Readwise sync.
+
+#### Highlight Entity
+
+No changes needed. Current fields are sufficient:
+- `text` — highlighted content
+- `highlightedAt` — creation timestamp
+- Notes linked via separate `Note` entity
+
+Color coding and location features are **out of scope** (data not available from Readwise API).
+
+---
+
+### API Endpoint Specifications
+
+#### Drill-Down Endpoints
+
+All drill-down endpoints follow consistent patterns:
+
+**Common Query Parameters:**
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| startDate | ISO date | No | Period start (default: 30 days ago) |
+| endDate | ISO date | No | Period end (default: today) |
+| cursor | UUID | No | Pagination cursor |
+| limit | int | No | Page size (default: 20, max: 50) |
+
+**Common Response Structure:**
+```typescript
+interface DrillDownResponse<T> {
+  readonly summary: {
+    readonly total: number;
+    readonly changePercent: number | null;
+  };
+  readonly documents: readonly T[];
+  readonly hasMore: boolean;
+  readonly nextCursor: string | null;
+}
+```
+
+#### GET /api/analytics/drill-down/words-read
+
+**Document DTO:**
+```typescript
+interface WordsReadDocument {
+  readonly id: string;
+  readonly title: string | null;
+  readonly author: string | null;
+  readonly source: string;           // Extracted from URL
+  readonly coverUrl: string | null;
+  readonly category: string;
+  readonly wordsRead: number;        // progress × wordCount
+  readonly readingProgress: number;  // 0-100
+}
+```
+
+**SQL Query Pattern:**
+```sql
+SELECT d.*,
+       ROUND(d.reading_progress * d.word_count) as words_read
+FROM documents d
+WHERE d.reading_progress > 0
+  AND d.updated_at BETWEEN :start AND :end
+ORDER BY words_read DESC
+LIMIT :limit OFFSET :offset
+```
+
+#### GET /api/analytics/drill-down/completed
+
+**Document DTO:**
+```typescript
+interface CompletedDocument {
+  readonly id: string;
+  readonly title: string | null;
+  readonly author: string | null;
+  readonly source: string;
+  readonly coverUrl: string | null;
+  readonly category: string;
+  readonly completedAt: string;  // ISO timestamp
+}
+```
+
+**Completion Detection:**
+Documents where `reading_progress = 1.0` (100%). Use `updated_at` as completion timestamp until explicit tracking is added.
+
+#### GET /api/analytics/drill-down/backlog
+
+**Document DTO:**
+```typescript
+interface BacklogDocument {
+  readonly id: string;
+  readonly title: string | null;
+  readonly author: string | null;
+  readonly source: string;
+  readonly coverUrl: string | null;
+  readonly category: string;
+  readonly savedAt: string;
+  readonly daysWaiting: number;  // Computed: now - savedAt
+}
+```
+
+**Backlog Definition:**
+Documents where `reading_progress < 0.1` AND `location IN ('new', 'later', 'shortlist')`.
+
+#### GET /api/documents/:id
+
+**Response DTO:**
+```typescript
+interface DocumentDetailResponse {
+  readonly id: string;
+  readonly readwiseId: string;
+  readonly title: string | null;
+  readonly author: string | null;
+  readonly sourceUrl: string;
+  readonly source: string;           // Extracted domain
+  readonly coverUrl: string | null;
+  readonly category: string;
+  readonly location: string;
+  readonly wordCount: number | null;
+  readonly readingProgress: number;
+  readonly savedAt: string;
+  readonly firstOpenedAt: string | null;  // From tracking
+  readonly lastOpenedAt: string | null;   // From tracking
+  readonly tags: readonly string[];
+  readonly highlights: readonly HighlightDto[];
+  readonly stats: DocumentStats;
+}
+
+interface HighlightDto {
+  readonly id: string;
+  readonly text: string;
+  readonly note: string | null;  // From linked Note entity
+  readonly createdAt: string;
+}
+
+interface DocumentStats {
+  readonly highlightCount: number;
+  readonly notesCount: number;
+  readonly estimatedReadingTime: number;  // wordCount / 200 WPM
+}
+```
+
+---
+
+### Frontend Architecture
+
+#### New TypeScript Interfaces
+
+Add to `api.models.ts`:
+
+```typescript
+// Drill-down types
+export type DrillDownType = 'words' | 'completed' | 'backlog';
+
+export interface DrillDownSummary {
+  readonly total: number;
+  readonly changePercent: number | null;
+}
+
+export interface DrillDownDocument {
+  readonly id: string;
+  readonly title: string | null;
+  readonly author: string | null;
+  readonly source: string;
+  readonly coverUrl: string | null;
+  readonly category: string;
+}
+
+export interface WordsReadDocument extends DrillDownDocument {
+  readonly wordsRead: number;
+  readonly readingProgress: number;
+}
+
+export interface CompletedDocument extends DrillDownDocument {
+  readonly completedAt: string;
+}
+
+export interface BacklogDocument extends DrillDownDocument {
+  readonly savedAt: string;
+  readonly daysWaiting: number;
+}
+
+export interface DrillDownResponse<T extends DrillDownDocument> {
+  readonly summary: DrillDownSummary;
+  readonly documents: readonly T[];
+  readonly hasMore: boolean;
+  readonly nextCursor: string | null;
+}
+
+// Document detail types
+export interface HighlightDto {
+  readonly id: string;
+  readonly text: string;
+  readonly note: string | null;
+  readonly createdAt: string;
+}
+
+export interface DocumentStats {
+  readonly highlightCount: number;
+  readonly notesCount: number;
+  readonly estimatedReadingTime: number;
+}
+
+export interface DocumentDetailResponse {
+  readonly id: string;
+  readonly readwiseId: string;
+  readonly title: string | null;
+  readonly author: string | null;
+  readonly sourceUrl: string;
+  readonly source: string;
+  readonly coverUrl: string | null;
+  readonly category: string;
+  readonly location: string;
+  readonly wordCount: number | null;
+  readonly readingProgress: number;
+  readonly savedAt: string;
+  readonly firstOpenedAt: string | null;
+  readonly lastOpenedAt: string | null;
+  readonly tags: readonly string[];
+  readonly highlights: readonly HighlightDto[];
+  readonly stats: DocumentStats;
+}
+```
+
+#### Service Layer
+
+**DrillDownService** (`core/services/drill-down.service.ts`):
+```typescript
+@Injectable({ providedIn: 'root' })
+export class DrillDownService {
+  private readonly http = inject(HttpClient);
+
+  getWordsRead(params: DrillDownParams): Observable<DrillDownResponse<WordsReadDocument>>;
+  getCompleted(params: DrillDownParams): Observable<DrillDownResponse<CompletedDocument>>;
+  getBacklog(params: DrillDownParams): Observable<DrillDownResponse<BacklogDocument>>;
+}
+```
+
+**DocumentService** (`core/services/document.service.ts`):
+```typescript
+@Injectable({ providedIn: 'root' })
+export class DocumentService {
+  private readonly http = inject(HttpClient);
+
+  getDocument(id: string): Observable<DocumentDetailResponse>;
+}
+```
+
+#### Routing Configuration
+
+Update `app.routes.ts`:
+```typescript
+{
+  path: 'library/:id',
+  loadComponent: () =>
+    import('./features/library/document-detail.component').then(
+      (m) => m.DocumentDetailComponent
+    ),
+}
+```
+
+#### Component Hierarchy
+
+```
+dashboard.component.ts
+├── kpi-card.component.ts           # Add (cardClick) output
+├── stat-drill-down-panel.component.ts  # NEW: slide-over container
+│   └── document-row.component.ts   # NEW: clickable document item
+└── ...existing components
+
+library/
+├── document-detail.component.ts    # NEW: full page view
+│   ├── document-header.component.ts
+│   ├── reading-timeline.component.ts
+│   └── highlight-list.component.ts
+│       └── highlight-item.component.ts
+```
+
+---
+
+### Slide-Over Implementation
+
+Based on `SyncPanelComponent` pattern:
+
+```typescript
+@Component({
+  selector: 'app-stat-drill-down-panel',
+  template: `
+    @if (isOpen()) {
+      <div class="fixed inset-0 z-50">
+        <!-- Backdrop -->
+        <div
+          class="fixed inset-0 bg-gray-900/50 dark:bg-black/60"
+          (click)="close.emit()"
+        ></div>
+
+        <!-- Panel -->
+        <div class="fixed inset-y-0 right-0 flex w-full max-w-md flex-col bg-card shadow-xl">
+          <!-- Header -->
+          <div class="flex items-center justify-between border-b border-border px-6 py-4">
+            <h2 class="text-lg font-semibold">{{ title() }}</h2>
+            <button type="button" (click)="close.emit()">
+              <!-- X icon -->
+            </button>
+          </div>
+
+          <!-- Summary -->
+          <div class="border-b border-border px-6 py-4">
+            <div class="text-2xl font-bold">{{ summary()?.total | formatNumber }}</div>
+            @if (summary()?.changePercent; as change) {
+              <span class="text-sm text-muted-foreground">
+                {{ change > 0 ? '+' : '' }}{{ change }}% vs last period
+              </span>
+            }
+          </div>
+
+          <!-- Document list (scrollable) -->
+          <div class="flex-1 overflow-y-auto">
+            @for (doc of documents(); track doc.id) {
+              <app-document-row
+                [document]="doc"
+                [type]="type()"
+                (click)="onDocumentClick(doc)"
+              />
+            }
+
+            @if (hasMore()) {
+              <button (click)="loadMore.emit()">Load more</button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  `
+})
+export class StatDrillDownPanelComponent {
+  readonly isOpen = input.required<boolean>();
+  readonly type = input.required<DrillDownType>();
+  readonly summary = input<DrillDownSummary | null>();
+  readonly documents = input<DrillDownDocument[]>([]);
+  readonly hasMore = input(false);
+
+  readonly close = output<void>();
+  readonly loadMore = output<void>();
+  readonly documentSelect = output<string>();
+
+  // Computed title based on type
+  readonly title = computed(() => {
+    switch (this.type()) {
+      case 'words': return 'Words Read';
+      case 'completed': return 'Articles Completed';
+      case 'backlog': return 'Reading Backlog';
+    }
+  });
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    this.close.emit();
+  }
+
+  onDocumentClick(doc: DrillDownDocument): void {
+    this.documentSelect.emit(doc.id);
+  }
+}
+```
+
+---
+
+### Error Handling
+
+**Drill-down endpoints:** Return empty list with `total: 0` if no data.
+
+**Document detail:** Return 404 with structured error:
+```json
+{
+  "error": "DOCUMENT_NOT_FOUND",
+  "message": "Document with ID 'xxx' not found",
+  "documentId": "xxx"
+}
+```
+
+**Frontend:** Show inline error state, not blocking modal.
+
+---
+
+### Testing Strategy
+
+#### Backend
+- Unit tests: Service methods with fakes
+- Repository tests: Native SQL queries with `@DataJpaTest`
+- API tests: Controller with `@WebMvcTest`
+
+#### Frontend
+- Component tests: Vitest + Testing Library
+- Service tests: Mock HttpClient
+- E2E: Manual testing via mockups (defer Playwright)
+
+---
+
+### Implementation Order
+
+1. **Backend: Document entity** - Add `firstOpenedAt`, `lastOpenedAt` columns
+2. **Backend: Sync enhancement** - Populate new timestamp fields from Readwise API
+3. **Backend: Drill-down endpoints** - Three new endpoints
+4. **Backend: Document detail endpoint** - Single document with highlights
+5. **Frontend: Services** - DrillDownService, DocumentService
+6. **Frontend: KPI card click** - Add output event
+7. **Frontend: Slide-over panel** - Following SyncPanel pattern
+8. **Frontend: Document detail page** - New route and component
+9. **Frontend: Highlight list** - Notes filter and display
+
+---
+
 ## Out of Scope
 
 - Editing highlights or notes (read-only view)
@@ -407,3 +873,5 @@ All highlight colors reduce opacity to 0.15 in dark mode.
 - Bulk actions on backlog items
 - Export highlights
 - Search within highlights
+- Highlight color coding (not available from Readwise API)
+- Highlight location/position metadata (not available from Readwise API)
