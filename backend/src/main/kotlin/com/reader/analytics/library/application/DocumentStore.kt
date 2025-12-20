@@ -2,6 +2,7 @@ package com.reader.analytics.library.application
 
 import com.reader.analytics.library.domain.Document
 import com.reader.analytics.library.domain.Highlight
+import com.reader.analytics.library.domain.Note
 import com.reader.analytics.library.domain.Tag
 
 interface DocumentStore {
@@ -11,4 +12,7 @@ interface DocumentStore {
 
     fun findHighlightByReadwiseId(readwiseId: String): Highlight?
     fun saveHighlight(highlight: Highlight): Highlight
+
+    fun findNoteByReadwiseId(readwiseId: String): Note?
+    fun saveNote(note: Note): Note
 }

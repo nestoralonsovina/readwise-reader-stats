@@ -6,6 +6,5 @@ data class HighlightSyncedEvent(
     val id: String,
     val documentId: String,
     val text: String,
-    val note: String?,
     val highlightedAt: Instant?
 )

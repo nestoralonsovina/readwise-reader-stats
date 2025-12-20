@@ -22,5 +22,6 @@ data class SyncLog(
     val status: SyncStatus,
     val documentsProcessed: Int = 0,
     val highlightsProcessed: Int = 0,
+    val notesProcessed: Int = 0,
     val errorMessage: String? = null
 )

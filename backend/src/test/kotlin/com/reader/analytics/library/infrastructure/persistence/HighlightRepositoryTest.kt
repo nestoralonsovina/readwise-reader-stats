@@ -29,7 +29,6 @@ class HighlightRepositoryTest {
             readwiseId = "rw-hl-123",
             documentReadwiseId = document.readwiseId,
             text = "This is highlighted text",
-            note = "My note",
             highlightedAt = Instant.parse("2024-01-15T10:00:00Z")
         )
 
@@ -39,7 +38,6 @@ class HighlightRepositoryTest {
         assertNotNull(retrieved)
         assertEquals("rw-hl-123", retrieved.readwiseId)
         assertEquals("This is highlighted text", retrieved.text)
-        assertEquals("My note", retrieved.note)
         assertEquals(document.readwiseId, retrieved.documentReadwiseId)
     }
 

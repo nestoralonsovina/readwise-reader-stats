@@ -3,6 +3,7 @@ package com.reader.analytics.sync.infrastructure.readwise.dto
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.reader.analytics.sync.domain.events.HighlightSyncedEvent
+import com.reader.analytics.sync.domain.events.NoteSyncedEvent
 import java.time.Instant
 import java.time.LocalDate
 
@@ -46,13 +47,24 @@ fun DocumentDto.isHighlight(): Boolean = category == "highlight"
 
 fun DocumentDto.isDocument(): Boolean = category != "highlight" && category != "note"
 
+fun DocumentDto.isNote(): Boolean = category == "note"
+
 fun DocumentDto.toHighlightEvent(): HighlightSyncedEvent {
     requireNotNull(parentId) { "Highlight must have parentId" }
     return HighlightSyncedEvent(
         id = id,
         documentId = parentId,
         text = content ?: "",
-        note = notes,
         highlightedAt = savedAt ?: createdAt
+    )
+}
+
+fun DocumentDto.toNoteEvent(): NoteSyncedEvent {
+    requireNotNull(parentId) { "Note $id must have parentId" }
+    return NoteSyncedEvent(
+        id = id,
+        parentId = parentId,
+        content = content ?: "",
+        createdAt = createdAt
     )
 }

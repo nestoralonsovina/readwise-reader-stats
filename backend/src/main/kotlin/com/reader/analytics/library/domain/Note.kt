@@ -5,8 +5,8 @@ import java.time.Instant
 import java.util.UUID
 
 @Entity
-@Table(name = "highlights")
-data class Highlight(
+@Table(name = "notes")
+data class Note(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     val id: UUID? = null,
@@ -14,11 +14,11 @@ data class Highlight(
     @Column(unique = true, nullable = false)
     val readwiseId: String,
 
-    @Column(name = "document_readwise_id", nullable = false)
-    val documentReadwiseId: String,
+    @Column(nullable = false)
+    val parentId: String,
 
     @Column(columnDefinition = "TEXT", nullable = false)
-    val text: String,
+    val content: String,
 
-    val highlightedAt: Instant? = null
+    val createdAt: Instant? = null
 )

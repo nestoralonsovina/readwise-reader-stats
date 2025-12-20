@@ -8,7 +8,9 @@ import com.reader.analytics.sync.infrastructure.ReadwiseClient
 import com.reader.analytics.sync.infrastructure.readwise.dto.DocumentDto
 import com.reader.analytics.sync.infrastructure.readwise.dto.isDocument
 import com.reader.analytics.sync.infrastructure.readwise.dto.isHighlight
+import com.reader.analytics.sync.infrastructure.readwise.dto.isNote
 import com.reader.analytics.sync.infrastructure.readwise.dto.toHighlightEvent
+import com.reader.analytics.sync.infrastructure.readwise.dto.toNoteEvent
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
@@ -36,25 +38,15 @@ class SyncService(
 
             val allItems = readwiseClient.fetchDocuments(updatedAfter).toList()
 
-            // Diagnostic logging: understand API structure
-            val categories = allItems.groupBy { it.category }.mapValues { it.value.size }
-            logger.info("API categories breakdown: {}", categories)
+            // Three-way classification
+            val documentDtos = allItems.filter { it.isDocument() }
+            val highlightDtos = allItems.filter { it.isHighlight() }
+            val noteDtos = allItems.filter { it.isNote() }
 
-            val highlightsWithNotes = allItems.filter { it.isHighlight() && !it.notes.isNullOrBlank() }
-            logger.info("Highlights with notes field populated: {}", highlightsWithNotes.size)
-
-            val noteDocuments = allItems.filter { it.category == "note" }
-            logger.info("Documents with category='note': {}", noteDocuments.size)
-            noteDocuments.take(3).forEach {
-                logger.info(
-                    "Sample note: id={}, parentId={}, hasContent={}, hasNotes={}",
-                    it.id, it.parentId, !it.content.isNullOrBlank(), !it.notes.isNullOrBlank()
-                )
-            }
-
-            val (highlightDtos, documentDtos) = allItems.partition { it.isHighlight() }
-
-            logger.info("Fetched {} documents and {} highlights to process", documentDtos.size, highlightDtos.size)
+            logger.info(
+                "Fetched {} documents, {} highlights, {} notes to process",
+                documentDtos.size, highlightDtos.size, noteDtos.size
+            )
 
             var latestUpdatedAt: Instant? = null
 
@@ -82,21 +74,34 @@ class SyncService(
                 }
             }
 
+            // Phase 3: Publish note events
+            noteDtos.forEach { note ->
+                val event = note.toNoteEvent()
+                eventPublisher.publishEvent(event)
+
+                note.updatedAt?.let { noteUpdatedAt ->
+                    if (latestUpdatedAt == null || noteUpdatedAt.isAfter(latestUpdatedAt)) {
+                        latestUpdatedAt = noteUpdatedAt
+                    }
+                }
+            }
+
             latestUpdatedAt?.let { timestamp ->
                 cursorStore.save(SyncCursor("documents", timestamp, null))
             }
 
             val duration = System.currentTimeMillis() - startedAt.toEpochMilli()
             logger.info(
-                "Sync completed [documents={}, highlights={}, latestUpdatedAt={}, duration={}ms]",
-                documentDtos.size, highlightDtos.size, latestUpdatedAt, duration
+                "Sync completed [documents={}, highlights={}, notes={}, latestUpdatedAt={}, duration={}ms]",
+                documentDtos.size, highlightDtos.size, noteDtos.size, latestUpdatedAt, duration
             )
 
             log = log.copy(
                 status = SyncStatus.COMPLETED,
                 completedAt = Instant.now(),
                 documentsProcessed = documentDtos.size,
-                highlightsProcessed = highlightDtos.size
+                highlightsProcessed = highlightDtos.size,
+                notesProcessed = noteDtos.size
             )
             logStore.save(log)
         } catch (e: Exception) {

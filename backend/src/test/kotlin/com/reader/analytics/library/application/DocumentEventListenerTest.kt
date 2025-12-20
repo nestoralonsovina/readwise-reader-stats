@@ -2,6 +2,7 @@ package com.reader.analytics.library.application
 
 import com.reader.analytics.library.domain.Document
 import com.reader.analytics.library.domain.Highlight
+import com.reader.analytics.library.domain.Note
 import com.reader.analytics.library.domain.Tag
 import com.reader.analytics.sync.domain.events.DocumentSyncedEvent
 import org.junit.jupiter.api.BeforeEach
@@ -146,6 +147,7 @@ class DocumentEventListenerTest {
         private val documents = mutableMapOf<String, Document>()
         private val tags = mutableMapOf<String, Tag>()
         private val highlights = mutableMapOf<String, Highlight>()
+        private val notes = mutableMapOf<String, Note>()
 
         override fun findByReadwiseId(readwiseId: String): Document? =
             documents[readwiseId]
@@ -170,6 +172,16 @@ class DocumentEventListenerTest {
             val id = highlight.id ?: UUID.randomUUID()
             val saved = highlight.copy(id = id)
             highlights[highlight.readwiseId] = saved
+            return saved
+        }
+
+        override fun findNoteByReadwiseId(readwiseId: String): Note? =
+            notes[readwiseId]
+
+        override fun saveNote(note: Note): Note {
+            val id = note.id ?: UUID.randomUUID()
+            val saved = note.copy(id = id)
+            notes[note.readwiseId] = saved
             return saved
         }
     }

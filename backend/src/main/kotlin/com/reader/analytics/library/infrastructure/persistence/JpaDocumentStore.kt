@@ -3,6 +3,7 @@ package com.reader.analytics.library.infrastructure.persistence
 import com.reader.analytics.library.application.DocumentStore
 import com.reader.analytics.library.domain.Document
 import com.reader.analytics.library.domain.Highlight
+import com.reader.analytics.library.domain.Note
 import com.reader.analytics.library.domain.Tag
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -11,7 +12,8 @@ import org.springframework.transaction.annotation.Transactional
 class JpaDocumentStore(
     private val documentRepository: DocumentRepository,
     private val tagRepository: TagRepository,
-    private val highlightRepository: HighlightRepository
+    private val highlightRepository: HighlightRepository,
+    private val noteRepository: NoteRepository
 ) : DocumentStore {
 
     override fun findByReadwiseId(readwiseId: String): Document? =
@@ -39,4 +41,10 @@ class JpaDocumentStore(
 
     override fun saveHighlight(highlight: Highlight): Highlight =
         highlightRepository.save(highlight)
+
+    override fun findNoteByReadwiseId(readwiseId: String): Note? =
+        noteRepository.findByReadwiseId(readwiseId)
+
+    override fun saveNote(note: Note): Note =
+        noteRepository.save(note)
 }

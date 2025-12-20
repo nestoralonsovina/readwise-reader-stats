@@ -19,7 +19,6 @@ class HighlightEventListener(
         val highlight = if (existingHighlight != null) {
             existingHighlight.copy(
                 text = event.text,
-                note = event.note,
                 highlightedAt = event.highlightedAt
             )
         } else {
@@ -27,7 +26,6 @@ class HighlightEventListener(
                 readwiseId = event.id,
                 documentReadwiseId = event.documentId,
                 text = event.text,
-                note = event.note,
                 highlightedAt = event.highlightedAt
             )
         }

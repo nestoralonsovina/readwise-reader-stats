@@ -322,8 +322,9 @@ class AnalyticsRepository(
         val total = jdbcTemplate.queryForObject(totalSql, Int::class.java) ?: 0
 
         val withNotesSql = """
-            SELECT COUNT(*) FROM highlights
-            WHERE note IS NOT NULL AND note != ''
+            SELECT COUNT(DISTINCT h.readwise_id)
+            FROM highlights h
+            WHERE EXISTS (SELECT 1 FROM notes n WHERE n.parent_id = h.readwise_id)
         """.trimIndent()
         val withNotes = jdbcTemplate.queryForObject(withNotesSql, Int::class.java) ?: 0
 
@@ -369,7 +370,11 @@ class AnalyticsRepository(
                 d.category,
                 d.image_url,
                 COUNT(h.id) AS highlight_count,
-                BOOL_OR(h.note IS NOT NULL AND h.note != '') AS has_notes
+                BOOL_OR(EXISTS (
+                    SELECT 1 FROM notes n WHERE n.parent_id = h.readwise_id
+                )) OR EXISTS (
+                    SELECT 1 FROM notes n WHERE n.parent_id = d.readwise_id
+                ) AS has_notes
             FROM documents d
             JOIN highlights h ON h.document_readwise_id = d.readwise_id
             GROUP BY d.id, d.readwise_id, d.title, d.category, d.image_url
