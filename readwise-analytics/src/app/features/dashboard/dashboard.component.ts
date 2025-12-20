@@ -1,5 +1,6 @@
-import { Component, inject, signal, effect, computed } from '@angular/core';
-import { forkJoin, of, catchError, switchMap, tap, Observable } from 'rxjs';
+import { Component, inject, signal, effect, computed, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin, of, catchError, tap } from 'rxjs';
 
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { SyncService } from '../../core/services/sync.service';
@@ -109,22 +110,7 @@ interface DashboardData {
         </div>
 
         <!-- Reading Activity Chart (full width) -->
-        <div class="rounded-xl border border-border bg-card p-5">
-          <div class="mb-4 flex items-center justify-between">
-            <h3 class="font-semibold text-foreground">Reading Activity</h3>
-            <div class="flex items-center gap-4 text-sm">
-              <div class="flex items-center gap-1.5">
-                <span class="h-2.5 w-2.5 rounded-full bg-blue-500"></span>
-                <span class="text-muted-foreground">Words</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                <span class="text-muted-foreground">Articles</span>
-              </div>
-            </div>
-          </div>
-          <app-reading-activity-chart [data]="readingStats()" />
-        </div>
+        <app-reading-activity-chart [data]="readingStats()" />
 
         <!-- Bottom Row -->
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -174,6 +160,7 @@ interface DashboardData {
 export class DashboardComponent {
   private readonly analyticsService = inject(AnalyticsService);
   private readonly syncService = inject(SyncService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly period = signal<Period>(30);
   readonly loading = signal(true);
@@ -232,9 +219,9 @@ export class DashboardComponent {
       highlights: this.analyticsService.getHighlights(period),
     })
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         catchError((err: unknown) => {
           const message = err instanceof Error ? err.message : 'Unknown error occurred';
-          console.error('Failed to load dashboard data:', err);
           this.error.set(message);
           return of(null);
         })
@@ -265,20 +252,17 @@ export class DashboardComponent {
     this.syncService
       .triggerSync()
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         tap((response) => {
           if (response.status === 'COMPLETED') {
             this.lastSynced.set(new Date());
           }
         }),
-        switchMap(() => of(this.period())),
-        catchError((err: unknown) => {
-          console.error('Sync failed:', err);
-          return of(this.period());
-        })
+        catchError(() => of(null))
       )
       .subscribe({
-        next: (period) => {
-          this.loadData(period);
+        next: () => {
+          this.loadData(this.period());
           this.syncing.set(false);
         },
       });

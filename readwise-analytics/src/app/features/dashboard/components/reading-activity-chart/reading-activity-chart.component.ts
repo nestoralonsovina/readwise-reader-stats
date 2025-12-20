@@ -12,7 +12,6 @@ import {
   ApexDataLabels,
   ApexTooltip,
   ApexGrid,
-  ApexTheme,
   ApexLegend,
 } from 'ng-apexcharts';
 
@@ -22,13 +21,25 @@ import {
   imports: [NgApexchartsModule],
   template: `
     <div class="rounded-xl border border-border bg-card p-5">
-      <h3 class="mb-4 text-lg font-semibold text-foreground">Reading Activity</h3>
+      <div class="mb-4 flex items-center justify-between">
+        <h3 class="font-semibold text-foreground">Reading Activity</h3>
+        <div class="flex items-center gap-4 text-sm">
+          <div class="flex items-center gap-1.5">
+            <span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+            <span class="text-muted-foreground">Words</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="h-2.5 w-2.5 rounded-full bg-blue-500"></span>
+            <span class="text-muted-foreground">Articles</span>
+          </div>
+        </div>
+      </div>
       @if (data()) {
         <apx-chart
           [series]="series()"
           [chart]="chartOptions()"
           [xaxis]="xaxis()"
-          [yaxis]="yaxis"
+          [yaxis]="yaxis()"
           [stroke]="strokeOptions"
           [fill]="fillOptions"
           [dataLabels]="dataLabels"
@@ -46,6 +57,21 @@ import {
   `,
 })
 export class ReadingActivityChartComponent {
+  private static readonly CHART_HEIGHT = 256;
+  private static readonly STROKE_WIDTH = 3;
+  private static readonly GRADIENT_OPACITY_FROM = 0.4;
+  private static readonly GRADIENT_OPACITY_TO = 0.1;
+  private static readonly GRID_DASH_ARRAY = 4;
+
+  private static readonly COLORS = {
+    WORDS: '#f59e0b',
+    ARTICLES: '#3b82f6',
+    LABEL_DARK: '#9ca3af',
+    LABEL_LIGHT: '#6b7280',
+    GRID_DARK: '#374151',
+    GRID_LIGHT: '#e5e7eb',
+  } as const;
+
   private readonly themeService = inject(ThemeService);
 
   readonly data = input<ReadingStatsResponse | null>();
@@ -68,7 +94,7 @@ export class ReadingActivityChartComponent {
 
   readonly chartOptions = computed<ApexChart>(() => ({
     type: 'line',
-    height: 256,
+    height: ReadingActivityChartComponent.CHART_HEIGHT,
     toolbar: { show: false },
     background: 'transparent',
     fontFamily: 'inherit',
@@ -81,7 +107,9 @@ export class ReadingActivityChartComponent {
       categories: stats.map((s) => this.formatDate(s.date)),
       labels: {
         style: {
-          colors: isDark ? '#9ca3af' : '#6b7280',
+          colors: isDark
+            ? ReadingActivityChartComponent.COLORS.LABEL_DARK
+            : ReadingActivityChartComponent.COLORS.LABEL_LIGHT,
         },
       },
       axisBorder: { show: false },
@@ -89,37 +117,55 @@ export class ReadingActivityChartComponent {
     };
   });
 
-  readonly yaxis: ApexYAxis[] = [
-    {
-      title: { text: 'Words Read', style: { fontWeight: 500 } },
-      labels: {
-        formatter: (val) => this.formatNumber(val),
+  readonly yaxis = computed<ApexYAxis[]>(() => {
+    const isDark = this.themeService.isDark();
+    const labelColor = isDark
+      ? ReadingActivityChartComponent.COLORS.LABEL_DARK
+      : ReadingActivityChartComponent.COLORS.LABEL_LIGHT;
+
+    return [
+      {
+        title: {
+          text: 'Words Read',
+          style: { fontWeight: 500, color: labelColor },
+        },
+        labels: {
+          formatter: (val: number): string => this.formatNumber(val),
+          style: { colors: labelColor },
+        },
       },
-    },
-    {
-      opposite: true,
-      title: { text: 'Articles', style: { fontWeight: 500 } },
-      labels: {
-        formatter: (val) => Math.round(val).toString(),
+      {
+        opposite: true,
+        title: {
+          text: 'Articles',
+          style: { fontWeight: 500, color: labelColor },
+        },
+        labels: {
+          formatter: (val: number): string => Math.round(val).toString(),
+          style: { colors: labelColor },
+        },
       },
-    },
-  ];
+    ];
+  });
 
   readonly strokeOptions: ApexStroke = {
     curve: 'smooth',
-    width: [0, 3],
+    width: [0, ReadingActivityChartComponent.STROKE_WIDTH],
   };
 
   readonly fillOptions: ApexFill = {
     type: ['gradient', 'solid'],
     gradient: {
       shadeIntensity: 1,
-      opacityFrom: 0.4,
-      opacityTo: 0.1,
+      opacityFrom: ReadingActivityChartComponent.GRADIENT_OPACITY_FROM,
+      opacityTo: ReadingActivityChartComponent.GRADIENT_OPACITY_TO,
     },
   };
 
-  readonly colors = ['#f59e0b', '#3b82f6'];
+  readonly colors = [
+    ReadingActivityChartComponent.COLORS.WORDS,
+    ReadingActivityChartComponent.COLORS.ARTICLES,
+  ];
 
   readonly dataLabels: ApexDataLabels = { enabled: false };
 
@@ -128,20 +174,21 @@ export class ReadingActivityChartComponent {
   }));
 
   readonly gridOptions = computed<ApexGrid>(() => ({
-    borderColor: this.themeService.isDark() ? '#374151' : '#e5e7eb',
-    strokeDashArray: 4,
+    borderColor: this.themeService.isDark()
+      ? ReadingActivityChartComponent.COLORS.GRID_DARK
+      : ReadingActivityChartComponent.COLORS.GRID_LIGHT,
+    strokeDashArray: ReadingActivityChartComponent.GRID_DASH_ARRAY,
   }));
 
   readonly legendOptions = computed<ApexLegend>(() => ({
-    position: 'top',
-    horizontalAlign: 'right',
-    labels: {
-      colors: this.themeService.isDark() ? '#9ca3af' : '#6b7280',
-    },
+    show: false,
   }));
 
   private formatDate(dateStr: string): string {
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      return dateStr;
+    }
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
