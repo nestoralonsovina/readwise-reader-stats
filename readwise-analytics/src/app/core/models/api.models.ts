@@ -129,6 +129,7 @@ export interface TopDocumentDto {
   readonly title: string | null;
   readonly category: string | null;
   readonly highlightCount: number;
+  readonly imageUrl: string | null;
 }
 
 export interface HighlightResponse {

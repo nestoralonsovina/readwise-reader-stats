@@ -42,6 +42,7 @@ class DocumentEventListenerIntegrationTest {
             lastOpenedAt = null,
             tags = listOf("test", "integration"),
             parentId = null,
+            imageUrl = null,
             highlights = emptyList()
         )
 
@@ -78,6 +79,7 @@ class DocumentEventListenerIntegrationTest {
             lastOpenedAt = null,
             tags = emptyList(),
             parentId = null,
+            imageUrl = null,
             highlights = emptyList()
         )
         listener.onDocumentSynced(event1)
@@ -97,6 +99,7 @@ class DocumentEventListenerIntegrationTest {
             lastOpenedAt = null,
             tags = listOf("updated"),
             parentId = null,
+            imageUrl = null,
             highlights = emptyList()
         )
         listener.onDocumentSynced(event2)
@@ -130,6 +133,7 @@ class DocumentEventListenerIntegrationTest {
             lastOpenedAt = null,
             tags = listOf("shared-tag"),
             parentId = null,
+            imageUrl = null,
             highlights = emptyList()
         )
         listener.onDocumentSynced(event1)
@@ -149,6 +153,7 @@ class DocumentEventListenerIntegrationTest {
             lastOpenedAt = null,
             tags = listOf("shared-tag"),
             parentId = null,
+            imageUrl = null,
             highlights = emptyList()
         )
         listener.onDocumentSynced(event2)

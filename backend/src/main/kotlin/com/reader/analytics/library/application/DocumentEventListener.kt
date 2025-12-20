@@ -29,6 +29,7 @@ class DocumentEventListener(
                 savedAt = event.savedAt,
                 updatedAt = event.updatedAt,
                 parentId = event.parentId,
+                imageUrl = event.imageUrl,
                 tags = tags
             )
         } else {
@@ -44,6 +45,7 @@ class DocumentEventListener(
                 savedAt = event.savedAt,
                 updatedAt = event.updatedAt,
                 parentId = event.parentId,
+                imageUrl = event.imageUrl,
                 tags = tags
             )
         }

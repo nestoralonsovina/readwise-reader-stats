@@ -54,5 +54,8 @@ data class TopDocumentDto(
     val category: String?,
 
     @Schema(description = "Number of highlights in this document", example = "45")
-    val highlightCount: Int
+    val highlightCount: Int,
+
+    @Schema(description = "Document cover or preview image URL", example = "https://images.unsplash.com/photo-123", nullable = true)
+    val imageUrl: String?
 )

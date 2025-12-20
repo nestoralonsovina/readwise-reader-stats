@@ -12,5 +12,6 @@ data class DocumentHighlightCount(
     val documentId: String,
     val title: String?,
     val highlightCount: Int,
-    val category: String?
+    val category: String?,
+    val imageUrl: String?
 )

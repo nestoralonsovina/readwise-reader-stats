@@ -96,6 +96,7 @@ class DocumentEventListenerTest {
             lastOpenedAt = null,
             tags = emptyList(),
             parentId = "parent-123",
+            imageUrl = "https://example.com/image.jpg",
             highlights = emptyList()
         )
 
@@ -113,13 +114,15 @@ class DocumentEventListenerTest {
         assertEquals(Instant.parse("2024-01-10T10:00:00Z"), saved.savedAt)
         assertEquals(Instant.parse("2024-01-15T10:00:00Z"), saved.updatedAt)
         assertEquals("parent-123", saved.parentId)
+        assertEquals("https://example.com/image.jpg", saved.imageUrl)
     }
 
     private fun createDocumentSyncedEvent(
         id: String,
         title: String,
         tags: List<String> = emptyList(),
-        readingProgress: Double? = null
+        readingProgress: Double? = null,
+        imageUrl: String? = null
     ) = DocumentSyncedEvent(
         id = id,
         url = "https://example.com/$id",
@@ -135,6 +138,7 @@ class DocumentEventListenerTest {
         lastOpenedAt = null,
         tags = tags,
         parentId = null,
+        imageUrl = imageUrl,
         highlights = emptyList()
     )
 

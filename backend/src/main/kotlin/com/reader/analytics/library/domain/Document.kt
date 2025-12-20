@@ -27,6 +27,9 @@ data class Document(
     val updatedAt: Instant? = null,
     val parentId: String? = null,
 
+    @Column(length = 2048)
+    val imageUrl: String? = null,
+
     @ManyToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE], fetch = FetchType.EAGER)
     @JoinTable(
         name = "document_tags",

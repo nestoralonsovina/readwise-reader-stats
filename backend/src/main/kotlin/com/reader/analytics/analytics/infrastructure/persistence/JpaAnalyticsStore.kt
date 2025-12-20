@@ -122,7 +122,8 @@ class JpaAnalyticsStore(
                 documentId = it.documentId,
                 title = it.title,
                 highlightCount = it.highlightCount,
-                category = it.category
+                category = it.category,
+                imageUrl = it.imageUrl
             )
         }
 

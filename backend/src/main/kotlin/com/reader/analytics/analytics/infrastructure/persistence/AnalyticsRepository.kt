@@ -353,10 +353,11 @@ class AnalyticsRepository(
                 d.readwise_id AS document_id,
                 d.title,
                 d.category,
+                d.image_url,
                 COUNT(h.id) AS highlight_count
             FROM documents d
             JOIN highlights h ON h.document_readwise_id = d.readwise_id
-            GROUP BY d.id, d.readwise_id, d.title, d.category
+            GROUP BY d.id, d.readwise_id, d.title, d.category, d.image_url
             ORDER BY highlight_count DESC
             LIMIT ?
         """.trimIndent()
@@ -366,6 +367,7 @@ class AnalyticsRepository(
                 documentId = rs.getString("document_id"),
                 title = rs.getString("title"),
                 category = rs.getString("category"),
+                imageUrl = rs.getString("image_url"),
                 highlightCount = rs.getInt("highlight_count")
             )
         }, limit)
@@ -461,5 +463,6 @@ data class RawDocumentHighlightCount(
     val documentId: String,
     val title: String?,
     val category: String?,
+    val imageUrl: String?,
     val highlightCount: Int
 )

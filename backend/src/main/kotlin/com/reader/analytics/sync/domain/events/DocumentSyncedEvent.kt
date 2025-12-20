@@ -17,5 +17,6 @@ data class DocumentSyncedEvent(
     val lastOpenedAt: Instant?,
     val tags: List<String>,
     val parentId: String?,
+    val imageUrl: String?,
     val highlights: List<HighlightSyncedEvent>
 )

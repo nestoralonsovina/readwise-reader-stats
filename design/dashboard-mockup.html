@@ -382,43 +382,39 @@
           <span class="text-xs text-gray-500 dark:text-gray-400">This month</span>
         </div>
 
-        <div class="flex items-center gap-6 mb-6">
-          <div class="text-center">
+        <!-- Key Metrics -->
+        <div class="flex items-start gap-8 mb-6">
+          <div>
             <div class="text-3xl font-bold">127</div>
             <div class="text-xs text-gray-500 dark:text-gray-400">Total</div>
           </div>
-          <div id="chart-highlights" class="flex-1 h-24"></div>
+          <div>
+            <div class="text-3xl font-bold text-accent-600 dark:text-accent-400">42</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">With Notes</div>
+          </div>
         </div>
 
-        <!-- Color Distribution -->
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded bg-yellow-400"></span>
-              <span class="text-sm text-gray-600 dark:text-gray-400">Yellow</span>
-            </div>
-            <span class="text-sm font-medium">68</span>
+        <!-- Annotation Rate -->
+        <div class="mb-4">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-sm text-gray-600 dark:text-gray-400">Annotation Rate</span>
+            <span class="text-sm font-medium">33%</span>
           </div>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded bg-blue-400"></span>
-              <span class="text-sm text-gray-600 dark:text-gray-400">Blue</span>
-            </div>
-            <span class="text-sm font-medium">31</span>
+          <div class="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+            <div class="h-full bg-accent-500 rounded-full" style="width: 33%"></div>
           </div>
+        </div>
+
+        <!-- Period Comparison -->
+        <div class="pt-4 border-t border-gray-100 dark:border-gray-800">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded bg-green-400"></span>
-              <span class="text-sm text-gray-600 dark:text-gray-400">Green</span>
-            </div>
-            <span class="text-sm font-medium">18</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded bg-red-400"></span>
-              <span class="text-sm text-gray-600 dark:text-gray-400">Red</span>
-            </div>
-            <span class="text-sm font-medium">10</span>
+            <span class="text-sm text-gray-600 dark:text-gray-400">vs last month</span>
+            <span class="text-sm font-medium text-success flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+              </svg>
+              +8 (12%)
+            </span>
           </div>
         </div>
       </div>
@@ -434,7 +430,13 @@
           <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
             <div class="w-10 h-10 rounded bg-gradient-to-br from-blue-500 to-violet-500 flex-shrink-0"></div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium truncate">How to Build a Second Brain</p>
+              <div class="flex items-center gap-1.5">
+                <p class="text-sm font-medium truncate">How to Build a Second Brain</p>
+                <!-- Note indicator -->
+                <svg class="w-3.5 h-3.5 text-accent-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" title="Has notes">
+                  <path d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z"/>
+                </svg>
+              </div>
               <p class="text-xs text-gray-500 dark:text-gray-400">fortelabs.com</p>
             </div>
             <span class="text-xs font-medium text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/30 px-2 py-0.5 rounded-full">24</span>
@@ -452,7 +454,13 @@
           <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer">
             <div class="w-10 h-10 rounded bg-gradient-to-br from-amber-500 to-orange-500 flex-shrink-0"></div>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium truncate">Atomic Habits Summary</p>
+              <div class="flex items-center gap-1.5">
+                <p class="text-sm font-medium truncate">Atomic Habits Summary</p>
+                <!-- Note indicator -->
+                <svg class="w-3.5 h-3.5 text-accent-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" title="Has notes">
+                  <path d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z"/>
+                </svg>
+              </div>
               <p class="text-xs text-gray-500 dark:text-gray-400">jamesclear.com</p>
             </div>
             <span class="text-xs font-medium text-accent-600 dark:text-accent-400 bg-accent-50 dark:bg-accent-900/30 px-2 py-0.5 rounded-full">15</span>
@@ -553,25 +561,6 @@
     const activityChart = new ApexCharts(document.querySelector("#chart-activity"), activityOptions);
     activityChart.render();
 
-    // Highlights Donut Chart
-    const highlightsOptions = {
-      series: [68, 31, 18, 10],
-      chart: { type: 'donut', height: 96, background: 'transparent' },
-      colors: ['#facc15', '#60a5fa', '#4ade80', '#f87171'],
-      labels: ['Yellow', 'Blue', 'Green', 'Red'],
-      stroke: { width: 0 },
-      dataLabels: { enabled: false },
-      legend: { show: false },
-      plotOptions: {
-        pie: {
-          donut: { size: '70%' },
-          expandOnClick: false
-        }
-      },
-      tooltip: { enabled: false }
-    };
-    const highlightsChart = new ApexCharts(document.querySelector("#chart-highlights"), highlightsOptions);
-    highlightsChart.render();
 
     // Update charts on theme change
     function updateCharts() {

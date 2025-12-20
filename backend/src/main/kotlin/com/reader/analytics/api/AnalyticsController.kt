@@ -293,7 +293,8 @@ class AnalyticsController(
                     documentId = it.documentId,
                     title = it.title,
                     category = it.category,
-                    highlightCount = it.highlightCount
+                    highlightCount = it.highlightCount,
+                    imageUrl = it.imageUrl
                 )
             }
         )
