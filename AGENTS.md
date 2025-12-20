@@ -142,6 +142,7 @@ Application layer defines interfaces (`CursorStore`, `LogStore`). Infrastructure
 - Subscribes to `DocumentSyncedEvent`
 - **ReadingProgressSnapshot**: Records reading progress changes over time
   - Only creates snapshot when `readingProgress` actually changes
+  - Uses `updatedAt` from Readwise as `recordedAt` (attributes reading to actual time, not sync time)
   - Captures `firstOpenedAt`, `lastOpenedAt` for peak hours analysis
   - Enables: words read, reading velocity, completion events, streaks
 - **LocationChange**: Records document pipeline transitions
@@ -185,7 +186,7 @@ Application layer defines interfaces (`CursorStore`, `LogStore`). Infrastructure
 | Store interfaces in application layer | Decouples domain from JPA; enables easy testing |
 | Tracking uses documentId string, not FK | Decouples Tracking from Library; no entity dependencies between contexts |
 | Change detection before snapshot | Only record when values change; reduces storage, enables delta calculations |
-| Clock injection in TrackingEventListener | Enables deterministic testing with fixed timestamps |
+| Use Readwise `updatedAt` as `recordedAt` | Attributes reading to actual time, not sync time; clock fallback for null values |
 | JdbcTemplate over JPA for analytics | Native PostgreSQL window functions not expressible in JPQL |
 | Projection classes (not entities) | MVP flexibility; easy migration to materialized views/entities later |
 | Query-time computation for analytics | MVP phase—can evolve to materialized views without changing API |
