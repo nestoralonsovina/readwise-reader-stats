@@ -5,6 +5,12 @@ import org.springframework.web.client.RestClientResponseException
 import java.time.Duration
 import kotlin.random.Random
 
+data class RateLimitEvent(
+    val retryAfterSeconds: Int,
+    val attempt: Int,
+    val maxAttempts: Int
+)
+
 class RateLimitRetryHandler(
     private val config: RetryConfig = RetryConfig()
 ) {
@@ -14,19 +20,27 @@ class RateLimitRetryHandler(
 
     fun <T> executeWithRetry(
         operation: String,
+        onRateLimited: ((RateLimitEvent) -> Unit)? = null,
+        onRateLimitCleared: (() -> Unit)? = null,
         block: () -> T
     ): T {
         var lastException: Exception? = null
+        var wasRateLimited = false
 
         repeat(config.maxAttempts) { attempt ->
             try {
-                return block()
+                val result = block()
+                if (wasRateLimited) {
+                    onRateLimitCleared?.invoke()
+                }
+                return result
             } catch (e: RestClientResponseException) {
                 if (!isRateLimitError(e)) {
                     throw e
                 }
 
                 lastException = e
+                wasRateLimited = true
                 val attemptNumber = attempt + 1
 
                 if (attemptNumber >= config.maxAttempts) {
@@ -38,6 +52,15 @@ class RateLimitRetryHandler(
                 }
 
                 val delay = calculateDelay(e.responseBodyAsString, attemptNumber)
+                val retryAfterSeconds = (delay.toMillis() / 1000).toInt()
+
+                onRateLimited?.invoke(
+                    RateLimitEvent(
+                        retryAfterSeconds = retryAfterSeconds,
+                        attempt = attemptNumber,
+                        maxAttempts = config.maxAttempts
+                    )
+                )
 
                 logger.warn(
                     "Rate limited on {} (attempt {}/{}), waiting {}ms before retry",

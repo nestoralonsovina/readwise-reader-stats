@@ -1,6 +1,7 @@
 import { Component, input, output, inject, computed } from '@angular/core';
 import { PeriodToggleComponent } from '../../../../shared/components/period-toggle/period-toggle.component';
 import { ThemeService } from '../../../../core/services/theme.service';
+import { SyncService } from '../../../../core/services/sync.service';
 import { Period } from '../../../../core/models/api.models';
 
 @Component({
@@ -56,12 +57,11 @@ import { Period } from '../../../../core/models/api.models';
           <button
             type="button"
             class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 disabled:opacity-50"
-            [disabled]="syncing()"
-            (click)="syncClick.emit()"
+            (click)="onSyncClick()"
           >
             <svg
               class="h-4 w-4"
-              [class.animate-spin]="syncing()"
+              [class.animate-spin]="syncService.isRunning()"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -73,7 +73,7 @@ import { Period } from '../../../../core/models/api.models';
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            {{ syncing() ? 'Syncing...' : 'Sync' }}
+            {{ syncService.isRunning() ? 'Syncing...' : 'Sync' }}
           </button>
         </div>
       </div>
@@ -82,13 +82,12 @@ import { Period } from '../../../../core/models/api.models';
 })
 export class DashboardHeaderComponent {
   readonly themeService = inject(ThemeService);
+  readonly syncService = inject(SyncService);
 
   readonly period = input.required<Period>();
-  readonly syncing = input<boolean>(false);
   readonly lastSynced = input<Date | null>(null);
 
   readonly periodChange = output<Period>();
-  readonly syncClick = output<void>();
 
   readonly lastSyncedText = computed(() => {
     const date = this.lastSynced();
@@ -124,4 +123,14 @@ export class DashboardHeaderComponent {
     }
     return `Last synced: ${diffDays} days ago`;
   });
+
+  onSyncClick(): void {
+    if (this.syncService.isRunning()) {
+      // If already running, just open the panel
+      this.syncService.openPanel();
+    } else {
+      // Start a new sync
+      this.syncService.startSync();
+    }
+  }
 }

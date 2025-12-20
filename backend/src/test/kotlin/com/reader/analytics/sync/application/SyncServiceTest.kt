@@ -353,7 +353,11 @@ class SyncServiceTest {
         var lastUpdatedAfter: Instant? = null
         var shouldThrowError = false
 
-        override fun fetchDocuments(updatedAfter: Instant?): Sequence<DocumentDto> {
+        override fun fetchDocuments(
+            updatedAfter: Instant?,
+            onRateLimited: ((com.reader.analytics.sync.infrastructure.readwise.RateLimitEvent) -> Unit)?,
+            onRateLimitCleared: (() -> Unit)?
+        ): Sequence<DocumentDto> {
             lastUpdatedAfter = updatedAfter
             if (shouldThrowError) {
                 throw RuntimeException("API error")

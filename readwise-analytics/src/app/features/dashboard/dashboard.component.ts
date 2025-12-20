@@ -1,6 +1,6 @@
 import { Component, inject, signal, effect, computed, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin, of, catchError, tap } from 'rxjs';
+import { forkJoin, of, catchError } from 'rxjs';
 
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { SyncService } from '../../core/services/sync.service';
@@ -24,6 +24,7 @@ import { PipelineCardComponent } from './components/pipeline-card/pipeline-card.
 import { HighlightsCardComponent } from './components/highlights-card/highlights-card.component';
 import { MostHighlightedComponent } from './components/most-highlighted/most-highlighted.component';
 import { DashboardFooterComponent } from './components/dashboard-footer/dashboard-footer.component';
+import { SyncPanelComponent } from '../sync/sync-panel.component';
 
 interface DashboardData {
   readonly dashboard: DashboardResponse;
@@ -45,15 +46,14 @@ interface DashboardData {
     HighlightsCardComponent,
     MostHighlightedComponent,
     DashboardFooterComponent,
+    SyncPanelComponent,
   ],
   template: `
     <div class="min-h-screen bg-background">
       <app-dashboard-header
         [period]="period()"
-        [syncing]="syncing()"
         [lastSynced]="lastSynced()"
         (periodChange)="period.set($event)"
-        (syncClick)="triggerSync()"
       />
 
       <main class="mx-auto max-w-7xl space-y-6 px-6 py-8">
@@ -154,6 +154,9 @@ interface DashboardData {
           </div>
         </div>
       }
+
+      <!-- Sync Panel (slide-over) -->
+      <app-sync-panel />
     </div>
   `,
 })
@@ -164,7 +167,6 @@ export class DashboardComponent {
 
   readonly period = signal<Period>(30);
   readonly loading = signal(true);
-  readonly syncing = signal(false);
   readonly lastSynced = signal<Date | null>(null);
   readonly data = signal<DashboardData | null>(null);
   readonly error = signal<string | null>(null);
@@ -197,6 +199,14 @@ export class DashboardComponent {
     effect(() => {
       const currentPeriod = this.period();
       this.loadData(currentPeriod);
+    });
+
+    // Refresh data when sync completes
+    effect(() => {
+      if (this.syncService.isCompleted()) {
+        this.lastSynced.set(new Date());
+        this.loadData(this.period());
+      }
     });
   }
 
@@ -238,32 +248,6 @@ export class DashboardComponent {
             });
           }
           this.loading.set(false);
-        },
-      });
-  }
-
-  triggerSync(): void {
-    if (this.syncing()) {
-      return;
-    }
-
-    this.syncing.set(true);
-
-    this.syncService
-      .triggerSync()
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        tap((response) => {
-          if (response.status === 'COMPLETED') {
-            this.lastSynced.set(new Date());
-          }
-        }),
-        catchError(() => of(null))
-      )
-      .subscribe({
-        next: () => {
-          this.loadData(this.period());
-          this.syncing.set(false);
         },
       });
   }

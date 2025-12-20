@@ -1,5 +1,6 @@
 package com.reader.analytics.sync.infrastructure
 
+import com.reader.analytics.sync.infrastructure.readwise.RateLimitEvent
 import com.reader.analytics.sync.infrastructure.readwise.RateLimitRetryHandler
 import com.reader.analytics.sync.infrastructure.readwise.RetryConfig
 import com.reader.analytics.sync.infrastructure.readwise.dto.DocumentDto
@@ -41,7 +42,11 @@ class ReadwiseWebClient(
 
     // ==================== Reader API v3 (Documents) ====================
 
-    override fun fetchDocuments(updatedAfter: Instant?): Sequence<DocumentDto> = sequence {
+    override fun fetchDocuments(
+        updatedAfter: Instant?,
+        onRateLimited: ((RateLimitEvent) -> Unit)?,
+        onRateLimitCleared: (() -> Unit)?
+    ): Sequence<DocumentDto> = sequence {
         logger.info("Starting document fetch from Readwise API [updatedAfter={}]", updatedAfter)
 
         var pageCursor: String? = null
@@ -51,7 +56,7 @@ class ReadwiseWebClient(
         do {
             logger.debug("Fetching page [updatedAfter={}, pageCursor={}]", updatedAfter, pageCursor)
 
-            val response = fetchDocumentPage(updatedAfter, pageCursor)
+            val response = fetchDocumentPage(updatedAfter, pageCursor, onRateLimited, onRateLimitCleared)
             pageCount++
             totalItems += response.results.size
 
@@ -71,8 +76,17 @@ class ReadwiseWebClient(
         )
     }
 
-    private fun fetchDocumentPage(updatedAfter: Instant?, pageCursor: String?): DocumentListResponse {
-        return retryHandler.executeWithRetry("fetchDocumentPage[cursor=$pageCursor]") {
+    private fun fetchDocumentPage(
+        updatedAfter: Instant?,
+        pageCursor: String?,
+        onRateLimited: ((RateLimitEvent) -> Unit)?,
+        onRateLimitCleared: (() -> Unit)?
+    ): DocumentListResponse {
+        return retryHandler.executeWithRetry(
+            operation = "fetchDocumentPage[cursor=$pageCursor]",
+            onRateLimited = onRateLimited,
+            onRateLimitCleared = onRateLimitCleared
+        ) {
             restClient.get()
                 .uri { builder ->
                     builder.path("/api/v3/list/")
