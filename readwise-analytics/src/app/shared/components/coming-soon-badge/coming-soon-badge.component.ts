@@ -33,7 +33,7 @@ export class ComingSoonBadgeComponent {
 
   readonly variantClass = computed(() =>
     this.variant() === 'accent'
-      ? 'rounded-full bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800'
+      ? 'rounded-full bg-brand/10 text-brand border-brand/20'
       : 'rounded-full'
   );
 }

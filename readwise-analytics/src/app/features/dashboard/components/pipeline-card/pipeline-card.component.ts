@@ -1,5 +1,6 @@
-import { Component, input, computed } from '@angular/core';
+import { Component, input, computed, inject } from '@angular/core';
 import { PipelineResponse } from '../../../../core/models/api.models';
+import { ChartColorsService } from '../../../../core/services/chart-colors.service';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmProgressImports } from '@spartan-ng/helm/progress';
 
@@ -57,15 +58,17 @@ interface PipelineItem {
   `,
 })
 export class PipelineCardComponent {
+  private readonly chartColors = inject(ChartColorsService);
+
   readonly data = input<PipelineResponse | null>();
 
-  private readonly locationColors: Record<string, string> = {
-    new: '#3b82f6',
-    later: '#f59e0b',
-    shortlist: '#8b5cf6',
-    archive: '#10b981',
-    feed: '#6b7280',
-  };
+  private readonly locationColors = computed(() => ({
+    new: this.chartColors.chart1(),
+    later: this.chartColors.chart2(),
+    shortlist: this.chartColors.chart3(),
+    archive: this.chartColors.chart4(),
+    feed: this.chartColors.chart5(),
+  }));
 
   private readonly locationLabels: Record<string, string> = {
     new: 'New',
@@ -77,12 +80,13 @@ export class PipelineCardComponent {
 
   readonly pipelineItems = computed<PipelineItem[]>(() => {
     const breakdown = this.data()?.breakdown?.byLocation ?? [];
+    const colors = this.locationColors();
 
     return breakdown.map((loc) => ({
       label: this.locationLabels[loc.location] ?? loc.location,
       count: loc.count,
       percentage: loc.percentage,
-      color: this.locationColors[loc.location] ?? '#9ca3af',
+      color: colors[loc.location as keyof typeof colors] ?? this.chartColors.mutedForeground(),
     }));
   });
 

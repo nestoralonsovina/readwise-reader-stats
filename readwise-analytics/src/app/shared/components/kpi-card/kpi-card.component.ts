@@ -98,8 +98,8 @@ const iconMap: Record<KpiIconType, string> = {
           } @else if (change(); as c) {
             <span
               class="flex items-center gap-0.5 text-xs font-medium"
-              [class.text-emerald-500]="c.direction === 'up'"
-              [class.text-red-500]="c.direction === 'down'"
+              [class.text-success]="c.direction === 'up'"
+              [class.text-destructive]="c.direction === 'down'"
             >
               <ng-icon
                 [name]="c.direction === 'up' ? 'lucideArrowUp' : 'lucideArrowDown'"

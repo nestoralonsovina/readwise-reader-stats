@@ -57,7 +57,7 @@ export class ProgressBarComponent {
     if (this.isError()) {
       classes.push('bg-destructive');
     } else {
-      classes.push('bg-amber-500');
+      classes.push('bg-brand');
     }
 
     if (this.isAnimated()) {

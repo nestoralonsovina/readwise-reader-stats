@@ -25,10 +25,10 @@ import { SyncState } from '../../../core/models/sync.models';
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <div
-                class="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30"
+                class="flex h-10 w-10 items-center justify-center rounded-full bg-success/10"
               >
                 <svg
-                  class="h-5 w-5 text-emerald-600 dark:text-emerald-400"
+                  class="h-5 w-5 text-success"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -52,7 +52,7 @@ import { SyncState } from '../../../core/models/sync.models';
             </div>
             <button
               type="button"
-              class="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600"
+              class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand/90"
               (click)="doneClick.emit()"
             >
               Done
@@ -86,7 +86,7 @@ import { SyncState } from '../../../core/models/sync.models';
             </div>
             <button
               type="button"
-              class="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600"
+              class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand/90"
               (click)="retryClick.emit()"
             >
               Retry Sync

@@ -4,6 +4,7 @@ import { forkJoin, of, catchError } from 'rxjs';
 
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { SyncService } from '../../core/services/sync.service';
+import { ChartColorsService } from '../../core/services/chart-colors.service';
 import {
   Period,
   periodToGranularity,
@@ -82,19 +83,19 @@ interface DashboardData {
             title="Words Read"
             [value]="wordsRead()"
             [sparklineData]="wordsSparkline()"
-            sparklineColor="#3b82f6"
+            [sparklineColor]="chartColors.chart1()"
             icon="document"
-            iconBgClass="bg-blue-100 dark:bg-blue-900/30"
-            iconColorClass="text-blue-600 dark:text-blue-400"
+            iconBgClass="bg-chart-1/10"
+            iconColorClass="text-chart-1"
           />
           <app-kpi-card
             title="Completed"
             [value]="articlesCompleted()"
             [sparklineData]="articlesSparkline()"
-            sparklineColor="#10b981"
+            [sparklineColor]="chartColors.chart4()"
             icon="checkmark"
-            iconBgClass="bg-emerald-100 dark:bg-emerald-900/30"
-            iconColorClass="text-emerald-600 dark:text-emerald-400"
+            iconBgClass="bg-chart-4/10"
+            iconColorClass="text-chart-4"
           />
           <app-streak-bar
             [current]="currentStreak()"
@@ -104,10 +105,10 @@ interface DashboardData {
             title="Backlog"
             [value]="backlogSize()"
             subtitle="articles to read"
-            sparklineColor="#8b5cf6"
+            [sparklineColor]="chartColors.chart3()"
             icon="inbox"
-            iconBgClass="bg-violet-100 dark:bg-violet-900/30"
-            iconColorClass="text-violet-600 dark:text-violet-400"
+            iconBgClass="bg-chart-3/10"
+            iconColorClass="text-chart-3"
           />
         </div>
 
@@ -133,7 +134,7 @@ interface DashboardData {
           class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
         >
           <div class="flex flex-col items-center gap-4">
-            <hlm-spinner class="size-8 text-amber-500" aria-label="Loading analytics" />
+            <hlm-spinner class="size-8 text-brand" aria-label="Loading analytics" />
             <p class="text-sm text-muted-foreground">Loading analytics...</p>
           </div>
         </div>
@@ -148,6 +149,7 @@ export class DashboardComponent {
   private readonly analyticsService = inject(AnalyticsService);
   private readonly syncService = inject(SyncService);
   private readonly destroyRef = inject(DestroyRef);
+  readonly chartColors = inject(ChartColorsService);
 
   readonly period = signal<Period>(30);
   readonly loading = signal(true);

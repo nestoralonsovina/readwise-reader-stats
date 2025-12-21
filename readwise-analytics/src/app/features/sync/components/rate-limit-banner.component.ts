@@ -7,14 +7,14 @@ import { RateLimitInfo } from '../../../core/models/sync.models';
   template: `
     @if (rateLimit()) {
       <div
-        class="border-b border-amber-200 bg-amber-50 px-6 py-4 dark:border-amber-800 dark:bg-amber-900/20"
+        class="border-b border-warning/20 bg-warning/5 px-6 py-4"
       >
         <div class="flex items-start gap-3">
           <div
-            class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40"
+            class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-warning/10"
           >
             <svg
-              class="h-4 w-4 text-amber-600 dark:text-amber-400"
+              class="h-4 w-4 text-warning"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -28,10 +28,10 @@ import { RateLimitInfo } from '../../../core/models/sync.models';
             </svg>
           </div>
           <div class="flex-1">
-            <p class="text-sm font-medium text-amber-800 dark:text-amber-200">
+            <p class="text-sm font-medium text-warning-foreground">
               Rate limit reached
             </p>
-            <p class="text-sm text-amber-600 dark:text-amber-400">
+            <p class="text-sm text-warning">
               Retrying in
               <span class="font-mono font-bold">{{ countdown() }}</span
               >s (attempt {{ rateLimit()!.attempt }}/{{ rateLimit()!.maxAttempts }})

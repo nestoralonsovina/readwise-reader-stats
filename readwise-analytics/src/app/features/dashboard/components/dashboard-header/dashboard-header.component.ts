@@ -57,7 +57,7 @@ import { lucideSun, lucideMoon, lucideRefreshCw, lucideMenu } from '@ng-icons/lu
           <!-- Sync button -->
           <button
             hlmBtn
-            class="bg-amber-500 hover:bg-amber-600 text-white"
+            class="bg-brand text-brand-foreground hover:bg-brand/90"
             (click)="onSyncClick()"
           >
             <ng-icon

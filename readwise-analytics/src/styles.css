@@ -48,6 +48,16 @@
   --chart-3: oklch(0.627 0.265 303.9);
   --chart-4: oklch(0.696 0.17 162.48);
   --chart-5: oklch(0.551 0.027 264.364);
+
+  /* Semantic status colors */
+  --success: oklch(0.696 0.17 162.48);
+  --success-foreground: oklch(0.166 0.058 152.16);
+  --warning: oklch(0.769 0.188 70.08);
+  --warning-foreground: oklch(0.421 0.095 57.71);
+
+  /* Chart UI */
+  --chart-label: oklch(0.446 0.03 256.802);
+  --chart-grid: oklch(0.898 0.013 247.839);
 }
 
 :root.dark {
@@ -90,6 +100,16 @@
   --chart-3: oklch(0.541 0.281 293.009);
   --chart-4: oklch(0.627 0.194 149.214);
   --chart-5: oklch(0.446 0.03 256.802);
+
+  /* Semantic status colors (dark) */
+  --success: oklch(0.627 0.194 149.214);
+  --success-foreground: oklch(0.962 0.031 166.96);
+  --warning: oklch(0.666 0.179 55.935);
+  --warning-foreground: oklch(0.962 0.059 95.617);
+
+  /* Chart UI (dark) */
+  --chart-label: oklch(0.707 0.022 261.325);
+  --chart-grid: oklch(0.269 0.015 264.536);
 }
 
 @layer base {
@@ -100,4 +120,39 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer utilities {
+  /* Brand color utilities */
+  .bg-brand { background-color: var(--brand); }
+  .bg-brand-foreground { background-color: var(--brand-foreground); }
+  .text-brand { color: var(--brand); }
+  .text-brand-foreground { color: var(--brand-foreground); }
+  .border-brand { border-color: var(--brand); }
+
+  /* Success color utilities */
+  .bg-success { background-color: var(--success); }
+  .bg-success-foreground { background-color: var(--success-foreground); }
+  .text-success { color: var(--success); }
+  .text-success-foreground { color: var(--success-foreground); }
+  .border-success { border-color: var(--success); }
+
+  /* Warning color utilities */
+  .bg-warning { background-color: var(--warning); }
+  .bg-warning-foreground { background-color: var(--warning-foreground); }
+  .text-warning { color: var(--warning); }
+  .text-warning-foreground { color: var(--warning-foreground); }
+  .border-warning { border-color: var(--warning); }
+
+  /* Chart color utilities */
+  .bg-chart-1 { background-color: var(--chart-1); }
+  .bg-chart-2 { background-color: var(--chart-2); }
+  .bg-chart-3 { background-color: var(--chart-3); }
+  .bg-chart-4 { background-color: var(--chart-4); }
+  .bg-chart-5 { background-color: var(--chart-5); }
+  .text-chart-1 { color: var(--chart-1); }
+  .text-chart-2 { color: var(--chart-2); }
+  .text-chart-3 { color: var(--chart-3); }
+  .text-chart-4 { color: var(--chart-4); }
+  .text-chart-5 { color: var(--chart-5); }
 }

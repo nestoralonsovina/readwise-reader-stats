@@ -22,7 +22,7 @@ import { LogEntry, LogEntryType } from '../../../core/models/sync.models';
         >
           <input
             type="checkbox"
-            class="h-3.5 w-3.5 rounded border-border text-amber-500 focus:ring-amber-500"
+            class="h-3.5 w-3.5 rounded border-border text-brand focus:ring-brand"
             [checked]="showVerbose()"
             (change)="showVerbose.set(!showVerbose())"
           />
@@ -42,7 +42,7 @@ import { LogEntry, LogEntryType } from '../../../core/models/sync.models';
               @switch (entry.type) {
                 @case ('success') {
                   <svg
-                    class="h-4 w-4 text-emerald-500"
+                    class="h-4 w-4 text-success"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -57,7 +57,7 @@ import { LogEntry, LogEntryType } from '../../../core/models/sync.models';
                 }
                 @case ('complete') {
                   <svg
-                    class="h-4 w-4 text-emerald-500"
+                    class="h-4 w-4 text-success"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -72,7 +72,7 @@ import { LogEntry, LogEntryType } from '../../../core/models/sync.models';
                 }
                 @case ('warning') {
                   <svg
-                    class="h-4 w-4 text-amber-500"
+                    class="h-4 w-4 text-warning"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -102,7 +102,7 @@ import { LogEntry, LogEntryType } from '../../../core/models/sync.models';
                 }
                 @case ('phase') {
                   <svg
-                    class="h-4 w-4 text-blue-500"
+                    class="h-4 w-4 text-chart-1"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -203,15 +203,15 @@ export class ActivityLogComponent {
   getEntryClasses(type: LogEntryType): string {
     switch (type) {
       case 'success':
-        return 'text-emerald-600 dark:text-emerald-400';
+        return 'text-success';
       case 'complete':
-        return 'font-medium text-emerald-600 dark:text-emerald-400';
+        return 'font-medium text-success';
       case 'warning':
-        return 'text-amber-600 dark:text-amber-400';
+        return 'text-warning';
       case 'error':
         return 'text-destructive';
       case 'phase':
-        return 'font-medium text-blue-600 dark:text-blue-400';
+        return 'font-medium text-chart-1';
       case 'progress':
         return 'text-muted-foreground';
       default:

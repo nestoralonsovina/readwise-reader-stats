@@ -58,7 +58,7 @@ import { lucideFileText, lucidePenSquare } from '@ng-icons/lucide';
                   <span
                     hlmBadge
                     variant="outline"
-                    class="rounded-full bg-amber-500/10 text-amber-600 border-transparent dark:text-amber-400"
+                    class="rounded-full bg-brand/10 text-brand border-transparent"
                   >
                     {{ doc.highlightCount }}
                   </span>

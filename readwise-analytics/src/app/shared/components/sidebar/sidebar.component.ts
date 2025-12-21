@@ -45,7 +45,7 @@ interface NavItem {
       <!-- Header with logo -->
       <hlm-sidebar-header class="border-b border-sidebar-border p-4">
         <div class="flex items-center gap-3">
-          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand">
             <ng-icon name="lucideBookOpen" class="text-white" size="sm" />
           </div>
           <span class="text-lg font-semibold group-data-[collapsible=icon]:hidden">

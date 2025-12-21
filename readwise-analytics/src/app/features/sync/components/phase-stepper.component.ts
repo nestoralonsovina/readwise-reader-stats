@@ -156,33 +156,33 @@ export class PhaseStepperComponent {
 
   getPhaseIconClasses(phase: PhaseDisplay): string {
     if (this.isPhaseCompleted(phase)) {
-      return 'bg-emerald-500';
+      return 'bg-success';
     }
     if (this.isPhaseFailed(phase)) {
       return 'bg-destructive';
     }
     if (this.isPhaseActive(phase)) {
-      return 'bg-amber-500 animate-pulse';
+      return 'bg-brand animate-pulse';
     }
     return 'bg-muted';
   }
 
   getPhaseLabelClasses(phase: PhaseDisplay): string {
     if (this.isPhaseCompleted(phase)) {
-      return 'text-emerald-600 dark:text-emerald-400';
+      return 'text-success';
     }
     if (this.isPhaseFailed(phase)) {
       return 'text-destructive';
     }
     if (this.isPhaseActive(phase)) {
-      return 'text-amber-600 dark:text-amber-400';
+      return 'text-brand';
     }
     return 'text-muted-foreground';
   }
 
   getConnectorClasses(phase: PhaseDisplay): string {
     if (this.isPhaseCompleted(phase)) {
-      return 'bg-emerald-500';
+      return 'bg-success';
     }
     return 'bg-muted';
   }

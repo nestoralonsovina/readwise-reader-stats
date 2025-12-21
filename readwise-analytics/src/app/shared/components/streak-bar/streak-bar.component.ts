@@ -19,9 +19,9 @@ const STREAK_VISUALIZATION_DAYS = 14;
         <div class="flex items-center gap-2">
           <!-- Flame icon -->
           <div
-            class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30"
+            class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10"
           >
-            <ng-icon name="lucideFlame" size="sm" class="text-amber-600 dark:text-amber-400" />
+            <ng-icon name="lucideFlame" size="sm" class="text-brand" />
           </div>
           <span class="text-sm text-muted-foreground">Current Streak</span>
         </div>
@@ -30,7 +30,7 @@ const STREAK_VISUALIZATION_DAYS = 14;
         <span
           hlmBadge
           variant="outline"
-          class="rounded-full bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
+          class="rounded-full bg-brand/10 text-brand border-brand/20"
         >
           Best: {{ longestStreakValue() }}
         </span>
@@ -48,8 +48,8 @@ const STREAK_VISUALIZATION_DAYS = 14;
           @for (day of streakDays(); track day.index) {
             <div
               class="h-6 w-2 rounded-sm transition-colors"
-              [class.bg-amber-500]="day.active && day.isToday"
-              [class.bg-amber-400]="day.active && !day.isToday"
+              [class.bg-brand]="day.active && day.isToday"
+              [class.bg-brand/80]="day.active && !day.isToday"
               [class.bg-muted]="!day.active"
               [title]="day.active ? 'Read' : 'No activity'"
             ></div>
