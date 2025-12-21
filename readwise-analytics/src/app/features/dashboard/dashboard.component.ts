@@ -132,8 +132,8 @@ interface DashboardData {
 
         <!-- Bottom Row: Pipeline, Highlights, Most Highlighted -->
         <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <app-pipeline-card [data]="pipeline()" />
-          <app-highlights-card [data]="highlights()" />
+          <app-pipeline-card [data]="pipeline()" [periodLabel]="periodLabelText()" />
+          <app-highlights-card [data]="highlights()" [periodLabel]="periodLabelText()" />
           <app-most-highlighted [documents]="topDocuments()" />
         </div>
 
@@ -218,6 +218,17 @@ export class DashboardComponent {
   readonly articlesSparkline = computed(() => {
     const stats = this.data()?.readingStats.stats ?? [];
     return stats.slice(-7).map((s) => s.articlesCompleted);
+  });
+
+  readonly periodLabelText = computed(() => {
+    switch (this.period()) {
+      case 7:
+        return 'Last 7 days';
+      case 30:
+        return 'Last 30 days';
+      case 365:
+        return 'Last year';
+    }
   });
 
   constructor() {

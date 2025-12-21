@@ -9,9 +9,12 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
   standalone: true,
   imports: [FormatNumberPipe, DecimalPipe, ...HlmCardImports],
   template: `
-    <section hlmCard class="gap-0 p-5">
-      <header hlmCardHeader class="mb-4 p-0">
+    <section hlmCard class="h-full gap-0 p-5">
+      <header hlmCardHeader class="mb-4 flex items-center justify-between p-0">
         <h3 hlmCardTitle class="text-lg font-semibold">Highlights</h3>
+        @if (periodLabel()) {
+          <span class="text-xs text-muted-foreground">{{ periodLabel() }}</span>
+        }
       </header>
 
       <div hlmCardContent class="p-0">
@@ -79,4 +82,5 @@ import { HlmCardImports } from '@spartan-ng/helm/card';
 })
 export class HighlightsCardComponent {
   readonly data = input<HighlightResponse | null>();
+  readonly periodLabel = input<string>();
 }

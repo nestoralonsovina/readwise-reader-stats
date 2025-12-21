@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { TopDocumentDto } from '../../../../core/models/api.models';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmAvatarImports } from '@spartan-ng/helm/avatar';
@@ -13,9 +13,15 @@ import { lucideFileText, lucidePenSquare } from '@ng-icons/lucide';
   imports: [...HlmCardImports, ...HlmAvatarImports, ...HlmBadgeImports, ...HlmIconImports],
   providers: [provideIcons({ lucideFileText, lucidePenSquare })],
   template: `
-    <section hlmCard class="gap-0 p-5">
-      <header hlmCardHeader class="mb-4 p-0">
+    <section hlmCard class="h-full gap-0 p-5">
+      <header hlmCardHeader class="mb-4 flex items-center justify-between p-0">
         <h3 hlmCardTitle class="text-lg font-semibold">Most Highlighted</h3>
+        <button
+          class="text-xs text-brand hover:underline"
+          (click)="viewAllClick.emit()"
+        >
+          View all
+        </button>
       </header>
 
       <div hlmCardContent class="p-0">
@@ -77,4 +83,5 @@ import { lucideFileText, lucidePenSquare } from '@ng-icons/lucide';
 })
 export class MostHighlightedComponent {
   readonly documents = input<readonly TopDocumentDto[] | null>();
+  readonly viewAllClick = output<void>();
 }

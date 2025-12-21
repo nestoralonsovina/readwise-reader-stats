@@ -220,8 +220,8 @@ class AnalyticsController(
     ): PipelineResponse {
         val dateRange = parseDateRange(startDate, endDate)
         val pipeline = analyticsService.getPipelineStats(dateRange)
-        val locations = analyticsService.getLocationBreakdown()
-        val categories = analyticsService.getCategoryBreakdown()
+        val locations = analyticsService.getLocationBreakdown(dateRange)
+        val categories = analyticsService.getCategoryBreakdown(dateRange)
 
         return PipelineResponse(
             current = CurrentPipelineDto(

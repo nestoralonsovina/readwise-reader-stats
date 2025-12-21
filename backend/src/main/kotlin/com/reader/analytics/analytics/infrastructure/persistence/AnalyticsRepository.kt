@@ -283,25 +283,31 @@ class AnalyticsRepository(
         )
     }
 
-    fun getLocationBreakdown(): List<RawLocationBreakdown> {
+    fun getLocationBreakdown(startDate: LocalDate, endDate: LocalDate): List<RawLocationBreakdown> {
         val sql = """
             SELECT
                 COALESCE(location, 'unknown') AS location,
                 COUNT(*) AS count
             FROM documents
+            WHERE saved_at >= ? AND saved_at < ?
             GROUP BY location
             ORDER BY count DESC
         """.trimIndent()
 
-        return jdbcTemplate.query(sql) { rs, _ ->
-            RawLocationBreakdown(
-                location = rs.getString("location"),
-                count = rs.getInt("count")
-            )
-        }
+        return jdbcTemplate.query(
+            sql,
+            { rs, _ ->
+                RawLocationBreakdown(
+                    location = rs.getString("location"),
+                    count = rs.getInt("count")
+                )
+            },
+            startDate.atStartOfDay(),
+            endDate.plusDays(1).atStartOfDay()
+        )
     }
 
-    fun getCategoryBreakdown(): List<RawCategoryBreakdown> {
+    fun getCategoryBreakdown(startDate: LocalDate, endDate: LocalDate): List<RawCategoryBreakdown> {
         val sql = """
             WITH latest_progress AS (
                 SELECT DISTINCT ON (document_id)
@@ -316,17 +322,23 @@ class AnalyticsRepository(
                 AVG(COALESCE(lp.reading_progress, 0)) AS avg_progress
             FROM documents d
             LEFT JOIN latest_progress lp ON lp.document_id = d.readwise_id
+            WHERE d.saved_at >= ? AND d.saved_at < ?
             GROUP BY d.category
             ORDER BY count DESC
         """.trimIndent()
 
-        return jdbcTemplate.query(sql) { rs, _ ->
-            RawCategoryBreakdown(
-                category = rs.getString("category"),
-                count = rs.getInt("count"),
-                averageProgress = rs.getDouble("avg_progress")
-            )
-        }
+        return jdbcTemplate.query(
+            sql,
+            { rs, _ ->
+                RawCategoryBreakdown(
+                    category = rs.getString("category"),
+                    count = rs.getInt("count"),
+                    averageProgress = rs.getDouble("avg_progress")
+                )
+            },
+            startDate.atStartOfDay(),
+            endDate.plusDays(1).atStartOfDay()
+        )
     }
 
     fun getHighlightStats(
@@ -379,7 +391,11 @@ class AnalyticsRepository(
         )
     }
 
-    fun getMostHighlightedDocuments(limit: Int): List<RawDocumentHighlightCount> {
+    fun getMostHighlightedDocuments(
+        startDate: LocalDate,
+        endDate: LocalDate,
+        limit: Int
+    ): List<RawDocumentHighlightCount> {
         val sql = """
             SELECT
                 d.readwise_id AS document_id,
@@ -394,21 +410,28 @@ class AnalyticsRepository(
                 ) AS has_notes
             FROM documents d
             JOIN highlights h ON h.document_id = d.id
+            WHERE h.highlighted_at >= ? AND h.highlighted_at < ?
             GROUP BY d.id, d.readwise_id, d.title, d.category, d.image_url
             ORDER BY highlight_count DESC
             LIMIT ?
         """.trimIndent()
 
-        return jdbcTemplate.query(sql, { rs, _ ->
-            RawDocumentHighlightCount(
-                documentId = rs.getString("document_id"),
-                title = rs.getString("title"),
-                category = rs.getString("category"),
-                imageUrl = rs.getString("image_url"),
-                highlightCount = rs.getInt("highlight_count"),
-                hasNotes = rs.getBoolean("has_notes")
-            )
-        }, limit)
+        return jdbcTemplate.query(
+            sql,
+            { rs, _ ->
+                RawDocumentHighlightCount(
+                    documentId = rs.getString("document_id"),
+                    title = rs.getString("title"),
+                    category = rs.getString("category"),
+                    imageUrl = rs.getString("image_url"),
+                    highlightCount = rs.getInt("highlight_count"),
+                    hasNotes = rs.getBoolean("has_notes")
+                )
+            },
+            startDate.atStartOfDay(),
+            endDate.plusDays(1).atStartOfDay(),
+            limit
+        )
     }
 
     fun getCompletionRate(startDate: LocalDate, endDate: LocalDate): Double {

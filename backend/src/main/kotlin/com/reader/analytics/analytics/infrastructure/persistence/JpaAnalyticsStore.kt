@@ -82,8 +82,8 @@ class JpaAnalyticsStore(
         )
     }
 
-    override fun getLocationBreakdown(): List<LocationBreakdown> {
-        val raw = repository.getLocationBreakdown()
+    override fun getLocationBreakdown(dateRange: DateRange): List<LocationBreakdown> {
+        val raw = repository.getLocationBreakdown(dateRange.start, dateRange.end)
         val total = raw.sumOf { it.count }
         return raw.map {
             LocationBreakdown(
@@ -94,8 +94,8 @@ class JpaAnalyticsStore(
         }
     }
 
-    override fun getCategoryBreakdown(): List<CategoryBreakdown> =
-        repository.getCategoryBreakdown().map {
+    override fun getCategoryBreakdown(dateRange: DateRange): List<CategoryBreakdown> =
+        repository.getCategoryBreakdown(dateRange.start, dateRange.end).map {
             CategoryBreakdown(
                 category = it.category,
                 count = it.count,
@@ -111,7 +111,7 @@ class JpaAnalyticsStore(
             previousStart = previousRange.start,
             previousEnd = previousRange.end
         )
-        val topDocs = getMostHighlightedDocuments(10)
+        val topDocs = getMostHighlightedDocuments(dateRange, 10)
 
         return HighlightStats(
             totalHighlights = raw.totalHighlights,
@@ -123,8 +123,8 @@ class JpaAnalyticsStore(
         )
     }
 
-    override fun getMostHighlightedDocuments(limit: Int): List<DocumentHighlightCount> =
-        repository.getMostHighlightedDocuments(limit).map {
+    override fun getMostHighlightedDocuments(dateRange: DateRange, limit: Int): List<DocumentHighlightCount> =
+        repository.getMostHighlightedDocuments(dateRange.start, dateRange.end, limit).map {
             DocumentHighlightCount(
                 documentId = it.documentId,
                 title = it.title,

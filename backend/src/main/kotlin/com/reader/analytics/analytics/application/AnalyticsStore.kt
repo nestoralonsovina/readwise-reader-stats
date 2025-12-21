@@ -20,13 +20,13 @@ interface AnalyticsStore {
 
     fun getPipelineStats(dateRange: DateRange): PipelineStats
 
-    fun getLocationBreakdown(): List<LocationBreakdown>
+    fun getLocationBreakdown(dateRange: DateRange): List<LocationBreakdown>
 
-    fun getCategoryBreakdown(): List<CategoryBreakdown>
+    fun getCategoryBreakdown(dateRange: DateRange): List<CategoryBreakdown>
 
     fun getHighlightStats(dateRange: DateRange): HighlightStats
 
-    fun getMostHighlightedDocuments(limit: Int): List<DocumentHighlightCount>
+    fun getMostHighlightedDocuments(dateRange: DateRange, limit: Int): List<DocumentHighlightCount>
 
     // Drill-down methods
     fun getWordsReadDocuments(

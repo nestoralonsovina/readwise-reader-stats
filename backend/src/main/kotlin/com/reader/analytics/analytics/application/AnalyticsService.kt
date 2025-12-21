@@ -43,11 +43,11 @@ class AnalyticsService(
     fun getPipelineStats(dateRange: DateRange): PipelineStats =
         analyticsStore.getPipelineStats(dateRange)
 
-    fun getLocationBreakdown(): List<LocationBreakdown> =
-        analyticsStore.getLocationBreakdown()
+    fun getLocationBreakdown(dateRange: DateRange): List<LocationBreakdown> =
+        analyticsStore.getLocationBreakdown(dateRange)
 
-    fun getCategoryBreakdown(): List<CategoryBreakdown> =
-        analyticsStore.getCategoryBreakdown()
+    fun getCategoryBreakdown(dateRange: DateRange): List<CategoryBreakdown> =
+        analyticsStore.getCategoryBreakdown(dateRange)
 
     fun getHighlightStats(dateRange: DateRange): HighlightStats =
         analyticsStore.getHighlightStats(dateRange)
