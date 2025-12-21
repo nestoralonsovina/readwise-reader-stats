@@ -1,18 +1,29 @@
 import { Component, input, output, inject, computed } from '@angular/core';
 import { PeriodToggleComponent } from '../../../../shared/components/period-toggle/period-toggle.component';
+import { SyncPanelComponent } from '../../../sync/sync-panel.component';
 import { ThemeService } from '../../../../core/services/theme.service';
 import { SyncService } from '../../../../core/services/sync.service';
 import { Period } from '../../../../core/models/api.models';
 import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmIconImports } from '@spartan-ng/helm/icon';
 import { HlmSidebarTrigger } from '@spartan-ng/helm/sidebar';
+import { HlmSheetImports } from '@spartan-ng/helm/sheet';
+import { BrnSheetImports } from '@spartan-ng/brain/sheet';
 import { provideIcons } from '@ng-icons/core';
 import { lucideSun, lucideMoon, lucideRefreshCw, lucideMenu } from '@ng-icons/lucide';
 
 @Component({
   selector: 'app-dashboard-header',
   standalone: true,
-  imports: [PeriodToggleComponent, ...HlmButtonImports, ...HlmIconImports, HlmSidebarTrigger],
+  imports: [
+    PeriodToggleComponent,
+    SyncPanelComponent,
+    ...HlmButtonImports,
+    ...HlmIconImports,
+    ...HlmSheetImports,
+    ...BrnSheetImports,
+    HlmSidebarTrigger,
+  ],
   providers: [provideIcons({ lucideSun, lucideMoon, lucideRefreshCw, lucideMenu })],
   template: `
     <header class="border-b border-border bg-card">
@@ -21,7 +32,7 @@ import { lucideSun, lucideMoon, lucideRefreshCw, lucideMenu } from '@ng-icons/lu
         <div class="flex items-center gap-3">
           <!-- Mobile sidebar trigger -->
           <button hlmSidebarTrigger class="md:hidden" aria-label="Toggle sidebar">
-            <ng-icon name="lucideMenu" size="lg" />
+            <ng-icon hlm name="lucideMenu" size="lg" />
           </button>
 
           <!-- Last synced -->
@@ -48,25 +59,32 @@ import { lucideSun, lucideMoon, lucideRefreshCw, lucideMenu } from '@ng-icons/lu
             "
           >
             @if (themeService.isDark()) {
-              <ng-icon name="lucideSun" size="lg" />
+              <ng-icon hlm name="lucideSun" size="lg" />
             } @else {
-              <ng-icon name="lucideMoon" size="lg" />
+              <ng-icon hlm name="lucideMoon" size="lg" />
             }
           </button>
 
-          <!-- Sync button -->
-          <button
-            hlmBtn
-            class="bg-brand text-brand-foreground hover:bg-brand/90"
-            (click)="onSyncClick()"
-          >
-            <ng-icon
-              name="lucideRefreshCw"
-              size="sm"
-              [class.animate-spin]="syncService.isRunning()"
-            />
-            {{ syncService.isRunning() ? 'Syncing...' : 'Sync' }}
-          </button>
+          <!-- Sync Sheet -->
+          <hlm-sheet side="right">
+            <button
+              brnSheetTrigger
+              hlmBtn
+              class="bg-brand text-brand-foreground hover:bg-brand/90"
+            >
+              <ng-icon
+                hlm
+                name="lucideRefreshCw"
+                size="sm"
+                [class.animate-spin]="syncService.isRunning()"
+              />
+              {{ syncService.isRunning() ? 'Syncing...' : 'Sync' }}
+            </button>
+
+            <hlm-sheet-content *brnSheetContent="let ctx" class="w-full max-w-lg sm:max-w-lg">
+              <app-sync-panel />
+            </hlm-sheet-content>
+          </hlm-sheet>
         </div>
       </div>
     </header>
@@ -115,14 +133,4 @@ export class DashboardHeaderComponent {
     }
     return `Last synced: ${diffDays} days ago`;
   });
-
-  onSyncClick(): void {
-    if (this.syncService.isRunning()) {
-      // If already running, just open the panel
-      this.syncService.openPanel();
-    } else {
-      // Start a new sync
-      this.syncService.startSync();
-    }
-  }
 }

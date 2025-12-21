@@ -1,43 +1,28 @@
 import { Component, input, effect, signal, OnDestroy } from '@angular/core';
 import { RateLimitInfo } from '../../../core/models/sync.models';
+import { HlmAlertImports } from '@spartan-ng/helm/alert';
+import { HlmIconImports } from '@spartan-ng/helm/icon';
+import { provideIcons } from '@ng-icons/core';
+import { lucideClock } from '@ng-icons/lucide';
 
 @Component({
   selector: 'app-rate-limit-banner',
   standalone: true,
+  imports: [...HlmAlertImports, ...HlmIconImports],
+  providers: [provideIcons({ lucideClock })],
   template: `
     @if (rateLimit()) {
       <div
-        class="border-b border-warning/20 bg-warning/5 px-6 py-4"
+        hlmAlert
+        class="rounded-none border-x-0 border-t-0 border-warning/20 bg-warning/5"
       >
-        <div class="flex items-start gap-3">
-          <div
-            class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-warning/10"
-          >
-            <svg
-              class="h-4 w-4 text-warning"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-          <div class="flex-1">
-            <p class="text-sm font-medium text-warning-foreground">
-              Rate limit reached
-            </p>
-            <p class="text-sm text-warning">
-              Retrying in
-              <span class="font-mono font-bold">{{ countdown() }}</span
-              >s (attempt {{ rateLimit()!.attempt }}/{{ rateLimit()!.maxAttempts }})
-            </p>
-          </div>
-        </div>
+        <ng-icon hlmAlertIcon name="lucideClock" class="text-warning" />
+        <h5 hlmAlertTitle class="text-warning-foreground">Rate limit reached</h5>
+        <p hlmAlertDescription class="text-warning">
+          Retrying in
+          <span class="font-mono font-bold">{{ countdown() }}</span
+          >s (attempt {{ rateLimit()!.attempt }}/{{ rateLimit()!.maxAttempts }})
+        </p>
       </div>
     }
   `,

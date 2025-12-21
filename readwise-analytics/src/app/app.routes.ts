@@ -36,6 +36,13 @@ export const routes: Routes = [
         redirectTo: 'dashboard',
       },
       {
+        path: 'library/:id',
+        loadComponent: () =>
+          import('./features/library/document-detail.component').then(
+            (m) => m.DocumentDetailComponent
+          ),
+      },
+      {
         path: 'settings',
         redirectTo: 'dashboard',
       },

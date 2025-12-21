@@ -1,22 +1,42 @@
 import { Component, input, output, computed } from '@angular/core';
 import { SyncState } from '../../../core/models/sync.models';
+import { HlmButtonImports } from '@spartan-ng/helm/button';
+import { HlmIconImports } from '@spartan-ng/helm/icon';
+import { BrnSheetClose } from '@spartan-ng/brain/sheet';
+import { provideIcons } from '@ng-icons/core';
+import { lucideCheck, lucideX, lucideRefreshCw } from '@ng-icons/lucide';
+
+type FooterType = 'idle' | 'running' | 'completed' | 'failed';
 
 @Component({
   selector: 'app-sync-footer',
   standalone: true,
+  imports: [...HlmButtonImports, ...HlmIconImports, BrnSheetClose],
+  providers: [provideIcons({ lucideCheck, lucideX, lucideRefreshCw })],
   template: `
-    <div class="border-t border-border bg-card px-6 py-4">
+    <div class="px-6 py-4">
       @switch (footerType()) {
+        @case ('idle') {
+          <div class="flex items-center justify-between">
+            <div class="text-sm text-muted-foreground">
+              Ready to sync your Readwise library
+            </div>
+            <button
+              hlmBtn
+              class="bg-brand text-brand-foreground hover:bg-brand/90"
+              (click)="startClick.emit()"
+            >
+              <ng-icon hlm name="lucideRefreshCw" size="sm" />
+              Start Sync
+            </button>
+          </div>
+        }
         @case ('running') {
           <div class="flex items-center justify-between">
             <div class="text-sm text-muted-foreground">
               Started <span class="font-medium">{{ elapsedTime() }}</span>
             </div>
-            <button
-              type="button"
-              class="rounded-lg bg-muted px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/80"
-              (click)="cancelClick.emit()"
-            >
+            <button hlmBtn variant="secondary" (click)="cancelClick.emit()">
               Cancel Sync
             </button>
           </div>
@@ -27,19 +47,7 @@ import { SyncState } from '../../../core/models/sync.models';
               <div
                 class="flex h-10 w-10 items-center justify-center rounded-full bg-success/10"
               >
-                <svg
-                  class="h-5 w-5 text-success"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+                <ng-icon hlm name="lucideCheck" class="text-success" />
               </div>
               <div>
                 <p class="text-sm font-medium">Sync completed</p>
@@ -51,9 +59,9 @@ import { SyncState } from '../../../core/models/sync.models';
               </div>
             </div>
             <button
-              type="button"
-              class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand/90"
-              (click)="doneClick.emit()"
+              hlmBtn
+              brnSheetClose
+              class="bg-brand text-brand-foreground hover:bg-brand/90"
             >
               Done
             </button>
@@ -63,21 +71,9 @@ import { SyncState } from '../../../core/models/sync.models';
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <div
-                class="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30"
+                class="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10"
               >
-                <svg
-                  class="h-5 w-5 text-destructive"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <ng-icon hlm name="lucideX" class="text-destructive" />
               </div>
               <div>
                 <p class="text-sm font-medium text-destructive">Sync failed</p>
@@ -85,8 +81,8 @@ import { SyncState } from '../../../core/models/sync.models';
               </div>
             </div>
             <button
-              type="button"
-              class="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground hover:bg-brand/90"
+              hlmBtn
+              class="bg-brand text-brand-foreground hover:bg-brand/90"
               (click)="retryClick.emit()"
             >
               Retry Sync
@@ -100,15 +96,16 @@ import { SyncState } from '../../../core/models/sync.models';
 export class SyncFooterComponent {
   readonly state = input.required<SyncState>();
 
+  readonly startClick = output<void>();
   readonly cancelClick = output<void>();
-  readonly doneClick = output<void>();
   readonly retryClick = output<void>();
 
-  readonly footerType = computed(() => {
+  readonly footerType = computed<FooterType>(() => {
     const status = this.state().status;
     if (status === 'completed') return 'completed';
-    if (status === 'failed') return 'failed';
-    return 'running';
+    if (status === 'failed' || status === 'cancelled') return 'failed';
+    if (status === 'running' || status === 'rate_limited') return 'running';
+    return 'idle';
   });
 
   readonly elapsedTime = computed(() => {

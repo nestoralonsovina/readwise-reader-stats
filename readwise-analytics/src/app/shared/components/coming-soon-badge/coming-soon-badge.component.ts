@@ -17,7 +17,7 @@ import { lucideClock } from '@ng-icons/lucide';
       [title]="tooltip()"
     >
       @if (showIcon()) {
-        <ng-icon name="lucideClock" size="xs" />
+        <ng-icon hlm name="lucideClock" size="xs" />
       }
       {{ label() }}
     </span>

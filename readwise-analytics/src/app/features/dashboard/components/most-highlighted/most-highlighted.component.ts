@@ -31,7 +31,7 @@ import { lucideFileText, lucidePenSquare } from '@ng-icons/lucide';
                     <img hlmAvatarImage [src]="doc.imageUrl" [alt]="doc.title ?? 'Document thumbnail'" />
                   }
                   <span hlmAvatarFallback class="rounded-lg bg-muted">
-                    <ng-icon name="lucideFileText" class="text-muted-foreground" />
+                    <ng-icon hlm name="lucideFileText" class="text-muted-foreground" />
                   </span>
                 </hlm-avatar>
 
@@ -52,7 +52,7 @@ import { lucideFileText, lucidePenSquare } from '@ng-icons/lucide';
                       class="rounded-full bg-blue-500/10 p-1 text-blue-600 dark:text-blue-400"
                       title="Has notes"
                     >
-                      <ng-icon name="lucidePenSquare" size="sm" />
+                      <ng-icon hlm name="lucidePenSquare" size="sm" />
                     </div>
                   }
                   <span

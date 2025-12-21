@@ -1,9 +1,11 @@
-import { Component, inject, computed, HostListener } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { SyncService } from '../../core/services/sync.service';
 import { PhaseStepperComponent } from './components/phase-stepper.component';
 import { RateLimitBannerComponent } from './components/rate-limit-banner.component';
 import { ActivityLogComponent } from './components/activity-log.component';
 import { SyncFooterComponent } from './components/sync-footer.component';
+import { HlmSheetImports } from '@spartan-ng/helm/sheet';
+import { HlmBadgeImports } from '@spartan-ng/helm/badge';
 
 @Component({
   selector: 'app-sync-panel',
@@ -13,78 +15,46 @@ import { SyncFooterComponent } from './components/sync-footer.component';
     RateLimitBannerComponent,
     ActivityLogComponent,
     SyncFooterComponent,
+    ...HlmSheetImports,
+    ...HlmBadgeImports,
   ],
   template: `
-    @if (syncService.isPanelOpen()) {
-      <div class="fixed inset-0 z-50">
-        <!-- Backdrop -->
-        <div
-          class="fixed inset-0 bg-gray-900/50 transition-opacity dark:bg-black/60"
-          (click)="close()"
-        ></div>
-
-        <!-- Panel -->
-        <div
-          class="fixed inset-y-0 right-0 flex w-full max-w-lg flex-col bg-card shadow-xl"
-        >
-          <!-- Header -->
-          <div
-            class="flex items-center justify-between border-b border-border px-6 py-4"
-          >
-            <div class="flex items-center gap-3">
-              <h2 class="text-lg font-semibold">{{ panelTitle() }}</h2>
-              <span
-                class="rounded-full px-2 py-0.5 text-xs font-medium"
-                [class]="statusBadgeClasses()"
-              >
-                {{ statusBadgeText() }}
-              </span>
-            </div>
-            <button
-              type="button"
-              class="rounded-lg p-2 text-muted-foreground hover:bg-muted"
-              (click)="close()"
-            >
-              <svg
-                class="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-
-          <!-- Phase Stepper -->
-          <app-phase-stepper [state]="syncService.state()" />
-
-          <!-- Rate Limit Banner -->
-          <app-rate-limit-banner [rateLimit]="syncService.state().rateLimit" />
-
-          <!-- Activity Log -->
-          <app-activity-log [logs]="syncService.logs()" />
-
-          <!-- Footer -->
-          <app-sync-footer
-            [state]="syncService.state()"
-            (cancelClick)="onCancel()"
-            (doneClick)="close()"
-            (retryClick)="onRetry()"
-          />
-        </div>
+    <hlm-sheet-header class="border-b border-border px-6 py-4">
+      <div class="flex items-center gap-3">
+        <h2 hlmSheetTitle class="text-lg font-semibold">{{ panelTitle() }}</h2>
+        <span hlmBadge variant="secondary" [class]="statusBadgeClasses()">
+          {{ statusBadgeText() }}
+        </span>
       </div>
-    }
+    </hlm-sheet-header>
+
+    <!-- Phase Stepper -->
+    <app-phase-stepper [state]="syncService.state()" />
+
+    <!-- Rate Limit Banner -->
+    <app-rate-limit-banner [rateLimit]="syncService.state().rateLimit" />
+
+    <!-- Activity Log -->
+    <app-activity-log [logs]="syncService.logs()" />
+
+    <!-- Footer -->
+    <hlm-sheet-footer class="mt-auto border-t border-border p-0">
+      <app-sync-footer
+        class="w-full"
+        [state]="syncService.state()"
+        (startClick)="onStart()"
+        (cancelClick)="onCancel()"
+        (retryClick)="onRetry()"
+      />
+    </hlm-sheet-footer>
   `,
   styles: [
     `
       :host {
-        display: contents;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
       }
     `,
   ],
@@ -101,8 +71,11 @@ export class SyncPanelComponent {
         return 'Sync Failed';
       case 'cancelled':
         return 'Sync Cancelled';
-      default:
+      case 'running':
+      case 'rate_limited':
         return 'Syncing with Readwise';
+      default:
+        return 'Sync with Readwise';
     }
   });
 
@@ -120,7 +93,7 @@ export class SyncPanelComponent {
       case 'cancelled':
         return 'Cancelled';
       default:
-        return 'Idle';
+        return 'Ready';
     }
   });
 
@@ -141,13 +114,8 @@ export class SyncPanelComponent {
     }
   });
 
-  @HostListener('document:keydown.escape')
-  onEscapeKey(): void {
-    this.close();
-  }
-
-  close(): void {
-    this.syncService.closePanel();
+  onStart(): void {
+    this.syncService.startSync();
   }
 
   onCancel(): void {

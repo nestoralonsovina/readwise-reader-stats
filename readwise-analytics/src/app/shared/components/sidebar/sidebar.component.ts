@@ -46,7 +46,7 @@ interface NavItem {
       <hlm-sidebar-header class="border-b border-sidebar-border p-4">
         <div class="flex items-center gap-3">
           <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand">
-            <ng-icon name="lucideBookOpen" class="text-white" size="sm" />
+            <ng-icon hlm name="lucideBookOpen" class="text-white" size="sm" />
           </div>
           <span class="text-lg font-semibold group-data-[collapsible=icon]:hidden">
             Reader Analytics
@@ -68,7 +68,7 @@ interface NavItem {
                   [isActive]="rla.isActive"
                   [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
                 >
-                  <ng-icon [name]="item.iconName" />
+                  <ng-icon hlm [name]="item.iconName" />
                   <span>{{ item.label }}</span>
                 </a>
                 @if (item.comingSoon) {
@@ -97,7 +97,7 @@ interface NavItem {
                   #rla="routerLinkActive"
                   [isActive]="rla.isActive"
                 >
-                  <ng-icon [name]="item.iconName" />
+                  <ng-icon hlm [name]="item.iconName" />
                   <span>{{ item.label }}</span>
                 </a>
                 @if (item.comingSoon) {
@@ -119,7 +119,7 @@ interface NavItem {
         <ul hlmSidebarMenu>
           <li hlmSidebarMenuItem>
             <a hlmSidebarMenuButton routerLink="/settings">
-              <ng-icon name="lucideSettings" />
+              <ng-icon hlm name="lucideSettings" />
               <span>Settings</span>
             </a>
             <span

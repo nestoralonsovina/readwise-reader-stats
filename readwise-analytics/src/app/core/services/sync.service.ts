@@ -34,7 +34,6 @@ export class SyncService {
   // Signals for reactive state
   readonly state = signal<SyncState>(INITIAL_SYNC_STATE);
   readonly logs = signal<readonly LogEntry[]>([]);
-  readonly isPanelOpen = signal(false);
 
   // Computed values
   readonly isRunning = computed(() => {
@@ -45,18 +44,9 @@ export class SyncService {
   readonly isCompleted = computed(() => this.state().status === 'completed');
   readonly isFailed = computed(() => this.state().status === 'failed');
 
-  openPanel(): void {
-    this.isPanelOpen.set(true);
-  }
-
-  closePanel(): void {
-    this.isPanelOpen.set(false);
-  }
-
   async startSync(): Promise<void> {
     // Prevent starting if already running
     if (this.isRunning()) {
-      this.openPanel();
       return;
     }
 
@@ -70,8 +60,6 @@ export class SyncService {
     this.logIdCounter = 0;
     this.lastEventId = null;
     this.cancelPendingReconnect();
-
-    this.openPanel();
 
     try {
       const response = await this.http
@@ -353,6 +341,5 @@ export class SyncService {
     this.disconnect();
     this.state.set(INITIAL_SYNC_STATE);
     this.logs.set([]);
-    this.closePanel();
   }
 }

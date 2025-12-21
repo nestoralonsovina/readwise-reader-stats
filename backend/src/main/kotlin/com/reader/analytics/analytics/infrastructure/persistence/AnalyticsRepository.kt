@@ -2,8 +2,9 @@ package com.reader.analytics.analytics.infrastructure.persistence
 
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Repository
-import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
+import java.util.UUID
 
 @Repository
 class AnalyticsRepository(
@@ -423,6 +424,128 @@ class AnalyticsRepository(
             endDate.plusDays(1).atStartOfDay()
         ) ?: 0.0
     }
+
+    fun getWordsReadDocuments(
+        startDate: LocalDate,
+        endDate: LocalDate,
+        cursor: UUID?,
+        limit: Int
+    ): List<RawWordsReadDocument> {
+        val sql = """
+            SELECT d.id, d.readwise_id, d.title, d.author, d.url, d.image_url, d.category,
+                   ROUND(COALESCE(d.reading_progress, 0) * COALESCE(d.word_count, 0))::bigint AS words_read,
+                   COALESCE(d.reading_progress, 0) AS reading_progress
+            FROM documents d
+            WHERE COALESCE(d.reading_progress, 0) > 0
+              AND COALESCE(d.word_count, 0) > 0
+              AND d.updated_at >= ? AND d.updated_at < ?
+              ${if (cursor != null) "AND d.id < ?::uuid" else ""}
+            ORDER BY words_read DESC, d.id DESC
+            LIMIT ?
+        """.trimIndent()
+
+        val params = mutableListOf<Any>(
+            startDate.atStartOfDay(),
+            endDate.plusDays(1).atStartOfDay()
+        )
+        if (cursor != null) params.add(cursor.toString())
+        params.add(limit)
+
+        return jdbcTemplate.query(sql, { rs, _ ->
+            RawWordsReadDocument(
+                id = UUID.fromString(rs.getString("id")),
+                readwiseId = rs.getString("readwise_id"),
+                title = rs.getString("title"),
+                author = rs.getString("author"),
+                url = rs.getString("url"),
+                imageUrl = rs.getString("image_url"),
+                category = rs.getString("category"),
+                wordsRead = rs.getLong("words_read"),
+                readingProgress = rs.getDouble("reading_progress")
+            )
+        }, *params.toTypedArray())
+    }
+
+    fun getCompletedDocuments(
+        startDate: LocalDate,
+        endDate: LocalDate,
+        cursor: UUID?,
+        limit: Int
+    ): List<RawCompletedDocument> {
+        val sql = """
+            SELECT d.id, d.readwise_id, d.title, d.author, d.url, d.image_url, d.category,
+                   d.updated_at AS completed_at
+            FROM documents d
+            WHERE d.reading_progress = 1.0
+              AND d.updated_at >= ? AND d.updated_at < ?
+              ${if (cursor != null) "AND d.id < ?::uuid" else ""}
+            ORDER BY d.updated_at DESC, d.id DESC
+            LIMIT ?
+        """.trimIndent()
+
+        val params = mutableListOf<Any>(
+            startDate.atStartOfDay(),
+            endDate.plusDays(1).atStartOfDay()
+        )
+        if (cursor != null) params.add(cursor.toString())
+        params.add(limit)
+
+        return jdbcTemplate.query(sql, { rs, _ ->
+            RawCompletedDocument(
+                id = UUID.fromString(rs.getString("id")),
+                readwiseId = rs.getString("readwise_id"),
+                title = rs.getString("title"),
+                author = rs.getString("author"),
+                url = rs.getString("url"),
+                imageUrl = rs.getString("image_url"),
+                category = rs.getString("category"),
+                completedAt = rs.getTimestamp("completed_at").toInstant()
+            )
+        }, *params.toTypedArray())
+    }
+
+    fun getBacklogDocuments(cursor: UUID?, limit: Int): List<RawBacklogDocument> {
+        val sql = """
+            SELECT d.id, d.readwise_id, d.title, d.author, d.url, d.image_url, d.category,
+                   d.saved_at,
+                   COALESCE(EXTRACT(DAY FROM NOW() - d.saved_at)::int, 0) AS days_waiting
+            FROM documents d
+            WHERE COALESCE(d.reading_progress, 0) < 0.1
+              AND d.location IN ('new', 'later', 'shortlist')
+              ${if (cursor != null) "AND d.id > ?::uuid" else ""}
+            ORDER BY d.saved_at ASC NULLS LAST, d.id ASC
+            LIMIT ?
+        """.trimIndent()
+
+        val params = mutableListOf<Any>()
+        if (cursor != null) params.add(cursor.toString())
+        params.add(limit)
+
+        return jdbcTemplate.query(sql, { rs, _ ->
+            RawBacklogDocument(
+                id = UUID.fromString(rs.getString("id")),
+                readwiseId = rs.getString("readwise_id"),
+                title = rs.getString("title"),
+                author = rs.getString("author"),
+                url = rs.getString("url"),
+                imageUrl = rs.getString("image_url"),
+                category = rs.getString("category"),
+                savedAt = rs.getTimestamp("saved_at")?.toInstant(),
+                daysWaiting = rs.getInt("days_waiting")
+            )
+        }, *params.toTypedArray())
+    }
+
+    fun getBacklogCount(): Int {
+        val sql = """
+            SELECT COUNT(*)
+            FROM documents d
+            WHERE COALESCE(d.reading_progress, 0) < 0.1
+              AND d.location IN ('new', 'later', 'shortlist')
+        """.trimIndent()
+
+        return jdbcTemplate.queryForObject(sql, Int::class.java) ?: 0
+    }
 }
 
 data class RawDailyStats(
@@ -484,4 +607,39 @@ data class RawDocumentHighlightCount(
     val imageUrl: String?,
     val highlightCount: Int,
     val hasNotes: Boolean
+)
+
+data class RawWordsReadDocument(
+    val id: UUID,
+    val readwiseId: String,
+    val title: String?,
+    val author: String?,
+    val url: String,
+    val imageUrl: String?,
+    val category: String?,
+    val wordsRead: Long,
+    val readingProgress: Double
+)
+
+data class RawCompletedDocument(
+    val id: UUID,
+    val readwiseId: String,
+    val title: String?,
+    val author: String?,
+    val url: String,
+    val imageUrl: String?,
+    val category: String?,
+    val completedAt: Instant
+)
+
+data class RawBacklogDocument(
+    val id: UUID,
+    val readwiseId: String,
+    val title: String?,
+    val author: String?,
+    val url: String,
+    val imageUrl: String?,
+    val category: String?,
+    val savedAt: Instant?,
+    val daysWaiting: Int
 )

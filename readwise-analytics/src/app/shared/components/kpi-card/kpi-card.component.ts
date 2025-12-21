@@ -1,4 +1,4 @@
-import { Component, input, computed } from '@angular/core';
+import { Component, input, computed, output } from '@angular/core';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { FormatNumberPipe } from '../../pipes/format-number.pipe';
 import { ComingSoonBadgeComponent } from '../coming-soon-badge/coming-soon-badge.component';
@@ -56,7 +56,13 @@ const iconMap: Record<KpiIconType, string> = {
     }),
   ],
   template: `
-    <section hlmCard class="gap-0 p-5">
+    <section
+      hlmCard
+      class="gap-0 p-5 transition-colors"
+      [class.cursor-pointer]="clickable()"
+      [class.hover:bg-muted/50]="clickable()"
+      (click)="onClick()"
+    >
       <header hlmCardHeader class="mb-3 flex items-start justify-between p-0">
         <div class="flex items-center gap-2">
           <!-- Icon badge -->
@@ -65,7 +71,7 @@ const iconMap: Record<KpiIconType, string> = {
               class="flex h-8 w-8 items-center justify-center rounded-lg"
               [class]="iconBgClass()"
             >
-              <ng-icon [name]="iconName()" size="sm" [class]="iconColorClass()" />
+              <ng-icon hlm [name]="iconName()" size="sm" [class]="iconColorClass()" />
             </div>
           }
           <span class="text-sm text-muted-foreground">{{ title() }}</span>
@@ -102,6 +108,7 @@ const iconMap: Record<KpiIconType, string> = {
               [class.text-destructive]="c.direction === 'down'"
             >
               <ng-icon
+                hlm
                 [name]="c.direction === 'up' ? 'lucideArrowUp' : 'lucideArrowDown'"
                 size="xs"
               />
@@ -129,6 +136,15 @@ export class KpiCardComponent {
   readonly iconColorClass = input<string>('text-blue-600 dark:text-blue-400');
   readonly change = input<ChangeIndicator | null>(null);
   readonly showComingSoon = input<boolean>(false);
+  readonly clickable = input<boolean>(false);
+
+  readonly cardClick = output<void>();
+
+  onClick(): void {
+    if (this.clickable()) {
+      this.cardClick.emit();
+    }
+  }
 
   readonly iconName = computed(() => {
     const iconType = this.icon();

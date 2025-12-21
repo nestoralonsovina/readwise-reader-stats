@@ -194,3 +194,89 @@ export function periodToDateRange(period: Period): { startDate: string; endDate:
     endDate: endDate.toISOString().split('T')[0],
   };
 }
+
+// ============================================================================
+// Drill-Down Types
+// ============================================================================
+
+export type DrillDownType = 'words' | 'completed' | 'backlog';
+
+export interface DrillDownParams {
+  readonly startDate?: string;
+  readonly endDate?: string;
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+export interface DrillDownSummary {
+  readonly total: number;
+  readonly changePercent: number | null;
+}
+
+// Base document interface for drill-down lists
+export interface DrillDownDocument {
+  readonly id: string;
+  readonly title: string | null;
+  readonly author: string | null;
+  readonly source: string;
+  readonly coverUrl: string | null;
+  readonly category: string | null;
+}
+
+export interface WordsReadDocument extends DrillDownDocument {
+  readonly wordsRead: number;
+  readonly readingProgress: number;
+}
+
+export interface CompletedDocument extends DrillDownDocument {
+  readonly completedAt: string;
+}
+
+export interface BacklogDocument extends DrillDownDocument {
+  readonly savedAt: string;
+  readonly daysWaiting: number;
+}
+
+export interface DrillDownResponse<T extends DrillDownDocument> {
+  readonly summary: DrillDownSummary;
+  readonly documents: readonly T[];
+  readonly hasMore: boolean;
+  readonly nextCursor: string | null;
+}
+
+// ============================================================================
+// Document Detail Types
+// ============================================================================
+
+export interface HighlightDto {
+  readonly id: string;
+  readonly text: string;
+  readonly note: string | null;
+  readonly createdAt: string | null;
+}
+
+export interface DocumentStatsDto {
+  readonly highlightCount: number;
+  readonly notesCount: number;
+  readonly estimatedReadingTime: number;
+}
+
+export interface DocumentDetailResponse {
+  readonly id: string;
+  readonly readwiseId: string;
+  readonly title: string | null;
+  readonly author: string | null;
+  readonly sourceUrl: string;
+  readonly source: string;
+  readonly coverUrl: string | null;
+  readonly category: string | null;
+  readonly location: string | null;
+  readonly wordCount: number | null;
+  readonly readingProgress: number;
+  readonly savedAt: string | null;
+  readonly firstOpenedAt: string | null;
+  readonly lastOpenedAt: string | null;
+  readonly tags: readonly string[];
+  readonly highlights: readonly HighlightDto[];
+  readonly stats: DocumentStatsDto;
+}

@@ -147,7 +147,33 @@ class JpaAnalyticsStore(
         cursor: UUID?,
         limit: Int
     ): DrillDownPage<WordsReadDocument> {
-        TODO("Not implemented")
+        val results = repository.getWordsReadDocuments(
+            dateRange.start,
+            dateRange.end,
+            cursor,
+            limit + 1
+        )
+
+        val hasMore = results.size > limit
+        val items = results.take(limit).map {
+            WordsReadDocument(
+                id = it.id,
+                readwiseId = it.readwiseId,
+                title = it.title,
+                author = it.author,
+                url = it.url,
+                imageUrl = it.imageUrl,
+                category = it.category,
+                wordsRead = it.wordsRead,
+                readingProgress = it.readingProgress
+            )
+        }
+
+        return DrillDownPage(
+            items = items,
+            hasMore = hasMore,
+            nextCursor = if (hasMore) items.lastOrNull()?.id else null
+        )
     }
 
     override fun getCompletedDocuments(
@@ -155,17 +181,61 @@ class JpaAnalyticsStore(
         cursor: UUID?,
         limit: Int
     ): DrillDownPage<CompletedDocument> {
-        TODO("Not implemented")
+        val results = repository.getCompletedDocuments(
+            dateRange.start,
+            dateRange.end,
+            cursor,
+            limit + 1
+        )
+
+        val hasMore = results.size > limit
+        val items = results.take(limit).map {
+            CompletedDocument(
+                id = it.id,
+                readwiseId = it.readwiseId,
+                title = it.title,
+                author = it.author,
+                url = it.url,
+                imageUrl = it.imageUrl,
+                category = it.category,
+                completedAt = it.completedAt
+            )
+        }
+
+        return DrillDownPage(
+            items = items,
+            hasMore = hasMore,
+            nextCursor = if (hasMore) items.lastOrNull()?.id else null
+        )
     }
 
     override fun getBacklogDocuments(
         cursor: UUID?,
         limit: Int
     ): DrillDownPage<BacklogDocument> {
-        TODO("Not implemented")
+        val results = repository.getBacklogDocuments(cursor, limit + 1)
+
+        val hasMore = results.size > limit
+        val items = results.take(limit).map {
+            BacklogDocument(
+                id = it.id,
+                readwiseId = it.readwiseId,
+                title = it.title,
+                author = it.author,
+                url = it.url,
+                imageUrl = it.imageUrl,
+                category = it.category,
+                savedAt = it.savedAt ?: java.time.Instant.now(),
+                daysWaiting = it.daysWaiting
+            )
+        }
+
+        return DrillDownPage(
+            items = items,
+            hasMore = hasMore,
+            nextCursor = if (hasMore) items.lastOrNull()?.id else null
+        )
     }
 
-    override fun getBacklogCount(): Int {
-        TODO("Not implemented")
-    }
+    override fun getBacklogCount(): Int = repository.getBacklogCount()
 }

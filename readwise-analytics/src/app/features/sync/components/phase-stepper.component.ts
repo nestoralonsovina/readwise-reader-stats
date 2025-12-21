@@ -1,6 +1,9 @@
 import { Component, input, computed } from '@angular/core';
 import { SyncState, SyncPhase, PhaseCounts } from '../../../core/models/sync.models';
-import { ProgressBarComponent } from './progress-bar.component';
+import { HlmProgressImports } from '@spartan-ng/helm/progress';
+import { HlmIconImports } from '@spartan-ng/helm/icon';
+import { provideIcons } from '@ng-icons/core';
+import { lucideCheck, lucideRefreshCw, lucideX } from '@ng-icons/lucide';
 
 interface PhaseDisplay {
   readonly name: string;
@@ -15,8 +18,6 @@ const PHASES: readonly PhaseDisplay[] = [
   { name: 'Notes', phase: 'NOTES', number: 4 },
 ];
 
-const FETCHING_PHASE: SyncPhase = 'FETCHING';
-
 // Type-safe mapping from SyncPhase to PhaseCounts keys
 const PHASE_TO_COUNT_KEY: Record<SyncPhase, keyof PhaseCounts> = {
   FETCHING: 'fetched',
@@ -28,7 +29,8 @@ const PHASE_TO_COUNT_KEY: Record<SyncPhase, keyof PhaseCounts> = {
 @Component({
   selector: 'app-phase-stepper',
   standalone: true,
-  imports: [ProgressBarComponent],
+  imports: [...HlmProgressImports, ...HlmIconImports],
+  providers: [provideIcons({ lucideCheck, lucideRefreshCw, lucideX })],
   template: `
     <div class="border-b border-border bg-muted/50 px-6 py-5">
       <div class="flex items-center justify-between">
@@ -40,53 +42,26 @@ const PHASE_TO_COUNT_KEY: Record<SyncPhase, keyof PhaseCounts> = {
               [class]="getPhaseIconClasses(phase)"
             >
               @if (isPhaseCompleted(phase)) {
-                <svg
-                  class="h-5 w-5 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <ng-icon
+                  hlm
+                  name="lucideCheck"
+                  class="text-white"
                   aria-label="Phase completed"
-                  role="img"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+                />
               } @else if (isPhaseActive(phase)) {
-                <svg
-                  class="h-5 w-5 animate-spin text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <ng-icon
+                  hlm
+                  name="lucideRefreshCw"
+                  class="animate-spin text-white"
                   aria-label="Phase in progress"
-                  role="img"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
+                />
               } @else if (isPhaseFailed(phase)) {
-                <svg
-                  class="h-5 w-5 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <ng-icon
+                  hlm
+                  name="lucideX"
+                  class="text-white"
                   aria-label="Phase failed"
-                  role="img"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                />
               } @else {
                 <span class="text-sm font-medium text-muted-foreground">
                   {{ phase.number }}
@@ -111,13 +86,48 @@ const PHASE_TO_COUNT_KEY: Record<SyncPhase, keyof PhaseCounts> = {
         }
       </div>
 
-      <app-progress-bar
-        [percent]="state().overallPercent"
-        [isAnimated]="isRunning()"
-        [isError]="isFailed()"
-      />
+      <!-- Progress Bar -->
+      <div class="mt-5">
+        <div class="mb-1.5 flex items-center justify-between">
+          <span class="text-xs text-muted-foreground">Overall Progress</span>
+          <span class="text-xs font-medium">{{ state().overallPercent }}%</span>
+        </div>
+        <hlm-progress [value]="state().overallPercent" [max]="100" class="h-2">
+          <hlm-progress-indicator
+            [class]="isFailed() ? 'bg-destructive' : 'bg-brand'"
+            [class.progress-animated]="isRunning()"
+          />
+        </hlm-progress>
+      </div>
     </div>
   `,
+  styles: [
+    `
+      @keyframes progress-animation {
+        0% {
+          background-position: 1rem 0;
+        }
+        100% {
+          background-position: 0 0;
+        }
+      }
+
+      .progress-animated {
+        background-image: linear-gradient(
+          -45deg,
+          rgba(255, 255, 255, 0.15) 25%,
+          transparent 25%,
+          transparent 50%,
+          rgba(255, 255, 255, 0.15) 50%,
+          rgba(255, 255, 255, 0.15) 75%,
+          transparent 75%,
+          transparent
+        );
+        background-size: 1rem 1rem;
+        animation: progress-animation 1s linear infinite;
+      }
+    `,
+  ],
 })
 export class PhaseStepperComponent {
   readonly state = input.required<SyncState>();

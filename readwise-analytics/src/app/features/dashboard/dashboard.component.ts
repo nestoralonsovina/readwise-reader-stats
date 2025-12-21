@@ -1,9 +1,11 @@
-import { Component, inject, signal, effect, computed, DestroyRef } from '@angular/core';
+import { Component, inject, signal, effect, computed, DestroyRef, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin, of, catchError } from 'rxjs';
+import { forkJoin, of, catchError, Observable } from 'rxjs';
 
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { SyncService } from '../../core/services/sync.service';
+import { DrillDownService } from '../../core/services/drill-down.service';
 import { ChartColorsService } from '../../core/services/chart-colors.service';
 import {
   Period,
@@ -14,10 +16,18 @@ import {
   StreakResponse,
   PipelineResponse,
   HighlightResponse,
+  DrillDownType,
+  DrillDownSummary,
+  DrillDownDocument,
+  DrillDownResponse,
+  WordsReadDocument,
+  CompletedDocument,
+  BacklogDocument,
 } from '../../core/models/api.models';
 
 import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.component';
 import { StreakBarComponent } from '../../shared/components/streak-bar/streak-bar.component';
+import { StatDrillDownSheetComponent } from '../../shared/components/stat-drill-down-sheet/stat-drill-down-sheet.component';
 
 import { DashboardHeaderComponent } from './components/dashboard-header/dashboard-header.component';
 import { ReadingActivityChartComponent } from './components/reading-activity-chart/reading-activity-chart.component';
@@ -25,7 +35,6 @@ import { PipelineCardComponent } from './components/pipeline-card/pipeline-card.
 import { HighlightsCardComponent } from './components/highlights-card/highlights-card.component';
 import { MostHighlightedComponent } from './components/most-highlighted/most-highlighted.component';
 import { DashboardFooterComponent } from './components/dashboard-footer/dashboard-footer.component';
-import { SyncPanelComponent } from '../sync/sync-panel.component';
 import { HlmSpinnerImports } from '@spartan-ng/helm/spinner';
 
 interface DashboardData {
@@ -42,13 +51,13 @@ interface DashboardData {
   imports: [
     KpiCardComponent,
     StreakBarComponent,
+    StatDrillDownSheetComponent,
     DashboardHeaderComponent,
     ReadingActivityChartComponent,
     PipelineCardComponent,
     HighlightsCardComponent,
     MostHighlightedComponent,
     DashboardFooterComponent,
-    SyncPanelComponent,
     ...HlmSpinnerImports,
   ],
   template: `
@@ -87,6 +96,8 @@ interface DashboardData {
             icon="document"
             iconBgClass="bg-chart-1/10"
             iconColorClass="text-chart-1"
+            [clickable]="true"
+            (cardClick)="openDrillDown('words')"
           />
           <app-kpi-card
             title="Completed"
@@ -96,6 +107,8 @@ interface DashboardData {
             icon="checkmark"
             iconBgClass="bg-chart-4/10"
             iconColorClass="text-chart-4"
+            [clickable]="true"
+            (cardClick)="openDrillDown('completed')"
           />
           <app-streak-bar
             [current]="currentStreak()"
@@ -109,6 +122,8 @@ interface DashboardData {
             icon="inbox"
             iconBgClass="bg-chart-3/10"
             iconColorClass="text-chart-3"
+            [clickable]="true"
+            (cardClick)="openDrillDown('backlog')"
           />
         </div>
 
@@ -128,6 +143,20 @@ interface DashboardData {
         />
       </main>
 
+      <!-- Drill-down sheet -->
+      @if (drillDownType(); as type) {
+        <app-stat-drill-down-sheet
+          [type]="type"
+          [summary]="drillDownSummary()"
+          [documents]="drillDownDocuments()"
+          [hasMore]="drillDownHasMore()"
+          [loading]="drillDownLoading()"
+          [loadingMore]="drillDownLoadingMore()"
+          (loadMore)="loadMoreDrillDown()"
+          (documentSelect)="navigateToDocument($event)"
+        />
+      }
+
       <!-- Loading overlay -->
       @if (loading()) {
         <div
@@ -140,14 +169,16 @@ interface DashboardData {
         </div>
       }
 
-      <!-- Sync Panel (slide-over) -->
-      <app-sync-panel />
     </div>
   `,
 })
 export class DashboardComponent {
+  @ViewChild(StatDrillDownSheetComponent) private drillDownSheet?: StatDrillDownSheetComponent;
+
   private readonly analyticsService = inject(AnalyticsService);
   private readonly syncService = inject(SyncService);
+  private readonly drillDownService = inject(DrillDownService);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   readonly chartColors = inject(ChartColorsService);
 
@@ -156,6 +187,15 @@ export class DashboardComponent {
   readonly lastSynced = signal<Date | null>(null);
   readonly data = signal<DashboardData | null>(null);
   readonly error = signal<string | null>(null);
+
+  // Drill-down state
+  readonly drillDownType = signal<DrillDownType | null>(null);
+  readonly drillDownSummary = signal<DrillDownSummary | null>(null);
+  readonly drillDownDocuments = signal<readonly DrillDownDocument[]>([]);
+  readonly drillDownHasMore = signal(false);
+  readonly drillDownNextCursor = signal<string | null>(null);
+  readonly drillDownLoading = signal(false);
+  readonly drillDownLoadingMore = signal(false);
 
   // Computed values for template binding
   readonly wordsRead = computed(() => this.data()?.dashboard.summary.wordsRead ?? null);
@@ -235,6 +275,79 @@ export class DashboardComponent {
           }
           this.loading.set(false);
         },
+      });
+  }
+
+  openDrillDown(type: DrillDownType): void {
+    // Reset state for new drill-down
+    this.drillDownType.set(type);
+    this.drillDownSummary.set(null);
+    this.drillDownDocuments.set([]);
+    this.drillDownHasMore.set(false);
+    this.drillDownNextCursor.set(null);
+    this.drillDownLoading.set(true);
+
+    // Open the sheet first, then load data
+    setTimeout(() => this.drillDownSheet?.open());
+
+    this.loadDrillDownData(type);
+  }
+
+  loadMoreDrillDown(): void {
+    const type = this.drillDownType();
+    const cursor = this.drillDownNextCursor();
+    if (!type || !cursor) return;
+
+    this.drillDownLoadingMore.set(true);
+    this.loadDrillDownData(type, cursor);
+  }
+
+  navigateToDocument(documentId: string): void {
+    void this.router.navigate(['/library', documentId]);
+  }
+
+  private loadDrillDownData(type: DrillDownType, cursor?: string): void {
+    const { startDate, endDate } = periodToDateRange(this.period());
+    const params = { startDate, endDate, cursor };
+
+    // Create correctly typed observable based on drill-down type
+    type AnyDrillDownResponse = DrillDownResponse<
+      WordsReadDocument | CompletedDocument | BacklogDocument
+    >;
+
+    let request$: Observable<AnyDrillDownResponse>;
+
+    switch (type) {
+      case 'words':
+        request$ = this.drillDownService.getWordsRead(params);
+        break;
+      case 'completed':
+        request$ = this.drillDownService.getCompleted(params);
+        break;
+      case 'backlog':
+        request$ = this.drillDownService.getBacklog(params);
+        break;
+    }
+
+    request$
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        catchError(() => of(null))
+      )
+      .subscribe((result) => {
+        if (result) {
+          this.drillDownSummary.set(result.summary);
+          // Append documents if loading more, replace otherwise
+          if (cursor) {
+            this.drillDownDocuments.set([...this.drillDownDocuments(), ...result.documents]);
+          } else {
+            this.drillDownDocuments.set(result.documents);
+          }
+          this.drillDownHasMore.set(result.hasMore);
+          this.drillDownNextCursor.set(result.nextCursor);
+        }
+        this.drillDownLoading.set(false);
+        this.drillDownLoadingMore.set(false);
       });
   }
 }

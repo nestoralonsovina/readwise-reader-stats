@@ -57,13 +57,14 @@ A right-side panel that slides in when clicking a stat card, showing the documen
 | Completed | Articles Completed | Completion date | By date (desc) |
 | Backlog | Reading Backlog | Days waiting | By age (desc) |
 
-**Behavior:**
-- Width: 400px (max-w-md)
-- Slides in from right with 300ms ease-out transition
+**Behavior (handled by Spartan Sheet):**
+- Width: 400px (`max-w-md`)
+- Slides in from right with built-in animation
 - Backdrop: semi-transparent overlay (click to close)
 - Close: X button, Escape key, or backdrop click
 - Scroll: Document list scrolls independently
 - Body scroll locked when open
+- Focus trap managed automatically
 
 ### 2. Document Detail Page
 
@@ -134,30 +135,27 @@ Then visit: http://localhost:8888/dashboard-mockup.html
 
 ### Stat Card Click → Slide-Over
 ```
-User clicks "Words Read" card
-  → Panel slides in from right (300ms ease-out)
-  → Backdrop fades in (300ms)
-  → Body scroll locked
-  → Focus trapped in panel
+User clicks "Words Read" card (brnSheetTrigger)
+  → Sheet opens automatically (Spartan handles animation, backdrop, scroll lock)
+  → Dashboard loads drill-down data
 ```
 
 ### Document Row Click → Detail Page
 ```
 User clicks document row in slide-over
   → Navigate to /library/:documentId
-  → Slide-over closes
+  → Sheet closes automatically
   → Detail page renders
 ```
 
 ### Close Slide-Over
 ```
 User clicks X button OR backdrop OR presses Escape
-  → Panel slides out (300ms ease-out)
-  → Backdrop fades out
-  → Body scroll restored
+  → Sheet closes automatically (Spartan handles all close behaviors)
 ```
 
 ### Keyboard Navigation
+Handled by Spartan Sheet:
 - `Escape` - Close slide-over
 - `Tab` - Navigate within panel (focus trap)
 
@@ -285,14 +283,14 @@ Full document with highlights.
 
 ### New Components
 
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| `stat-drill-down-panel` | `shared/components/` | Slide-over panel container |
-| `document-row` | `shared/components/` | Row in drill-down list |
-| `document-detail` | `features/library/` | Full document detail page |
-| `highlight-list` | `features/library/components/` | Highlights with filters |
-| `highlight-item` | `features/library/components/` | Single highlight with note |
-| `reading-timeline` | `shared/components/` | Saved → Opened → Completed |
+| Component | Location | Spartan Components |
+|-----------|----------|-------------------|
+| `stat-drill-down-panel` | `shared/components/` | Sheet header/footer, Button, Icon |
+| `document-row` | `shared/components/` | Badge (category), Icon |
+| `document-detail` | `features/library/` | Progress, Badge (tags), Button, Card |
+| `highlight-list` | `features/library/components/` | Checkbox (filter), Separator |
+| `highlight-item` | `features/library/components/` | Card (optional) |
+| `reading-timeline` | `shared/components/` | Custom layout (no equivalent) |
 
 ### Components to Modify
 
@@ -315,24 +313,18 @@ Full document with highlights.
 
 ### Dashboard Component
 ```typescript
-// Slide-over state
-readonly drillDownOpen = signal(false);
+// Data signals only - Sheet manages its own visibility
 readonly drillDownType = signal<'words' | 'completed' | 'backlog' | null>(null);
 readonly drillDownData = signal<DrillDownData | null>(null);
 
-// Open panel
-openDrillDown(type: 'words' | 'completed' | 'backlog') {
+// Load data when sheet opens (triggered by KPI card click)
+loadDrillDownData(type: 'words' | 'completed' | 'backlog') {
   this.drillDownType.set(type);
-  this.drillDownOpen.set(true);
-  this.loadDrillDownData(type);
-}
-
-// Close panel
-closeDrillDown() {
-  this.drillDownOpen.set(false);
-  this.drillDownType.set(null);
+  // Fetch data from service...
 }
 ```
+
+**Note:** No `drillDownOpen` signal needed. Spartan Sheet manages visibility internally via `brnSheetTrigger`.
 
 ### Document Detail Component
 ```typescript
@@ -358,16 +350,43 @@ readonly filteredHighlights = computed(() => {
 
 ## Styling Notes
 
+### Spartan Components
+
+All UI primitives use Spartan components:
+
+| Element | Spartan Import |
+|---------|---------------|
+| Slide-over panel | `HlmSheetImports`, `BrnSheetImports` |
+| Progress bars | `HlmProgressImports` |
+| Buttons | `HlmButtonImports` |
+| Tags/badges | `HlmBadgeImports` |
+| Checkboxes | `HlmCheckboxImports`, `HlmLabelImports` |
+| Icons | `HlmIconImports`, `provideIcons()` |
+| Cards (optional) | `HlmCardImports` |
+| Separators | `HlmSeparatorImports` |
+
+### Icons (ng-icons/lucide)
+
+| Purpose | Icon |
+|---------|------|
+| External link | `lucideExternalLink` |
+| Word count | `lucideBookOpen` |
+| Highlights | `lucideHighlighter` |
+| Notes | `lucideStickyNote` |
+| Reading time | `lucideClock` |
+| Back navigation | `lucideArrowLeft` |
+| Category: article | `lucideFileText` |
+| Category: book | `lucideBook` |
+| Category: pdf | `lucideFileType` |
+
 ### Transitions
-- Panel slide: `transform 300ms ease-out`
-- Backdrop fade: `opacity 300ms ease-out`
-- Body scroll lock when panel open
+Sheet animations handled by Spartan primitives. No custom transitions needed.
 
 ---
 
 ## Open Questions
 
-1. **Spartan UI Sheet Component:** Does `@spartan-ng/ui-sheet-brain` exist and support right-side slide-overs? If not, build custom.
+1. ~~**Spartan UI Sheet Component:** Does `@spartan-ng/ui-sheet-brain` exist and support right-side slide-overs? If not, build custom.~~ **RESOLVED: Using Spartan Sheet.**
 
 2. **Router vs Overlay for Detail:** Should document detail be:
    - Full route (`/library/:id`) - better for deep linking, bookmarking
@@ -389,9 +408,9 @@ readonly filteredHighlights = computed(() => {
 ### Open Questions - Resolved
 
 #### 1. Spartan UI Sheet Component
-**Decision:** Build custom slide-over following existing `SyncPanelComponent` pattern.
+**Decision:** Use Spartan Sheet (`hlm-sheet`) with right-side slide-over.
 
-**Rationale:** Spartan UI sheet (`@spartan-ng/ui-sheet-brain`) is not installed and adds dependency complexity. The `SyncPanelComponent` already implements the exact slide-over pattern needed (backdrop, escape key, right-side panel).
+**Rationale:** Spartan Sheet handles overlay, positioning, animations, keyboard (escape), and scroll locking. Matches the sync panel pattern. Eliminates custom panel logic entirely.
 
 #### 2. Router vs Overlay for Document Detail
 **Decision:** Full route at `/library/:documentId`.
@@ -735,71 +754,83 @@ library/
 
 ### Slide-Over Implementation
 
-Based on `SyncPanelComponent` pattern:
+Uses Spartan Sheet pattern (matching sync panel):
 
+**Dashboard template (wraps KPI cards):**
+```typescript
+// Each KPI card wrapped in Sheet trigger
+<hlm-sheet side="right">
+  <app-kpi-card
+    brnSheetTrigger
+    [label]="'Words Read'"
+    [value]="stats.wordsRead"
+    (click)="loadDrillDownData('words')"
+  />
+  <hlm-sheet-content class="w-full max-w-md sm:max-w-md">
+    <app-stat-drill-down-panel
+      [type]="'words'"
+      [data]="drillDownData()"
+      (documentSelect)="onDocumentSelect($event)"
+    />
+  </hlm-sheet-content>
+</hlm-sheet>
+```
+
+**Panel component (content only, no overlay logic):**
 ```typescript
 @Component({
   selector: 'app-stat-drill-down-panel',
+  imports: [
+    ...HlmSheetImports,
+    ...HlmButtonImports,
+    ...HlmIconImports,
+    DocumentRowComponent,
+  ],
+  providers: [provideIcons({ lucideX })],
   template: `
-    @if (isOpen()) {
-      <div class="fixed inset-0 z-50">
-        <!-- Backdrop -->
-        <div
-          class="fixed inset-0 bg-gray-900/50 dark:bg-black/60"
-          (click)="close.emit()"
-        ></div>
+    <hlm-sheet-header class="border-b border-border px-6 py-4">
+      <h2 hlmSheetTitle class="text-lg font-semibold">{{ title() }}</h2>
+    </hlm-sheet-header>
 
-        <!-- Panel -->
-        <div class="fixed inset-y-0 right-0 flex w-full max-w-md flex-col bg-card shadow-xl">
-          <!-- Header -->
-          <div class="flex items-center justify-between border-b border-border px-6 py-4">
-            <h2 class="text-lg font-semibold">{{ title() }}</h2>
-            <button type="button" (click)="close.emit()">
-              <!-- X icon -->
-            </button>
-          </div>
+    <!-- Summary -->
+    <div class="border-b border-border px-6 py-4">
+      <div class="text-2xl font-bold">{{ summary()?.total | number }}</div>
+      @if (summary()?.changePercent; as change) {
+        <span class="text-sm text-muted-foreground">
+          {{ change > 0 ? '+' : '' }}{{ change }}% vs last period
+        </span>
+      }
+    </div>
 
-          <!-- Summary -->
-          <div class="border-b border-border px-6 py-4">
-            <div class="text-2xl font-bold">{{ summary()?.total | formatNumber }}</div>
-            @if (summary()?.changePercent; as change) {
-              <span class="text-sm text-muted-foreground">
-                {{ change > 0 ? '+' : '' }}{{ change }}% vs last period
-              </span>
-            }
-          </div>
+    <!-- Document list -->
+    <div class="flex-1 overflow-y-auto">
+      @for (doc of documents(); track doc.id) {
+        <app-document-row
+          [document]="doc"
+          [type]="type()"
+          (click)="documentSelect.emit(doc.id)"
+        />
+      }
+    </div>
 
-          <!-- Document list (scrollable) -->
-          <div class="flex-1 overflow-y-auto">
-            @for (doc of documents(); track doc.id) {
-              <app-document-row
-                [document]="doc"
-                [type]="type()"
-                (click)="onDocumentClick(doc)"
-              />
-            }
-
-            @if (hasMore()) {
-              <button (click)="loadMore.emit()">Load more</button>
-            }
-          </div>
-        </div>
-      </div>
-    }
+    <hlm-sheet-footer class="border-t border-border px-6 py-4">
+      @if (hasMore()) {
+        <button hlmBtn variant="outline" class="w-full" (click)="loadMore.emit()">
+          Load more
+        </button>
+      }
+    </hlm-sheet-footer>
   `
 })
 export class StatDrillDownPanelComponent {
-  readonly isOpen = input.required<boolean>();
   readonly type = input.required<DrillDownType>();
   readonly summary = input<DrillDownSummary | null>();
   readonly documents = input<DrillDownDocument[]>([]);
   readonly hasMore = input(false);
 
-  readonly close = output<void>();
   readonly loadMore = output<void>();
   readonly documentSelect = output<string>();
 
-  // Computed title based on type
   readonly title = computed(() => {
     switch (this.type()) {
       case 'words': return 'Words Read';
@@ -807,17 +838,14 @@ export class StatDrillDownPanelComponent {
       case 'backlog': return 'Reading Backlog';
     }
   });
-
-  @HostListener('document:keydown.escape')
-  onEscapeKey(): void {
-    this.close.emit();
-  }
-
-  onDocumentClick(doc: DrillDownDocument): void {
-    this.documentSelect.emit(doc.id);
-  }
 }
 ```
+
+**Key simplifications:**
+- No `isOpen` input (Sheet manages visibility)
+- No `close` output (Sheet handles via X button, escape, backdrop)
+- No `@HostListener` for escape key
+- No manual backdrop or positioning
 
 ---
 

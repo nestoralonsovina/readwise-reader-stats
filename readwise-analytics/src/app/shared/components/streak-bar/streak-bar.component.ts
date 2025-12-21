@@ -21,7 +21,7 @@ const STREAK_VISUALIZATION_DAYS = 14;
           <div
             class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10"
           >
-            <ng-icon name="lucideFlame" size="sm" class="text-brand" />
+            <ng-icon hlm name="lucideFlame" size="sm" class="text-brand" />
           </div>
           <span class="text-sm text-muted-foreground">Current Streak</span>
         </div>
