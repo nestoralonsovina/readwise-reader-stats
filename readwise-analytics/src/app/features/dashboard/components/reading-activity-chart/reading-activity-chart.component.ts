@@ -1,8 +1,8 @@
-import { Component, input, computed, inject } from '@angular/core';
+import { Component, input, computed, inject, output } from '@angular/core';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { ThemeService } from '../../../../core/services/theme.service';
 import { ChartColorsService } from '../../../../core/services/chart-colors.service';
-import { ReadingStatsResponse } from '../../../../core/models/api.models';
+import { ReadingStatsResponse, CustomDateRange } from '../../../../core/models/api.models';
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import {
   ApexChart,
@@ -15,6 +15,11 @@ import {
   ApexGrid,
   ApexLegend,
 } from 'ng-apexcharts';
+
+interface ZoomEventAxis {
+  readonly min: number;
+  readonly max: number;
+}
 
 @Component({
   selector: 'app-reading-activity-chart',
@@ -62,11 +67,14 @@ export class ReadingActivityChartComponent {
   private static readonly CHART_HEIGHT = 256;
   private static readonly STROKE_WIDTH = 3;
   private static readonly GRID_DASH_ARRAY = 4;
+  private static readonly MILLION_THRESHOLD = 1_000_000;
+  private static readonly THOUSAND_THRESHOLD = 1_000;
 
   private readonly themeService = inject(ThemeService);
   private readonly chartColorsService = inject(ChartColorsService);
 
   readonly data = input<ReadingStatsResponse | null>();
+  readonly zoomChange = output<CustomDateRange>();
 
   readonly series = computed<ApexAxisChartSeries>(() => {
     const stats = this.data()?.stats ?? [];
@@ -74,12 +82,12 @@ export class ReadingActivityChartComponent {
       {
         name: 'Words Read',
         type: 'line',
-        data: stats.map((s) => s.wordsRead),
+        data: stats.map((s) => ({ x: new Date(s.date).getTime(), y: s.wordsRead })),
       },
       {
         name: 'Articles Completed',
         type: 'line',
-        data: stats.map((s) => s.articlesCompleted),
+        data: stats.map((s) => ({ x: new Date(s.date).getTime(), y: s.articlesCompleted })),
       },
     ];
   });
@@ -87,25 +95,56 @@ export class ReadingActivityChartComponent {
   readonly chartOptions = computed<ApexChart>(() => ({
     type: 'line',
     height: ReadingActivityChartComponent.CHART_HEIGHT,
-    toolbar: { show: false },
+    toolbar: {
+      show: true,
+      tools: {
+        download: false,
+        selection: true,
+        zoom: true,
+        zoomin: true,
+        zoomout: true,
+        pan: false,
+        reset: true,
+      },
+    },
+    zoom: {
+      enabled: true,
+      type: 'x',
+      autoScaleYaxis: true,
+    },
+    selection: {
+      enabled: true,
+      type: 'x',
+    },
     background: 'transparent',
     fontFamily: 'inherit',
+    events: {
+      zoomed: (_chartContext: unknown, { xaxis }: { xaxis: ZoomEventAxis }) => {
+        this.handleZoom(xaxis.min, xaxis.max);
+      },
+    },
   }));
 
   readonly xaxis = computed<ApexXAxis>(() => {
-    const stats = this.data()?.stats ?? [];
     const labelColor = this.chartColorsService.chartLabel();
     return {
-      categories: stats.map((s) => this.formatDate(s.date)),
+      type: 'datetime',
       labels: {
         style: {
           colors: labelColor,
         },
+        datetimeUTC: false,
       },
       axisBorder: { show: false },
       axisTicks: { show: false },
     };
   });
+
+  private handleZoom(minTimestamp: number, maxTimestamp: number): void {
+    const startDate = new Date(minTimestamp).toISOString().split('T')[0];
+    const endDate = new Date(maxTimestamp).toISOString().split('T')[0];
+    this.zoomChange.emit({ type: 'custom', startDate, endDate });
+  }
 
   readonly yaxis = computed<ApexYAxis[]>(() => {
     const labelColor = this.chartColorsService.chartLabel();
@@ -160,17 +199,13 @@ export class ReadingActivityChartComponent {
     show: false,
   }));
 
-  private formatDate(dateStr: string): string {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) {
-      return dateStr;
-    }
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
-
   private formatNumber(val: number): string {
-    if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M`;
-    if (val >= 1_000) return `${(val / 1_000).toFixed(1)}K`;
+    if (val >= ReadingActivityChartComponent.MILLION_THRESHOLD) {
+      return `${(val / ReadingActivityChartComponent.MILLION_THRESHOLD).toFixed(1)}M`;
+    }
+    if (val >= ReadingActivityChartComponent.THOUSAND_THRESHOLD) {
+      return `${(val / ReadingActivityChartComponent.THOUSAND_THRESHOLD).toFixed(1)}K`;
+    }
     return val.toString();
   }
 }

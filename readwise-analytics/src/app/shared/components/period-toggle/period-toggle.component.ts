@@ -1,5 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
-import { Period } from '../../../core/models/api.models';
+import { Period, FixedPeriod, isCustomPeriod } from '../../../core/models/api.models';
 import { HlmToggleGroupImports } from '@spartan-ng/helm/toggle-group';
 
 @Component({
@@ -24,25 +24,42 @@ import { HlmToggleGroupImports } from '@spartan-ng/helm/toggle-group';
           {{ option.label }}
         </button>
       }
+      @if (isCustom()) {
+        <button
+          hlmToggleGroupItem
+          value="custom"
+          class="data-[state=on]:bg-card data-[state=on]:shadow-sm"
+        >
+          Custom
+        </button>
+      }
     </div>
   `,
 })
 export class PeriodToggleComponent {
   readonly period = input.required<Period>();
-  readonly periodChange = output<Period>();
+  readonly periodChange = output<FixedPeriod>();
 
-  readonly periodAsString = computed(() => this.period().toString());
+  readonly isCustom = computed(() => isCustomPeriod(this.period()));
 
-  readonly options: ReadonlyArray<{ label: string; value: Period }> = [
+  readonly periodAsString = computed(() => {
+    const p = this.period();
+    return isCustomPeriod(p) ? 'custom' : p.toString();
+  });
+
+  readonly options: ReadonlyArray<{ label: string; value: FixedPeriod }> = [
     { label: 'Week', value: 7 },
     { label: 'Month', value: 30 },
     { label: 'Year', value: 365 },
   ];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onValueChange(value: unknown): void {
     if (typeof value !== 'string' || !value) return;
-    const period = Number(value) as Period;
+    if (value === 'custom') {
+      // Custom period is display-only; user must select a fixed period to change
+      return;
+    }
+    const period = Number(value) as FixedPeriod;
     this.periodChange.emit(period);
   }
 }

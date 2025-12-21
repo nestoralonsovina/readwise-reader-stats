@@ -9,6 +9,9 @@ import { DrillDownService } from '../../core/services/drill-down.service';
 import { ChartColorsService } from '../../core/services/chart-colors.service';
 import {
   Period,
+  FixedPeriod,
+  CustomDateRange,
+  isCustomPeriod,
   periodToGranularity,
   periodToDateRange,
   DashboardResponse,
@@ -128,7 +131,7 @@ interface DashboardData {
         </div>
 
         <!-- Reading Activity Chart (full width) -->
-        <app-reading-activity-chart [data]="readingStats()" />
+        <app-reading-activity-chart [data]="readingStats()" (zoomChange)="onChartZoom($event)" />
 
         <!-- Bottom Row: Pipeline, Highlights, Most Highlighted -->
         <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -221,7 +224,11 @@ export class DashboardComponent {
   });
 
   readonly periodLabelText = computed(() => {
-    switch (this.period()) {
+    const currentPeriod = this.period();
+    if (isCustomPeriod(currentPeriod)) {
+      return `${currentPeriod.startDate} – ${currentPeriod.endDate}`;
+    }
+    switch (currentPeriod) {
       case 7:
         return 'Last 7 days';
       case 30:
@@ -249,6 +256,10 @@ export class DashboardComponent {
 
   retryLoad(): void {
     this.loadData(this.period());
+  }
+
+  onChartZoom(customRange: CustomDateRange): void {
+    this.period.set(customRange);
   }
 
   private loadData(period: Period): void {

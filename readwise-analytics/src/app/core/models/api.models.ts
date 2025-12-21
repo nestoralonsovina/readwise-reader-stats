@@ -151,10 +151,25 @@ export interface SyncResponse {
 }
 
 // UI state types
-export type Period = 7 | 30 | 365;
+export type FixedPeriod = 7 | 30 | 365;
+
+export interface CustomDateRange {
+  readonly type: 'custom';
+  readonly startDate: string;
+  readonly endDate: string;
+}
+
+export type Period = FixedPeriod | CustomDateRange;
 export type Granularity = 'DAILY' | 'WEEKLY' | 'MONTHLY';
 
+export function isCustomPeriod(period: Period): period is CustomDateRange {
+  return typeof period === 'object' && period.type === 'custom';
+}
+
 export function periodToGranularity(period: Period): Granularity {
+  if (isCustomPeriod(period)) {
+    return 'DAILY';
+  }
   switch (period) {
     case 7:
       return 'DAILY';
@@ -170,6 +185,9 @@ export function periodToGranularity(period: Period): Granularity {
 }
 
 export function periodToLabel(period: Period): string {
+  if (isCustomPeriod(period)) {
+    return 'Custom';
+  }
   switch (period) {
     case 7:
       return 'Week';
@@ -185,6 +203,9 @@ export function periodToLabel(period: Period): string {
 }
 
 export function periodToDateRange(period: Period): { startDate: string; endDate: string } {
+  if (isCustomPeriod(period)) {
+    return { startDate: period.startDate, endDate: period.endDate };
+  }
   const endDate = new Date();
   const startDate = new Date();
   startDate.setDate(endDate.getDate() - period);
