@@ -159,9 +159,9 @@ export function periodToGranularity(period: Period): Granularity {
     case 7:
       return 'DAILY';
     case 30:
-      return 'WEEKLY';
+      return 'DAILY';
     case 365:
-      return 'MONTHLY';
+      return 'WEEKLY';
     default: {
       const exhaustiveCheck: never = period;
       throw new Error(`Unsupported period: ${exhaustiveCheck}`);
