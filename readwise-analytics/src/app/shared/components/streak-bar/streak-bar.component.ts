@@ -14,7 +14,7 @@ const STREAK_VISUALIZATION_DAYS = 14;
   imports: [...HlmCardImports, ...HlmBadgeImports, ...HlmIconImports],
   providers: [provideIcons({ lucideFlame })],
   template: `
-    <section hlmCard class="gap-0 p-5">
+    <section hlmCard class="h-full gap-0 p-5">
       <header hlmCardHeader class="mb-3 flex items-start justify-between p-0">
         <div class="flex items-center gap-2">
           <!-- Flame icon -->

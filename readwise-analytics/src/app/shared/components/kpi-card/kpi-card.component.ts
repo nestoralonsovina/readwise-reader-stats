@@ -58,7 +58,7 @@ const iconMap: Record<KpiIconType, string> = {
   template: `
     <section
       hlmCard
-      class="gap-0 p-5 transition-colors"
+      class="h-full gap-0 p-5 transition-colors"
       [class.cursor-pointer]="clickable()"
       [class.hover:bg-muted/50]="clickable()"
       (click)="onClick()"
