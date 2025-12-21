@@ -47,12 +47,7 @@ const UNIT_MAP: Record<DrillDownType, string> = {
       <hlm-sheet-content *brnSheetContent="let ctx" class="flex w-full max-w-md flex-col p-0">
         <!-- Header -->
         <hlm-sheet-header class="border-b border-border px-6 py-4">
-          <div class="flex items-center justify-between">
-            <h2 hlmSheetTitle class="text-lg font-semibold">{{ title() }}</h2>
-            <button brnSheetClose hlmBtn variant="ghost" size="icon" class="-mr-2">
-              <ng-icon hlm name="lucideX" size="sm" />
-            </button>
-          </div>
+          <h2 hlmSheetTitle class="text-lg font-semibold">{{ title() }}</h2>
         </hlm-sheet-header>
 
         @if (loading()) {
