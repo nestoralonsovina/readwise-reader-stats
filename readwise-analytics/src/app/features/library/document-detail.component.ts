@@ -214,7 +214,7 @@ const CATEGORY_ICONS: Record<string, string> = {
           <app-reading-timeline
             [savedAt]="doc.savedAt"
             [firstOpenedAt]="doc.firstOpenedAt"
-            [lastOpenedAt]="doc.lastOpenedAt"
+            [lastReadAt]="doc.lastOpenedAt"
             [completedAt]="doc.readingProgress === 100 ? doc.lastOpenedAt : null"
           />
 
