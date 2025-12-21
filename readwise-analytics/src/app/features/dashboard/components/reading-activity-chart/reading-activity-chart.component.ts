@@ -95,18 +95,7 @@ export class ReadingActivityChartComponent {
   readonly chartOptions = computed<ApexChart>(() => ({
     type: 'line',
     height: ReadingActivityChartComponent.CHART_HEIGHT,
-    toolbar: {
-      show: true,
-      tools: {
-        download: false,
-        selection: true,
-        zoom: true,
-        zoomin: true,
-        zoomout: true,
-        pan: false,
-        reset: true,
-      },
-    },
+    toolbar: { show: false },
     zoom: {
       enabled: true,
       type: 'x',
