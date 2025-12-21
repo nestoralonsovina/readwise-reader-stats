@@ -2,6 +2,7 @@ package com.reader.analytics.library.application
 
 import com.reader.analytics.library.domain.DocumentDetail
 import com.reader.analytics.library.domain.HighlightDetail
+import com.reader.analytics.tracking.application.TrackingStore
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -9,7 +10,8 @@ import java.util.UUID
 class DocumentService(
     private val documentStore: DocumentStore,
     private val highlightStore: HighlightStore,
-    private val noteStore: NoteStore
+    private val noteStore: NoteStore,
+    private val trackingStore: TrackingStore
 ) {
     companion object {
         private const val WORDS_PER_MINUTE = 250
@@ -18,6 +20,7 @@ class DocumentService(
     fun getDocumentDetail(id: UUID): DocumentDetail? {
         val document = documentStore.findById(id) ?: return null
         val highlights = highlightStore.findByDocumentId(id)
+        val latestSnapshot = trackingStore.findLatestSnapshot(document.readwiseId)
 
         val highlightDetails = highlights.map { highlight ->
             val note = highlight.id?.let { noteStore.findByHighlightId(it) }
@@ -40,7 +43,7 @@ class DocumentService(
             author = document.author,
             category = document.category,
             location = document.location,
-            readingProgress = document.readingProgress,
+            readingProgress = latestSnapshot?.readingProgress,
             wordCount = document.wordCount,
             savedAt = document.savedAt,
             firstOpenedAt = document.firstOpenedAt,

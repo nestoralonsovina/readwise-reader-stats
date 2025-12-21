@@ -21,7 +21,6 @@ data class Document(
     val author: String? = null,
     val category: String? = null,
     val location: String? = null,
-    val readingProgress: Double? = null,
     val wordCount: Int? = null,
     val savedAt: Instant? = null,
     val updatedAt: Instant? = null,

@@ -204,12 +204,20 @@ class AnalyticsRepository(
 
     fun getPipelineStats(): RawPipelineStats {
         val sql = """
+            WITH latest_progress AS (
+                SELECT DISTINCT ON (document_id)
+                    document_id,
+                    reading_progress
+                FROM reading_progress_snapshots
+                ORDER BY document_id, recorded_at DESC
+            )
             SELECT
-                COUNT(*) FILTER (WHERE location IN ('new', 'later')) AS backlog_size,
-                COUNT(*) FILTER (WHERE reading_progress > 0 AND reading_progress < 1) AS in_progress,
-                COUNT(*) FILTER (WHERE reading_progress = 1) AS completed,
-                COUNT(*) FILTER (WHERE location = 'archive') AS archived
-            FROM documents
+                COUNT(*) FILTER (WHERE d.location IN ('new', 'later')) AS backlog_size,
+                COUNT(*) FILTER (WHERE lp.reading_progress > 0 AND lp.reading_progress < 1) AS in_progress,
+                COUNT(*) FILTER (WHERE lp.reading_progress = 1) AS completed,
+                COUNT(*) FILTER (WHERE d.location = 'archive') AS archived
+            FROM documents d
+            LEFT JOIN latest_progress lp ON lp.document_id = d.readwise_id
         """.trimIndent()
 
         return jdbcTemplate.queryForObject(sql) { rs, _ ->
@@ -295,12 +303,20 @@ class AnalyticsRepository(
 
     fun getCategoryBreakdown(): List<RawCategoryBreakdown> {
         val sql = """
+            WITH latest_progress AS (
+                SELECT DISTINCT ON (document_id)
+                    document_id,
+                    reading_progress
+                FROM reading_progress_snapshots
+                ORDER BY document_id, recorded_at DESC
+            )
             SELECT
-                COALESCE(category, 'uncategorized') AS category,
+                COALESCE(d.category, 'uncategorized') AS category,
                 COUNT(*) AS count,
-                AVG(COALESCE(reading_progress, 0)) AS avg_progress
-            FROM documents
-            GROUP BY category
+                AVG(COALESCE(lp.reading_progress, 0)) AS avg_progress
+            FROM documents d
+            LEFT JOIN latest_progress lp ON lp.document_id = d.readwise_id
+            GROUP BY d.category
             ORDER BY count DESC
         """.trimIndent()
 
@@ -432,13 +448,22 @@ class AnalyticsRepository(
         limit: Int
     ): List<RawWordsReadDocument> {
         val sql = """
+            WITH latest_progress AS (
+                SELECT DISTINCT ON (document_id)
+                    document_id,
+                    reading_progress,
+                    word_count
+                FROM reading_progress_snapshots
+                WHERE recorded_at >= ? AND recorded_at < ?
+                ORDER BY document_id, recorded_at DESC
+            )
             SELECT d.id, d.readwise_id, d.title, d.author, d.url, d.image_url, d.category,
-                   ROUND(COALESCE(d.reading_progress, 0) * COALESCE(d.word_count, 0))::bigint AS words_read,
-                   COALESCE(d.reading_progress, 0) AS reading_progress
-            FROM documents d
-            WHERE COALESCE(d.reading_progress, 0) > 0
-              AND COALESCE(d.word_count, 0) > 0
-              AND d.updated_at >= ? AND d.updated_at < ?
+                   ROUND(COALESCE(lp.reading_progress, 0) * COALESCE(lp.word_count, 0))::bigint AS words_read,
+                   COALESCE(lp.reading_progress, 0) AS reading_progress
+            FROM latest_progress lp
+            JOIN documents d ON d.readwise_id = lp.document_id
+            WHERE COALESCE(lp.reading_progress, 0) > 0
+              AND COALESCE(lp.word_count, 0) > 0
               ${if (cursor != null) "AND d.id < ?::uuid" else ""}
             ORDER BY words_read DESC, d.id DESC
             LIMIT ?
@@ -473,13 +498,21 @@ class AnalyticsRepository(
         limit: Int
     ): List<RawCompletedDocument> {
         val sql = """
+            WITH completion_events AS (
+                SELECT DISTINCT ON (document_id)
+                    document_id,
+                    recorded_at AS completed_at
+                FROM reading_progress_snapshots
+                WHERE reading_progress = 1.0
+                  AND recorded_at >= ? AND recorded_at < ?
+                ORDER BY document_id, recorded_at ASC
+            )
             SELECT d.id, d.readwise_id, d.title, d.author, d.url, d.image_url, d.category,
-                   d.updated_at AS completed_at
-            FROM documents d
-            WHERE d.reading_progress = 1.0
-              AND d.updated_at >= ? AND d.updated_at < ?
-              ${if (cursor != null) "AND d.id < ?::uuid" else ""}
-            ORDER BY d.updated_at DESC, d.id DESC
+                   ce.completed_at
+            FROM completion_events ce
+            JOIN documents d ON d.readwise_id = ce.document_id
+            ${if (cursor != null) "WHERE d.id < ?::uuid" else ""}
+            ORDER BY ce.completed_at DESC, d.id DESC
             LIMIT ?
         """.trimIndent()
 
@@ -506,11 +539,19 @@ class AnalyticsRepository(
 
     fun getBacklogDocuments(cursor: UUID?, limit: Int): List<RawBacklogDocument> {
         val sql = """
+            WITH latest_progress AS (
+                SELECT DISTINCT ON (document_id)
+                    document_id,
+                    reading_progress
+                FROM reading_progress_snapshots
+                ORDER BY document_id, recorded_at DESC
+            )
             SELECT d.id, d.readwise_id, d.title, d.author, d.url, d.image_url, d.category,
                    d.saved_at,
                    COALESCE(EXTRACT(DAY FROM NOW() - d.saved_at)::int, 0) AS days_waiting
             FROM documents d
-            WHERE COALESCE(d.reading_progress, 0) < 0.1
+            LEFT JOIN latest_progress lp ON lp.document_id = d.readwise_id
+            WHERE COALESCE(lp.reading_progress, 0) < 0.1
               AND d.location IN ('new', 'later', 'shortlist')
               ${if (cursor != null) "AND d.id > ?::uuid" else ""}
             ORDER BY d.saved_at ASC NULLS LAST, d.id ASC
@@ -538,9 +579,17 @@ class AnalyticsRepository(
 
     fun getBacklogCount(): Int {
         val sql = """
+            WITH latest_progress AS (
+                SELECT DISTINCT ON (document_id)
+                    document_id,
+                    reading_progress
+                FROM reading_progress_snapshots
+                ORDER BY document_id, recorded_at DESC
+            )
             SELECT COUNT(*)
             FROM documents d
-            WHERE COALESCE(d.reading_progress, 0) < 0.1
+            LEFT JOIN latest_progress lp ON lp.document_id = d.readwise_id
+            WHERE COALESCE(lp.reading_progress, 0) < 0.1
               AND d.location IN ('new', 'later', 'shortlist')
         """.trimIndent()
 
