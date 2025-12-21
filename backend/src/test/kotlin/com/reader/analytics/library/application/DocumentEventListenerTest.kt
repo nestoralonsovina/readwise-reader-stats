@@ -97,8 +97,7 @@ class DocumentEventListenerTest {
             lastOpenedAt = Instant.parse("2024-01-14T18:30:00Z"),
             tags = emptyList(),
             parentId = "parent-123",
-            imageUrl = "https://example.com/image.jpg",
-            highlights = emptyList()
+            imageUrl = "https://example.com/image.jpg"
         )
 
         listener.onDocumentSynced(event)
@@ -141,8 +140,7 @@ class DocumentEventListenerTest {
         lastOpenedAt = null,
         tags = tags,
         parentId = null,
-        imageUrl = imageUrl,
-        highlights = emptyList()
+        imageUrl = imageUrl
     )
 
     class FakeDocumentStore : DocumentStore {

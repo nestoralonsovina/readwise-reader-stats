@@ -218,8 +218,7 @@ class TrackingEventListenerTest {
         lastOpenedAt = null,
         tags = emptyList(),
         parentId = null,
-        imageUrl = null,
-        highlights = emptyList()
+        imageUrl = null
     )
 
     class FakeTrackingStore : TrackingStore {

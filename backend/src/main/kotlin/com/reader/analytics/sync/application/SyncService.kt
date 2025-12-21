@@ -136,7 +136,6 @@ class SyncService(
         lastOpenedAt = lastOpenedAt,
         tags = tagKeys(),
         parentId = parentId,
-        imageUrl = imageUrl,
-        highlights = emptyList()
+        imageUrl = imageUrl
     )
 }
