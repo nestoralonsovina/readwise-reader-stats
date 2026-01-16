@@ -14,10 +14,13 @@ data class Document(
     @Column(unique = true, nullable = false)
     val readwiseId: String,
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 2048)
     val url: String,
 
+    @Column(length = 1024)
     val title: String? = null,
+
+    @Column(length = 512)
     val author: String? = null,
     val category: String? = null,
     val location: String? = null,

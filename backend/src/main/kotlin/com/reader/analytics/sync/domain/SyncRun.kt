@@ -1,5 +1,6 @@
 package com.reader.analytics.sync.domain
 
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -38,6 +39,7 @@ data class SyncRun(
     val lastRateLimitRetrySeconds: Int? = null,
     val lastRateLimitAttempt: Int? = null,
 
+    @Column(columnDefinition = "TEXT")
     val errorMessage: String? = null,
 
     @Enumerated(EnumType.STRING)
