@@ -14,6 +14,18 @@ Analytics dashboard for Readwise Reader library. Syncs documents, highlights, an
 
 ## Quick Start
 
+### Docker (Full Stack)
+
+```bash
+# Start everything with hot-reload
+docker compose -f docker-compose.dev.yml up --build
+
+# With auto-rebuild on backend changes
+docker compose -f docker-compose.dev.yml watch
+```
+
+### Manual (Separate Terminals)
+
 ```bash
 # Backend
 cd backend && docker compose up -d
@@ -25,6 +37,13 @@ bun install && bun run start
 ```
 
 Backend: http://localhost:8080 | Frontend: http://localhost:4200
+
+### Hot Reload Behavior
+
+| Component | Reload | Mechanism |
+|-----------|--------|-----------|
+| Frontend | Instant | Volume mount + Angular HMR |
+| Backend | Container rebuild | `docker compose watch` |
 
 ## Architecture
 

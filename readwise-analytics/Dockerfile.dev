@@ -1,0 +1,12 @@
+FROM oven/bun:latest
+
+WORKDIR /app
+
+COPY package.json bun.lock* ./
+RUN bun install
+
+COPY . .
+
+EXPOSE 4200
+
+CMD ["bun", "run", "ng", "serve", "--host", "0.0.0.0", "--proxy-config", "proxy.docker.json"]
