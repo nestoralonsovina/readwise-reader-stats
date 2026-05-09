@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Readwise Reader Analytics - All Highlights View</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            accent: {
+              50: '#fffbeb',
+              100: '#fef3c7',
+              200: '#fde68a',
+              300: '#fcd34d',
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+              700: '#b45309',
+              800: '#92400e',
+              900: '#78350f',
+            },
+            chart: {
+              1: '#f59e0b',
+              2: '#3b82f6',
+              3: '#10b981',
+              4: '#8b5cf6',
+              5: '#ef4444',
+            },
+            success: '#10b981',
+            warning: '#f59e0b',
+            danger: '#ef4444',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+    * { transition: background-color 0.2s, border-color 0.2s, color 0.2s; }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen flex">
+
+  <!-- Sidebar -->
+  <aside class="fixed inset-y-0 left-0 w-56 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col z-10">
+    <div class="p-4 border-b border-gray-200 dark:border-gray-800">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-accent-500 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+        </div>
+        <span class="font-semibold text-lg">Reader Analytics</span>
+      </div>
+    </div>
+    <nav class="flex-1 p-3 space-y-1">
+      <a href="dashboard-mockup.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
+        Dashboard
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Reading Stats
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        Content Pipeline
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-400 font-medium">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+        Highlights
+      </a>
+      <div class="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          Library
+        </a>
+      </div>
+    </nav>
+    <div class="p-3 border-t border-gray-200 dark:border-gray-800">
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Settings
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 ml-56">
+
+    <!-- Header -->
+    <header class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+      <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div>
+          <h1 class="text-xl font-semibold">Highlights</h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Your annotations and saved passages</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <button class="px-3 py-1.5 text-sm rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">Week</button>
+            <button class="px-3 py-1.5 text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm font-medium">Month</button>
+            <button class="px-3 py-1.5 text-sm rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">Year</button>
+          </div>
+          <button id="themeToggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+            <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8">
+
+      <!-- KPI Cards Row -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <!-- Total Highlights -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-accent-100 dark:bg-accent-900/30 flex items-center justify-center">
+                <svg class="w-4 h-4 text-accent-600 dark:text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+              </div>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Total Highlights</span>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-2xl font-bold">1,247</span>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">across 89 documents</p>
+        </div>
+
+        <!-- This Period -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              </div>
+              <span class="text-sm text-gray-600 dark:text-gray-400">This Month</span>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-2xl font-bold">127</span>
+            <span class="text-xs font-medium text-success flex items-center gap-0.5">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+              12%
+            </span>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">vs 113 last month</p>
+        </div>
+
+        <!-- With Notes -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+              </div>
+              <span class="text-sm text-gray-600 dark:text-gray-400">With Notes</span>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-2xl font-bold">312</span>
+            <span class="text-sm text-gray-500">(25%)</span>
+          </div>
+          <div class="mt-2 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+            <div class="h-full bg-emerald-500 rounded-full" style="width: 25%"></div>
+          </div>
+        </div>
+
+        <!-- Avg Per Document -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+                <svg class="w-4 h-4 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+              </div>
+              <span class="text-sm text-gray-600 dark:text-gray-400">Avg / Document</span>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-2xl font-bold">14.0</span>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">highlights per document</p>
+        </div>
+      </div>
+
+      <!-- Toolbar Row -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-4">
+          <!-- View Toggle - "All Highlights" selected -->
+          <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <button class="px-3 py-1.5 text-sm rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+              By Document
+            </button>
+            <button class="px-3 py-1.5 text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm font-medium flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+              All Highlights
+            </button>
+          </div>
+
+          <!-- Filter: With Notes (checked) -->
+          <label class="flex items-center gap-2 cursor-pointer">
+            <div class="relative">
+              <input type="checkbox" class="peer sr-only" id="notesOnly" checked>
+              <div class="w-4 h-4 border-2 border-accent-500 bg-accent-500 rounded"></div>
+              <svg class="absolute top-0.5 left-0.5 w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <span class="text-sm text-gray-600 dark:text-gray-400">With notes only</span>
+          </label>
+        </div>
+
+        <!-- Search -->
+        <div class="relative w-full sm:w-64">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Search highlights..."
+            class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+          >
+        </div>
+      </div>
+
+      <!-- All Highlights List (unified stream with document context) -->
+      <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+        <div class="divide-y divide-gray-100 dark:divide-gray-800">
+
+          <!-- Highlight 1 -->
+          <article class="p-5 hover:bg-gray-50 dark:hover:bg-gray-800/30">
+            <div class="flex gap-4">
+              <!-- Document thumbnail -->
+              <div class="flex-shrink-0">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-violet-500"></div>
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <!-- Document context -->
+                <div class="flex items-center gap-2 mb-2">
+                  <a href="#" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-accent-600 dark:hover:text-accent-400 truncate">
+                    How to Build a Second Brain
+                  </a>
+                  <span class="text-xs text-gray-400">·</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">fortelabs.com</span>
+                </div>
+
+                <!-- Highlight with quote bar -->
+                <div class="flex gap-3">
+                  <div class="w-1 shrink-0 rounded-full bg-accent-500"></div>
+                  <div class="flex-1">
+                    <blockquote class="text-gray-900 dark:text-gray-100">
+                      "Your Second Brain is a personal system for knowledge management. It's a way of organizing your digital life that helps you capture what resonates, organize your notes, and create new things from them."
+                    </blockquote>
+
+                    <!-- Note -->
+                    <div class="mt-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-3">
+                      <div class="mb-1 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                        </svg>
+                        <span>Note</span>
+                      </div>
+                      <p class="text-sm text-gray-700 dark:text-gray-300">This is the core concept of the book. The key is having a reliable external system so you can offload cognitive burden.</p>
+                    </div>
+
+                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Dec 15, 2024</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Highlight 2 -->
+          <article class="p-5 hover:bg-gray-50 dark:hover:bg-gray-800/30">
+            <div class="flex gap-4">
+              <div class="flex-shrink-0">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500"></div>
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-2">
+                  <a href="#" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-accent-600 dark:hover:text-accent-400 truncate">
+                    Atomic Habits
+                  </a>
+                  <span class="text-xs text-gray-400">·</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">jamesclear.com</span>
+                </div>
+
+                <div class="flex gap-3">
+                  <div class="w-1 shrink-0 rounded-full bg-accent-500"></div>
+                  <div class="flex-1">
+                    <blockquote class="text-gray-900 dark:text-gray-100">
+                      "You do not rise to the level of your goals. You fall to the level of your systems."
+                    </blockquote>
+
+                    <div class="mt-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-3">
+                      <div class="mb-1 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                        </svg>
+                        <span>Note</span>
+                      </div>
+                      <p class="text-sm text-gray-700 dark:text-gray-300">Key insight: Focus on building systems (identity-based habits) rather than setting goals. Goals are about results; systems are about the process.</p>
+                    </div>
+
+                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Dec 14, 2024</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Highlight 3 -->
+          <article class="p-5 hover:bg-gray-50 dark:hover:bg-gray-800/30">
+            <div class="flex gap-4">
+              <div class="flex-shrink-0">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-violet-500"></div>
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-2">
+                  <a href="#" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-accent-600 dark:hover:text-accent-400 truncate">
+                    How to Build a Second Brain
+                  </a>
+                  <span class="text-xs text-gray-400">·</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">fortelabs.com</span>
+                </div>
+
+                <div class="flex gap-3">
+                  <div class="w-1 shrink-0 rounded-full bg-accent-500"></div>
+                  <div class="flex-1">
+                    <blockquote class="text-gray-900 dark:text-gray-100">
+                      "CODE: Capture, Organize, Distill, Express. These four steps form the creative process of working with your Second Brain."
+                    </blockquote>
+
+                    <div class="mt-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-3">
+                      <div class="mb-1 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                        </svg>
+                        <span>Note</span>
+                      </div>
+                      <p class="text-sm text-gray-700 dark:text-gray-300">Similar to GTD's capture -> process -> organize -> review -> do. The CODE framework is more focused on creative output.</p>
+                    </div>
+
+                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Dec 12, 2024</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Highlight 4 -->
+          <article class="p-5 hover:bg-gray-50 dark:hover:bg-gray-800/30">
+            <div class="flex gap-4">
+              <div class="flex-shrink-0">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-rose-500 to-pink-500"></div>
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-2">
+                  <a href="#" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-accent-600 dark:hover:text-accent-400 truncate">
+                    Deep Work Rules
+                  </a>
+                  <span class="text-xs text-gray-400">·</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">calnewport.com</span>
+                </div>
+
+                <div class="flex gap-3">
+                  <div class="w-1 shrink-0 rounded-full bg-accent-500"></div>
+                  <div class="flex-1">
+                    <blockquote class="text-gray-900 dark:text-gray-100">
+                      "The ability to perform deep work is becoming increasingly rare at exactly the same time it is becoming increasingly valuable in our economy."
+                    </blockquote>
+
+                    <div class="mt-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-3">
+                      <div class="mb-1 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                        </svg>
+                        <span>Note</span>
+                      </div>
+                      <p class="text-sm text-gray-700 dark:text-gray-300">This is the central thesis - deep work is a superpower due to supply/demand dynamics. Most people can't focus, so those who can have an advantage.</p>
+                    </div>
+
+                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Dec 10, 2024</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Highlight 5 -->
+          <article class="p-5 hover:bg-gray-50 dark:hover:bg-gray-800/30">
+            <div class="flex gap-4">
+              <div class="flex-shrink-0">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-500"></div>
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-2">
+                  <a href="#" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-accent-600 dark:hover:text-accent-400 truncate">
+                    The Pragmatic Programmer
+                  </a>
+                  <span class="text-xs text-gray-400">·</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">pragprog.com</span>
+                </div>
+
+                <div class="flex gap-3">
+                  <div class="w-1 shrink-0 rounded-full bg-accent-500"></div>
+                  <div class="flex-1">
+                    <blockquote class="text-gray-900 dark:text-gray-100">
+                      "Don't gather requirements - dig for them. Requirements rarely lie on the surface. They're buried deep beneath layers of assumptions, misconceptions, and politics."
+                    </blockquote>
+
+                    <div class="mt-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-3">
+                      <div class="mb-1 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                        </svg>
+                        <span>Note</span>
+                      </div>
+                      <p class="text-sm text-gray-700 dark:text-gray-300">Applies to design as well. Never accept surface-level requirements. Always dig deeper to understand the real problem.</p>
+                    </div>
+
+                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Dec 8, 2024</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="mt-6 flex items-center justify-between">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Showing 5 of 312 highlights with notes
+        </p>
+        <div class="flex items-center gap-2">
+          <button class="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50" disabled>
+            Previous
+          </button>
+          <button class="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+            Next
+          </button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    const themeToggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      html.classList.add('dark');
+    }
+    themeToggle.addEventListener('click', () => {
+      html.classList.toggle('dark');
+      localStorage.theme = html.classList.contains('dark') ? 'dark' : 'light';
+    });
+  </script>
+</body>
+</html>
