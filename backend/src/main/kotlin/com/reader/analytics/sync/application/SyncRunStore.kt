@@ -8,6 +8,7 @@ interface SyncRunStore {
     fun save(run: SyncRun): SyncRun
     fun findById(id: UUID): SyncRun?
     fun findByStatus(status: SyncRunStatus): SyncRun?
+    fun findRecent(limit: Int): List<SyncRun>
     fun findAllOrderByStartedAtDesc(limit: Int, offset: Int): List<SyncRun>
     fun countAll(): Long
     fun countByStatus(status: SyncRunStatus): Long

@@ -49,7 +49,7 @@ class SyncProgressEmitter {
         return emitter
     }
 
-    fun emit(syncId: UUID, event: SyncProgressEvent) {
+    open fun emit(syncId: UUID, event: SyncProgressEvent) {
         val eventId = storeEvent(syncId, event)
         val syncEmitters = emitters[syncId] ?: return
 

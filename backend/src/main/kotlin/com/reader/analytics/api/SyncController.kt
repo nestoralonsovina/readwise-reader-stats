@@ -4,6 +4,7 @@ import com.reader.analytics.api.dto.ActiveSyncResponse
 import com.reader.analytics.api.dto.SyncConflictResponse
 import com.reader.analytics.api.dto.SyncStartResponse
 import com.reader.analytics.api.dto.SyncStatusResponse
+import com.reader.analytics.sync.application.CancelResult
 import com.reader.analytics.sync.application.SyncOrchestrator
 import com.reader.analytics.sync.application.SyncProgressEmitter
 import com.reader.analytics.sync.application.SyncRunStore
@@ -17,6 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -105,6 +107,36 @@ class SyncController(
         return ResponseEntity.ok(SyncStatusResponse.from(run))
     }
 
+    @DeleteMapping("/{syncId}")
+    @Operation(
+        summary = "Cancel a running sync",
+        description = "Cancels a sync that is currently in PENDING or RUNNING state."
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "204", description = "Sync cancelled successfully"),
+        ApiResponse(responseCode = "404", description = "Sync not found"),
+        ApiResponse(responseCode = "409", description = "Sync cannot be cancelled (already completed, failed, or cancelled)")
+    )
+    fun cancelSync(@PathVariable syncId: UUID): ResponseEntity<Any> {
+        return when (val result = syncOrchestrator.cancel(syncId)) {
+            is CancelResult.Success -> ResponseEntity.noContent().build()
+            is CancelResult.NotFound -> ResponseEntity.notFound().build()
+            is CancelResult.NotCancellable -> ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(mapOf("error" to "Sync is in status: ${result.status}"))
+        }
+    }
+
+    @GetMapping("/history")
+    @Operation(
+        summary = "Get sync history",
+        description = "Returns a list of past sync runs, ordered by start time descending."
+    )
+    fun getHistory(@RequestParam(defaultValue = "20") limit: Int): ResponseEntity<List<SyncStatusResponse>> {
+        val runs = syncRunStore.findRecent(limit)
+        return ResponseEntity.ok(runs.map { SyncStatusResponse.from(it) })
+    }
+
     @GetMapping("/active")
     @Operation(
         summary = "Check for active sync",
@@ -140,7 +172,7 @@ class SyncController(
         @PathVariable syncId: UUID,
         @RequestParam(required = false) lastEventId: Long?
     ): SseEmitter {
-        val emitter = SseEmitter(0L) // No timeout
+        val emitter = SseEmitter(0L)
         return syncProgressEmitter.register(syncId, emitter, lastEventId)
     }
 }

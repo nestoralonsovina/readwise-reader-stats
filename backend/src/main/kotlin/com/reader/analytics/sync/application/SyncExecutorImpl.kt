@@ -126,6 +126,8 @@ class SyncExecutorImpl(
                 updateCounts = { run, count -> run.copy(highlightsProcessed = count) }
             )
 
+            if (isCancelled(syncId)) return
+
             // Phase 4: Notes
             currentRun = processPhase(
                 syncId = syncId,
@@ -217,6 +219,7 @@ class SyncExecutorImpl(
         var run = syncRunStore.save(currentRun.copy(currentPhase = phase))
 
         items.forEachIndexed { index, item ->
+            if (isCancelled(syncId)) return@forEachIndexed
             processItem(item)
 
             // Emit progress every 10 items
@@ -230,6 +233,10 @@ class SyncExecutorImpl(
                     )
                 )
             }
+        }
+
+        if (isCancelled(syncId)) {
+            return syncRunStore.findById(syncId) ?: currentRun
         }
 
         // Emit phase completed
@@ -304,4 +311,8 @@ class SyncExecutorImpl(
         parentId = parentId,
         imageUrl = imageUrl
     )
+
+    private fun isCancelled(syncId: UUID): Boolean {
+        return syncRunStore.findById(syncId)?.status == SyncRunStatus.CANCELLED
+    }
 }

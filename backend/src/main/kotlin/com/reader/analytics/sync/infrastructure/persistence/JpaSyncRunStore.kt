@@ -22,6 +22,9 @@ class JpaSyncRunStore(
     override fun findByStatus(status: SyncRunStatus): SyncRun? =
         repository.findFirstByStatus(status)
 
+    override fun findRecent(limit: Int): List<SyncRun> =
+        repository.findAllByOrderByStartedAtDesc(PageRequest.of(0, limit))
+
     override fun findAllOrderByStartedAtDesc(limit: Int, offset: Int): List<SyncRun> =
         repository.findAllByOrderByStartedAtDesc(PageRequest.of(offset / limit, limit))
 
