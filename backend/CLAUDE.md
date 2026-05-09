@@ -27,15 +27,15 @@ Fetches from Readwise API, publishes domain events, streams progress via SSE.
 
 | Component | Purpose |
 |-----------|---------|
-| `SyncOrchestrator` | Mutex check, spawns async sync task |
-| `SyncExecutorImpl` | Phased sync (documents → highlights → notes) |
+| `SyncOrchestrator` | Mutex check, spawns async sync task, cancel running syncs |
+| `SyncExecutorImpl` | Phased sync (documents → highlights → notes), cooperative cancellation |
 | `SyncProgressEmitter` | SSE event broadcasting to connected clients |
 | `ReadwiseClient` | API client with rate limiting |
 | `RateLimitRetryHandler` | 429 retry with exponential backoff |
 | `SyncRunStore` | Persistence port for SyncRun |
 | Events | `DocumentSyncedEvent`, `HighlightSyncedEvent`, `NoteSyncedEvent` |
 
-Key domain types: `SyncRun`, `SyncRunStatus`, `SyncPhase`, `SyncProgressEvent`
+Key domain types: `SyncRun`, `SyncRunStatus`, `SyncPhase`, `SyncProgressEvent`, `CancelResult`
 
 ### Library Context
 Subscribes to events, persists entities.
@@ -80,6 +80,10 @@ Query-time computation via native PostgreSQL.
 **Query-time analytics**: No stored aggregates. PostgreSQL window functions (`LAG`, `ROW_NUMBER`, `DISTINCT ON`) for calculations.
 
 **Cursor pagination**: Drill-down endpoints use keyset pagination (not offset) for stable paging through large result sets.
+
+**Database migrations**: Flyway manages schema. Migrations in `src/main/resources/db/migration/`. Hibernate `ddl-auto: validate` in production (local), `create-drop` in tests. Never modify existing migrations — add new numbered ones.
+
+**Cooperative cancellation**: `SyncOrchestrator.cancel()` sets status to CANCELLED and emits event. `SyncExecutorImpl` checks `isCancelled()` between phases.
 
 ## Readwise API
 

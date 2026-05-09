@@ -4,9 +4,11 @@ import com.reader.analytics.library.domain.Document
 import com.reader.analytics.library.domain.Highlight
 import com.reader.analytics.library.domain.Note
 import com.reader.analytics.library.domain.Tag
+import com.reader.analytics.tracking.application.TrackingStore
+import com.reader.analytics.tracking.domain.LocationChange
+import com.reader.analytics.tracking.domain.ReadingProgressSnapshot
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import java.time.Instant
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -18,6 +20,7 @@ class DocumentServiceTest {
     private lateinit var documentStore: FakeDocumentStore
     private lateinit var highlightStore: FakeHighlightStore
     private lateinit var noteStore: FakeNoteStore
+    private lateinit var trackingStore: FakeTrackingStore
     private lateinit var service: DocumentService
 
     @BeforeEach
@@ -25,7 +28,8 @@ class DocumentServiceTest {
         documentStore = FakeDocumentStore()
         highlightStore = FakeHighlightStore()
         noteStore = FakeNoteStore()
-        service = DocumentService(documentStore, highlightStore, noteStore)
+        trackingStore = FakeTrackingStore()
+        service = DocumentService(documentStore, highlightStore, noteStore, trackingStore)
     }
 
     @Test
@@ -39,7 +43,6 @@ class DocumentServiceTest {
             author = "John Doe",
             category = "article",
             location = "later",
-            readingProgress = 0.75,
             wordCount = 1500,
             savedAt = Instant.parse("2024-01-15T10:00:00Z"),
             firstOpenedAt = Instant.parse("2024-01-16T09:00:00Z"),
@@ -47,6 +50,14 @@ class DocumentServiceTest {
             imageUrl = "https://example.com/cover.jpg"
         )
         documentStore.documents[docId] = document
+        trackingStore.snapshot = ReadingProgressSnapshot(
+            documentId = "rw-123",
+            readingProgress = 0.75,
+            wordCount = 1500,
+            firstOpenedAt = null,
+            lastOpenedAt = null,
+            recordedAt = Instant.now()
+        )
 
         val result = service.getDocumentDetail(docId)
 
@@ -204,5 +215,14 @@ class DocumentServiceTest {
 
         override fun findByHighlightId(highlightId: UUID): Note? =
             notesByHighlight[highlightId]
+    }
+
+    class FakeTrackingStore : TrackingStore {
+        var snapshot: ReadingProgressSnapshot? = null
+
+        override fun findLatestSnapshot(documentId: String): ReadingProgressSnapshot? = snapshot
+        override fun saveSnapshot(snapshot: ReadingProgressSnapshot): ReadingProgressSnapshot = snapshot
+        override fun findLatestLocation(documentId: String): LocationChange? = null
+        override fun saveLocationChange(change: LocationChange): LocationChange = change
     }
 }

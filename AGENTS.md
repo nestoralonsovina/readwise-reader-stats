@@ -58,7 +58,7 @@ Sync Context → publishes events → Library, Tracking contexts → Analytics q
 
 | Context | Purpose | Key Entities |
 |---------|---------|--------------|
-| Sync | Readwise API integration, async orchestration | SyncRun, SyncPhase, SyncCursor, SyncProgressEvent |
+| Sync | Readwise API integration, async orchestration | SyncRun, SyncRunStatus, SyncPhase, SyncCursor, SyncProgressEvent, CancelResult |
 | Library | Document storage | Document, Highlight, Note, Tag |
 | Tracking | Progress time-series | ReadingProgressSnapshot, LocationChange |
 | Analytics | Query-time metrics | Projections via PostgreSQL |
@@ -90,7 +90,7 @@ Query params: `startDate`, `endDate` (ISO format), `granularity` (DAILY/WEEKLY/M
 
 | Layer | Technology |
 |-------|------------|
-| Backend | Kotlin 2.2, Spring Boot 4.0, PostgreSQL 16, Hibernate 7.1 |
+| Backend | Kotlin 2.2, Spring Boot 4.0, PostgreSQL 16, Hibernate 7.1, Flyway |
 | Frontend | Angular 21, Tailwind CSS 4, Spartan UI, ApexCharts |
 | Tooling | Gradle, Bun, GraalVM Native Image |
 
