@@ -2,6 +2,14 @@
 
 Analytics dashboard for your Readwise Reader library. Syncs documents, highlights, and notes from the Readwise API and surfaces reading insights.
 
+## Screenshots
+
+### Dashboard
+![Dashboard](docs/dashboard-screen.png)
+
+### Sync Progress
+![Sync Progress](docs/sync-screen.png)
+
 ## Quick Start
 
 ### Docker (Full Stack)
