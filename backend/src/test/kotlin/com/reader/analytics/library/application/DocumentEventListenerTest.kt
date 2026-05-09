@@ -45,15 +45,13 @@ class DocumentEventListenerTest {
             id = UUID.randomUUID(),
             readwiseId = "rw-456",
             url = "https://example.com/old",
-            title = "Old Title",
-            readingProgress = 0.0
+            title = "Old Title"
         )
         documentStore.save(existingDoc)
 
         val event = createDocumentSyncedEvent(
             id = "rw-456",
-            title = "Updated Title",
-            readingProgress = 0.75
+            title = "Updated Title"
         )
 
         listener.onDocumentSynced(event)
@@ -61,7 +59,6 @@ class DocumentEventListenerTest {
         val updated = documentStore.findByReadwiseId("rw-456")
         assertNotNull(updated)
         assertEquals("Updated Title", updated.title)
-        assertEquals(0.75, updated.readingProgress)
         assertEquals(existingDoc.id, updated.id)
     }
 
@@ -109,7 +106,6 @@ class DocumentEventListenerTest {
         assertEquals("Test Author", saved.author)
         assertEquals("article", saved.category)
         assertEquals("archive", saved.location)
-        assertEquals(0.5, saved.readingProgress)
         assertEquals(1500, saved.wordCount)
         assertEquals(Instant.parse("2024-01-10T10:00:00Z"), saved.savedAt)
         assertEquals(Instant.parse("2024-01-15T10:00:00Z"), saved.updatedAt)
@@ -123,7 +119,6 @@ class DocumentEventListenerTest {
         id: String,
         title: String,
         tags: List<String> = emptyList(),
-        readingProgress: Double? = null,
         imageUrl: String? = null
     ) = DocumentSyncedEvent(
         id = id,
@@ -132,7 +127,7 @@ class DocumentEventListenerTest {
         author = "Test Author",
         category = "article",
         location = "new",
-        readingProgress = readingProgress,
+        readingProgress = null,
         wordCount = 1000,
         savedAt = Instant.now(),
         updatedAt = Instant.now(),
