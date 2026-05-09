@@ -75,7 +75,8 @@ sealed class SyncProgressEvent {
 
     data class Cancelled(
         override val syncId: UUID,
-        val phase: SyncPhase?,
+        val reason: String,
+        val phase: SyncPhase? = null,
         override val timestamp: Instant = Instant.now()
     ) : SyncProgressEvent()
 
@@ -103,7 +104,7 @@ sealed class SyncProgressEvent {
             is PhaseCompleted -> """{"type":"$type","phase":"$phase","count":$count,"timestamp":"$timestamp"}"""
             is Completed -> """{"type":"$type","summary":{"documents":$documentsCount,"highlights":$highlightsCount,"notes":$notesCount},"duration":"$duration","timestamp":"$timestamp"}"""
             is Error -> """{"type":"$type","phase":${phase?.let { "\"$it\"" } ?: "null"},"message":"${message.replace("\"", "\\\"")}","timestamp":"$timestamp"}"""
-            is Cancelled -> """{"type":"$type","phase":${phase?.let { "\"$it\"" } ?: "null"},"timestamp":"$timestamp"}"""
+            is Cancelled -> """{"type":"$type","reason":"${reason.replace("\"", "\\\"")}","phase":${phase?.let { "\"$it\"" } ?: "null"},"timestamp":"$timestamp"}"""
         }
 
         return data
