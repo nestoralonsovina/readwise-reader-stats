@@ -1,3 +1,8 @@
+# Environment
+.env
+.env.*
+!.env.sample
+
 # Local configuration
 backend/src/main/resources/application-local.yml
 backend/src/main/resources/application-local.yaml

@@ -12,6 +12,14 @@ docker compose up -d                         # Start PostgreSQL
 
 Database: `localhost:5432/readwise_analytics` (postgres/postgres)
 
+## Environment
+
+Copy `.env.sample` to `.env` and set your Readwise API token:
+```bash
+cp .env.sample .env
+# Edit .env — set READWISE_API_TOKEN from https://readwise.io/access_token
+```
+
 ## Bounded Contexts
 
 ### Sync Context

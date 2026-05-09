@@ -27,6 +27,9 @@ docker compose -f docker-compose.dev.yml watch
 ### Manual (Separate Terminals)
 
 ```bash
+# 1. Copy environment config
+cp .env.sample .env  # then edit .env with your Readwise API token
+
 # Backend
 cd backend && docker compose up -d
 ./gradlew bootRun --args='--spring.profiles.active=local'
