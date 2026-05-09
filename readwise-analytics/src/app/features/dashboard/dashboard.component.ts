@@ -160,8 +160,8 @@ interface DashboardData {
         />
       }
 
-      <!-- Loading overlay -->
-      @if (loading()) {
+      <!-- Loading overlay - only show on initial load when no data exists -->
+      @if (loading() && !data()) {
         <div
           class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
         >
