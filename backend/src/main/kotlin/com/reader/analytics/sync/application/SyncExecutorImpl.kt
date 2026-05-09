@@ -37,6 +37,8 @@ class SyncExecutorImpl(
         val run = syncRunStore.findById(syncId)
             ?: throw IllegalStateException("SyncRun not found: $syncId")
 
+        if (isCancelled(syncId)) return
+
         val startedAt = run.startedAt
         var currentRun = syncRunStore.save(run.copy(status = SyncRunStatus.RUNNING))
 
@@ -79,6 +81,8 @@ class SyncExecutorImpl(
             )
             currentRun = syncRunStore.save(currentRun.copy(completedPhases = 1))
 
+            if (isCancelled(syncId)) return
+
             val documentDtos = allItems.filter { it.isDocument() }
             val highlightDtos = allItems.filter { it.isHighlight() }
             val noteDtos = allItems.filter { it.isNote() }
@@ -104,6 +108,8 @@ class SyncExecutorImpl(
                 },
                 updateCounts = { run, count -> run.copy(documentsProcessed = count) }
             )
+
+            if (isCancelled(syncId)) return
 
             // Phase 3: Highlights
             currentRun = processPhase(
