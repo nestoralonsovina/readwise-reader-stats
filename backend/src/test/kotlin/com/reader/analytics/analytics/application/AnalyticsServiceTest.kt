@@ -267,16 +267,16 @@ class AnalyticsServiceTest {
             return pipelineStats
         }
 
-        override fun getLocationBreakdown() = locationBreakdownResult
+        override fun getLocationBreakdown(dateRange: DateRange) = locationBreakdownResult
 
-        override fun getCategoryBreakdown() = categoryBreakdownResult
+        override fun getCategoryBreakdown(dateRange: DateRange) = categoryBreakdownResult
 
         override fun getHighlightStats(dateRange: DateRange): HighlightStats {
             lastHighlightStatsDateRange = dateRange
             return highlightStats
         }
 
-        override fun getMostHighlightedDocuments(limit: Int) = mostHighlightedDocuments.take(limit)
+        override fun getMostHighlightedDocuments(dateRange: DateRange, limit: Int) = mostHighlightedDocuments.take(limit)
 
         override fun getWordsReadDocuments(
             dateRange: DateRange,

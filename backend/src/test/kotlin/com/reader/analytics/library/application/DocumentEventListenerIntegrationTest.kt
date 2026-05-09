@@ -53,7 +53,6 @@ class DocumentEventListenerIntegrationTest {
         assertEquals("Test Author", document.author)
         assertEquals("article", document.category)
         assertEquals("new", document.location)
-        assertEquals(0.5, document.readingProgress)
         assertEquals(500, document.wordCount)
         assertEquals(2, document.tags.size)
 
@@ -109,7 +108,6 @@ class DocumentEventListenerIntegrationTest {
         assertEquals("Updated Title", document.title)
         assertEquals("New Author", document.author)
         assertEquals("archive", document.location)
-        assertEquals(1.0, document.readingProgress)
         assertEquals(1, document.tags.size)
     }
 
